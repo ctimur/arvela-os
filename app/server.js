@@ -6,7 +6,7 @@ import pg from 'pg';
 import { als, lang, M1, M2, exact, translateHtml, pickLang, locale, LANGS } from './i18n.js';
 import { registerCrm, migrateCrm, crmActions } from './ext-crm.js';
 
-const VERSION = '0.11.0';
+const VERSION = '0.11.1';
 const PORT = Number(process.env.PORT || 3000);
 const SETUP_TOKEN = process.env.SETUP_TOKEN || '';
 const COOKIE_SECURE = process.env.COOKIE_SECURE !== '0';
@@ -648,7 +648,7 @@ import { registerForge, migrateForge } from './ext-forge.js';
 registerSites({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, STAFF });
 registerQuotes({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, audit, HttpError, int, nn });
 registerInvoices({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, audit, HttpError, int, nn });
-hooks = registerAutomation({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, STAFF, TK_ST, PR_ST, audit, safeEqual, APP_URL: process.env.APP_URL });
+hooks = registerAutomation({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, STAFF, TK_ST, PR_ST, audit, safeEqual, SETUP_TOKEN, APP_URL: process.env.APP_URL });
 const forge = registerForge({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, safeEqual, audit, SETUP_TOKEN, VERSION });
 const crm = registerCrm({ route, all, one, q, need, layout, h, badge, fmtMoney, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, opts });
 const todayPage = registerToday({ all, one, h, layout, need, STAFF, forgePending: forge.pendingCount, extraActions: async (a) => crmActions(await crm.openLeads(a)) });
