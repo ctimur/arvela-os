@@ -564,7 +564,7 @@ route('GET', '/kayitlar', async (ctx, res) => {
   need(ctx, 'admin');
   const rows = await all('SELECT a.*, u.name FROM audit a LEFT JOIN users u ON u.id=a.user_id WHERE a.agency_id=$1 ORDER BY a.created_at DESC LIMIT 200', [ctx.user.agency_id]);
   send(res, 200, layout(ctx, 'Kayıtlar', `<h1>İşlem kayıtları</h1><div class="tbl"><table><tr><th>Zaman</th><th>Kişi</th><th>İşlem</th><th>Ayrıntı</th></tr>
-${rows.map(r => `<tr><td>${new Date(r.created_at).toLocaleString('tr-TR')}</td><td>${h(r.name || '—')}</td><td>${h(r.action)}</td><td><code>${h(JSON.stringify(r.detail))}</code></td></tr>`).join('') || '<tr><td colspan="4" class="muted">Kayıt yok.</td></tr>'}</table></div>`, '/kayitlar'));
+${rows.map(r => `<tr><td>${new Date(r.created_at).toLocaleString(locale(), { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Istanbul' })}</td><td>${h(r.name || (r.detail?.via === 'api' ? 'API (n8n)' : 'Sistem'))}</td><td>${h(EVENT_LABEL[r.action] || r.action)}<br><code class="muted">${h(r.action)}</code></td><td><code>${h(JSON.stringify(r.detail))}</code></td></tr>`).join('') || '<tr><td colspan="4" class="muted">Kayıt yok.</td></tr>'}</table></div>`, '/kayitlar'));
 });
 
 // ----- müşteri portalı -----
@@ -641,7 +641,7 @@ import { registerInvoices, migrateInvoices } from './ext-invoices.js';
 import { registerToday, portalActions } from './ext-today.js';
 import { registerWork, migrateWork } from './ext-work.js';
 import { registerSync, migrateSync } from './ext-sync.js';
-import { registerAutomation, migrateAutomation } from './ext-automation.js';
+import { registerAutomation, migrateAutomation, EVENT_LABEL } from './ext-automation.js';
 import { registerForge, migrateForge } from './ext-forge.js';
 registerSites({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, STAFF });
 registerQuotes({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, audit, HttpError, int, nn });
