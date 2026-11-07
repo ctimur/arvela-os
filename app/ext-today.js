@@ -74,7 +74,6 @@ function actionCard(x, h, size) {
   return `<article class="act ${size}${size === 'hero' ? '' : ''}"><div class="act-meta"><span class="badge ${x.tone}">${h(x.tag)}</span><span class="muted">${h(x.meta)}</span></div>
 <${size === 'hero' ? 'h2' : 'h3'}>${h(x.title)}</${size === 'hero' ? 'h2' : 'h3'}>${x.body ? `<p>${h(x.body)}</p>` : ''}<div class="act-btns">${btns}</div></article>`;
 }
-
 export function registerToday({ all, one, h, layout, need, STAFF }) {
   return async function todayPage(ctx, res, send) {
     need(ctx, ...STAFF); const a = ctx.user.agency_id; const admin = ctx.user.role === 'admin';

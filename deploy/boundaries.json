@@ -4,7 +4,7 @@
   ".grow{flex:1;min-width:0;display:flex;flex-direction:column}",
   "  const out = u ? `<form class=\"inline\" method=\"post\" action=\"/cikis\">${csrfField(ctx)}<button class=\"btn-out\">Çıkış</button></form>` : '';",
   "  await q('INSERT INTO users (agency_id, email, name, role, pass_hash) VALUES ($1,lower($2),$3,$4,$5)', [ag.id, b.email.trim(), b.name.trim(), 'admin', hashPassword(b.password)]);",
-  "<section class=\"card\"><h2>Hizmetler</h2>",
+  "${svcs.length ? `<div class=\"tbl\"><table><tr><th>Modül</th><th>Faturalama</th><th>Durum</th><th>Başlangıç</th><th></th></tr>${svcs.map(s => `<tr><td>${h(s.code)} · ${h(s.name)}</td><td>${h(s.billing)}</td>",
   "  const rows = await all(`SELECT p.*, c.name client, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id)::int total, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id AND t.status='bitti')::int done",
   "  send(res, 200, layout(ctx, 'Onaylar', `<h1>Onaylar</h1><p class=\"muted\">Müşteriye onay isteği müşteri sayfasından gönderilir; müşteri portalından onaylar ya da düzeltme ister.</p>",
   "  const prjs = await all(`SELECT p.*, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id)::int total, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id AND t.status='bitti')::int done FROM projects p WHERE p.client_id=$1 ORDER BY (p.status='tamamlandi'), p.created_at DESC`, [cid]);"

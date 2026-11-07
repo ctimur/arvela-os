@@ -26,6 +26,8 @@ jobs:
         run: for t in tests/*.test.mjs; do node "$t" || exit 1; done
       - name: Parçalar sınıra sığıyor mu
         run: python3 deploy/rechunk.py
+      - name: Parçalar birleşince dosyayı birebir veriyor mu
+        run: python3 -c "import yaml" 2>/dev/null || pip install pyyaml; python3 deploy/verify_chunks.py
 
   deploy:
     needs: check

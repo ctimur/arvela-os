@@ -36,6 +36,8 @@ def main():
             if text.count('\n' + m + '\n') != 1:
                 raise SystemExit(f'{name}: sınır satırı dosyada tam bir kez geçmeli: {m[:60]!r}')
             i = text.index('\n' + m + '\n', start) + 1
+            if text[:i].endswith('\n\n'):
+                raise SystemExit(f'{name}: sınır satırından önce boş satır olamaz (YAML parçanın sondaki boş satırını siler): {m[:60]!r}')
             parts.append(text[start:i]); start = i
         parts.append(text[start:])
         assert ''.join(parts) == text
