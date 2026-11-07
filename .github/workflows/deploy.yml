@@ -1,0 +1,40 @@
+name: Yayına al
+
+on:
+  push:
+    branches: [main]
+    paths: ['app/**', 'deploy/**']
+  workflow_dispatch:
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Sözdizimi kontrolü
+        run: |
+          for f in app/*.js; do node --check "$f"; done
+          for f in app/*.json; do node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))"; done
+      - name: Parçalar sınıra sığıyor mu
+        run: python3 deploy/rechunk.py
+
+  deploy:
+    needs: check
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Hostinger'a yayınla
+        env:
+          HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
+          VPS_ID: ${{ vars.VPS_ID || '1249062' }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          SETUP_TOKEN: ${{ secrets.SETUP_TOKEN }}
+        run: python3 deploy/deploy.py

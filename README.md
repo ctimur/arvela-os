@@ -34,16 +34,24 @@ DATABASE_URL=postgres://user:pass@localhost:5432/arvela SETUP_TOKEN=yerel-anahta
 
 İlk açılışta `/kurulum` sayfası `SETUP_TOKEN` ile ilk yönetici hesabını açar; hesap açıldıktan sonra kapanır.
 
-## Yayın (şimdilik)
+## Yayın
 
 Sunucu: Hostinger KVM 1, Ubuntu 24.04 + Docker + Traefik (Let's Encrypt).
 
-Hostinger Docker API'si tek compose dosyasında en fazla 8.192 karakter kabul ettiği için kaynak dosyalar `arvela-src-NN` adlı tek seferlik projelerle `arvela_src` diskine parça parça yazılır. `arvela-os` projesi açılışta parçaları birleştirir ve SHA-256 özetlerini doğrular; uyuşmazlıkta başlamaz.
+`main` dalına `app/` ya da `deploy/` altında bir değişiklik gönderildiğinde **Yayına al** iş akışı (`.github/workflows/deploy.yml`) çalışır:
 
-1. `app/` içinde değişikliği yap, `node --check` ile doğrula.
-2. `python3 deploy/rechunk.py` değişen parçaları ve yeni özetleri listeler.
-3. Yalnızca değişen `arvela-src-NN` projelerini yeniden yaz, ardından `deploy/docker-compose.yml` içindeki özetleri güncelleyip `arvela-os` projesini yeniden yayınla.
+1. JavaScript ve JSON dosyalarını kontrol eder, parçaların sınıra sığdığını doğrular.
+2. `deploy/deploy.py` değişen parçaları `arvela-src-NN` projelerine yazar, `arvela-os` projesini yeni SHA-256 özetleriyle yeniden yayınlar ve `/healthz` sağlıklı dönene kadar bekler.
+
+Gerekli GitHub ayarları (Settings → Secrets and variables → Actions, `production` ortamı):
+
+| Ad | Tür | Ne |
+|---|---|---|
+| `HOSTINGER_API_TOKEN` | secret | hPanel → Profil → API'den alınan anahtar |
+| `DB_PASSWORD` | secret | Sunucudaki mevcut veritabanı şifresi (değiştirmeyin; veritabanı bununla açıldı) |
+| `SETUP_TOKEN` | secret | İlk kurulum anahtarı |
+| `VPS_ID` | variable | `1249062` (isteğe bağlı) |
+
+Neden parça: Hostinger Docker API'si tek compose dosyasında en fazla 8.192 karakter kabul ediyor. Kaynak dosyalar `arvela_src` diskine parça parça yazılır; `arvela-os` açılışta birleştirir ve özetleri doğrular, uyuşmazlıkta başlamaz. Sınırlar `deploy/boundaries.json`'da sabittir; bir parça büyürse oraya yeni bir sınır satırı ekleyin ve `deploy/deploy.py` içindeki `ORDER` sayısını artırın.
 
 `arvela-src-NN` projelerini silmeyin: kaynak disk onlara bağlı.
-
-Hedef: GitHub Actions ile imaj üretip tek adımda yayın (yol haritasında).
