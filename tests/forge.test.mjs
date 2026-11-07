@@ -7,7 +7,7 @@ assert.equal(nextStatus({ status: 'onaylandi', head_sha: A }, { state: 'open', h
 assert.equal(nextStatus({ status: 'onaylandi', head_sha: A }, { state: 'open', head_sha: B }), 'bekliyor', 'onaydan sonra kod değişirse onay düşer');
 assert.equal(nextStatus({ status: 'reddedildi', head_sha: A }, { state: 'open', head_sha: B }), 'bekliyor', 'reddedilen PR güncellenince yeniden incelenir');
 assert.equal(nextStatus({ status: 'yayinda', head_sha: A }, { state: 'closed', merged: true, head_sha: A }), 'yayinda');
-assert.equal(nextStatus({ status: 'bekliyor', head_sha: A }, { state: 'closed', merged: true, head_sha: A }), 'kapandi', 'onaysız birleştirme Forge dışıdır');
+assert.equal(nextStatus({ status: 'bekliyor', head_sha: A }, { state: 'closed', merged: true, head_sha: A }), 'yayinda', 'birleştirilen değişiklik yayındadır');
 assert.equal(nextStatus({ status: 'bekliyor', head_sha: A }, { state: 'closed', head_sha: A }), 'kapandi');
 assert.equal(forgeKey(''), '');
 

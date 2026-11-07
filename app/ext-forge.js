@@ -12,7 +12,7 @@ const SHA = /^[0-9a-f]{40}$/;
 
 // Gelen PR kaydına göre yeni durum: onaydan sonra kod değiştiyse onay düşer.
 export function nextStatus(prev, pr) {
-  if (pr.merged) return prev && ['onaylandi', 'yayinda'].includes(prev.status) ? 'yayinda' : 'kapandi';
+  if (pr.merged) return 'yayinda'; // Forge dışında (Yönetici'nin doğrudan izniyle) birleştirilen de yayındadır
   if (pr.state === 'closed') return prev?.status === 'reddedildi' ? 'reddedildi' : 'kapandi';
   if (!prev) return 'bekliyor';
   if (prev.head_sha !== pr.head_sha && ['onaylandi', 'hata', 'reddedildi'].includes(prev.status)) return 'bekliyor';

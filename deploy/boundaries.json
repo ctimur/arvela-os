@@ -52,15 +52,15 @@
   "        await emit(agencyId, 'site.alert', { domain: s.domain, client_id: s.client_id, client: s.client, ssl_status: s.ssl_status, wp_version: s.wp_version, issue: s.issue, url: s.client_id ? `${BASE}/musteriler/${s.client_id}/siteler` : `${BASE}/siteler` });",
   "    FROM clients c LEFT JOIN users u ON u.id=c.owner_id WHERE c.agency_id=$1 AND (CASE $2 WHEN '' THEN c.status='lead' AND c.stage = ANY($3) ELSE c.stage=$2 END) ORDER BY c.call_at NULLS LAST, c.created_at DESC LIMIT $4`, [a, qp(ctx, 'stage'), OPEN_STAGES, lim(ctx)]) }));",
   "  api('POST', '/tasks/:id/status', 'yaz', async (ctx, a, p) => {",
-  "${hooks.map(w => `<div class=\"svc\"><div class=\"svc-h\"><span class=\"grow\"><strong>${h(w.name)}</strong><span class=\"muted\">${w.events.includes('*') ? 'Tüm olaylar' : `${w.events.length} olay`} · son 7 gün ${w.week} bildirim${w.fails ? ` · <span class=\"late\">${w.fails} başarısız</span>` : ''}</span></span>${badge(w.active ? 'Etkin' : 'Kapalı', w.active ? 'ok' : '')}</div>",
-  "    await d.audit(ctx, 'automation.webhook_create', { id: r.id }); redirect(res, '/otomasyonlar');"
+  "    send(res, 200, layout(ctx, 'Otomasyonlar', `<div class=\"page-head\"><div><h1>Otomasyonlar</h1><p class=\"muted lead\">Arvela OS'te olan her şey n8n'e bildirilir; n8n de API ile görev, not, proje ve müşteri ekleyebilir.</p></div>",
+  "${[['GET /summary', 'Günün özeti: geciken ve bugünkü görevler, bekleyen onaylar, acil siteler (finans yetkisiyle gecikmiş faturalar)', 'is'], ['GET /clients · /clients/{id}', 'Müşteriler; ayrıntıda hizmetler, projeler, siteler, onaylar', 'is'], ['GET /projects · /projects/{id}', 'Projeler; ayrıntıda görevler', 'is'], ['GET /tasks?status=open|overdue|today', 'Görevler (assignee_id, project_id ile süzülür)', 'is'], ['GET /tasks/{id}', 'Görev ve notları', 'is'], ['GET /approvals?status=bekliyor', 'Onaylar', 'is'], ['GET /sites?health=acil', 'Siteler ve sağlık durumu', 'is'], ['GET /leads?stage=yeni|ulasildi|gorusme|teklif', 'Satış hattındaki adaylar (aşama olmadan: tüm açık adaylar)', 'is'], ['GET /team', 'Ekip', 'is'], ['GET /quotes · /invoices?status=overdue', 'Teklifler ve faturalar', 'finans'], ['POST /clients', 'Aday ya da müşteri ekle: name, phone, email, sector, contact_name, interest, lead_source, notes, status (varsayılan: lead → Satış hattı)', 'yaz'], ['POST /projects', 'Proje aç: client_id, name, description, due_date', 'yaz'], ['POST /tasks', 'Görev ekle: project_id, title, description, assignee_id, due_date, priority', 'yaz'], ['POST /tasks/{id}/status', 'Görev durumu: yapilacak, yapiliyor, incelemede, bitti', 'yaz'], ['POST /tasks/{id}/notes', 'Göreve not: body', 'yaz'], ['POST /approvals', 'Onaya gönder: client_id, project_id, title, body', 'yaz']]"
  ],
  "n8n-seed.json": [
-  "720",
-  "\"expression\": \"0 10 * * 1-5\"",
-  "\"node\": \"Gecikmiş faturalar\",",
-  "\"path\": \"arvela-task-assigned\",",
-  "\"fieldLabel\": \"Telefon\","
+  "500",
+  "\"content\": \"## Arvela · Onay hatırlatma\\nHer iş günü 10:00'da 2 günden uzun bekleyen onayları listeler; müşteriye tek dokunuşla WhatsApp hatırlatması için bağlantı verir. Bekleyen yoksa e-posta gitmez.\",",
+  "\"name\": \"Yöneticiye gönder\",",
+  "\"content\": \"## Arvela · Görev bildirimi\\nGörev oluşturulunca ya da güncellenince sorumlusuna e-posta gönderir (kendi yaptığı değişiklik hariç).\\nArvela OS → Otomasyonlar → \\\"n8n · Görev bildirimi\\\" bağlantısını Etkin yap.\",",
+  "\"name\": \"İletişim formu\","
  ],
  "ext-forge.js": [
   "      await q(`UPDATE forge_changes SET status=$1, error=$2, merged_sha=COALESCE($3, merged_sha), deployed_at=CASE WHEN $1='yayinda' THEN now() ELSE deployed_at END, updated_at=now() WHERE pr=$4`,",

@@ -267,6 +267,28 @@ export function registerAutomation(d) {
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Seed-Version': String(seed.version) }); res.end(JSON.stringify(seed.workflows));
   });
 
+  route('GET', '/api/n8n-seed-info', async (ctx, res) => {
+    const seed = JSON.parse(fs.readFileSync(new URL('./n8n-seed.json', import.meta.url), 'utf8'));
+    json(res, 200, { version: seed.version, ids: seed.ids || {} });
+  });
+
+  // GitHub 'n8n bağla' akışı n8n'i kurarken çağırır: sistem API anahtarını yeniler, webhook anahtarını döndürür
+  // ve hazır akışların bağlantılarını açar (olay yönlendirici hariç). Kimlik: HMAC(SETUP_TOKEN, "arvela-n8n-provision").
+  route('POST', '/api/n8n/provision', async (ctx, res) => {
+    const pkey = d.SETUP_TOKEN ? crypto.createHmac('sha256', d.SETUP_TOKEN).update('arvela-n8n-provision').digest('hex') : '';
+    const auth = String(ctx.req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+    if (!pkey || !safeEqual(auth, pkey)) throw new HttpError(403, 'Yetkisiz.');
+    const agency = await one('SELECT id FROM agencies WHERE slug=$1', ['arvela']);
+    await q(`UPDATE api_keys SET revoked_at=now() WHERE agency_id=$1 AND name='n8n (otomatik)' AND revoked_at IS NULL`, [agency.id]);
+    const { prefix, key } = newApiKey();
+    await q(`INSERT INTO api_keys (agency_id, name, prefix, key_hash, scopes) VALUES ($1,'n8n (otomatik)',$2,$3,$4)`, [agency.id, prefix, hashKey(key), ['is', 'yaz', 'finans']]);
+    const token = await tokenFor(agency.id);
+    const on = DEFAULT_HOOKS.filter(([, path]) => path !== 'arvela-events').map(([, path]) => `https://n8n.arveladigital.com/webhook/${path}`);
+    await q(`UPDATE webhooks SET active = (url = ANY($2)) WHERE agency_id=$1 AND url LIKE 'https://n8n.arveladigital.com/webhook/%'`, [agency.id, on]);
+    await q('INSERT INTO audit (agency_id, user_id, action, detail) VALUES ($1,NULL,$2,$3)', [agency.id, 'automation.n8n_provision', { prefix, hooks: on.length }]);
+    json(res, 200, { api_key: key, webhook_token: token, hooks: on.length });
+  });
+
   // ---------- Otomasyonlar sayfası ----------
   const evTone = (x) => x.ok ? 'ok' : x.attempts && !x.ok ? 'bad' : 'warn';
   const evText = (x) => x.ok ? `${x.status_code}` : x.attempts ? (x.status_code ? `Hata ${x.status_code}` : 'Ulaşılamadı') : 'Sırada';
