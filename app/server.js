@@ -5,8 +5,9 @@ import fs from 'node:fs';
 import pg from 'pg';
 import { als, lang, M1, M2, exact, translateHtml, pickLang, locale, LANGS } from './i18n.js';
 import { registerCrm, migrateCrm, crmActions } from './ext-crm.js';
+import { registerFreelance, migrateFreelance, packageActions } from './ext-freelance.js';
 
-const VERSION = '0.11.1';
+const VERSION = '0.12.0';
 const PORT = Number(process.env.PORT || 3000);
 const SETUP_TOKEN = process.env.SETUP_TOKEN || '';
 const COOKIE_SECURE = process.env.COOKIE_SECURE !== '0';
@@ -186,6 +187,7 @@ details summary{cursor:pointer;font-weight:600}
 .chips{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-top:8px;font-size:14px}
 .crumb{font-size:14px;color:var(--stone);display:flex;flex-wrap:wrap;gap:6px}.crumb a{text-decoration:none}
 .jump{display:flex;gap:6px;flex-wrap:wrap}.jump a{padding:8px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);text-decoration:none;color:var(--ink);font-size:14px}.jump a:hover{border-color:var(--champ)}
+button.textbtn{background:none;border:0;padding:0;min-height:0;color:var(--stone);font-size:13px;text-decoration:underline;cursor:pointer}.kv{display:grid;grid-template-columns:max-content 1fr;gap:6px 16px;margin:0 0 12px}.kv dt{color:var(--stone);font-size:13px}.kv dd{margin:0}div.stack{display:flex;flex-direction:column;gap:20px}
 .desc{margin:0;white-space:pre-wrap;color:#4A4538;max-width:860px}
 .filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.filters input[type=search]{flex:1 1 260px}
 .prog{height:6px;border-radius:999px;background:#E3DCCD;overflow:hidden;min-width:80px}.prog span{display:block;height:100%;background:var(--gold);border-radius:999px}.prog.big{height:8px}
@@ -259,15 +261,15 @@ function layout(ctx, title, body, active = '') {
   const u = ctx.user;
   const links = !u ? [] :
     u.role === 'client' ? [['/portal', 'Portalım'], ['/portal/siteler', 'Sitelerim'], ['/portal/teklifler', 'Tekliflerim'], ['/portal/faturalar', 'Faturalarım']] :
-    u.role === 'freelancer' ? [['/gorevler', 'Görevlerim']] :
-    [['/panel', 'Bugün'], ['/satis', 'Satış hattı'], ['/musteriler', 'Müşteriler'], ['/gorevler', 'Görevlerim'], ['/onaylar', 'Onaylar'], ['/siteler', 'Siteler'], ['/projeler', 'Projeler'], ['/katalog', 'Katalog'], ['/otomasyonlar', 'Otomasyonlar'], ...(u.role === 'admin' ? [['/teklifler', 'Teklifler'], ['/faturalar', 'Faturalar'], ['/ekip', 'Ekip'], ['/forge', 'Forge'], ['/kayitlar', 'Kayıtlar']] : [])];
+    u.role === 'freelancer' ? [['/paketler', 'İş paketlerim'], ['/gorevler', 'Görevlerim']] :
+    [['/panel', 'Bugün'], ['/satis', 'Satış hattı'], ['/musteriler', 'Müşteriler'], ['/gorevler', 'Görevlerim'], ['/onaylar', 'Onaylar'], ['/siteler', 'Siteler'], ['/projeler', 'Projeler'], ['/paketler', 'İş paketleri'], ['/katalog', 'Katalog'], ['/otomasyonlar', 'Otomasyonlar'], ...(u.role === 'admin' ? [['/teklifler', 'Teklifler'], ['/faturalar', 'Faturalar'], ['/odemeler', 'Freelancer ödemeleri'], ['/ekip', 'Ekip'], ['/forge', 'Forge'], ['/kayitlar', 'Kayıtlar']] : [])];
   const staffish = u && (u.role === 'admin' || u.role === 'staff');
   const isOn = (href) => active === href;
   const cur = (href) => isOn(href) ? ' class="on" aria-current="page"' : '';
   const side = links.map(([href, t]) => `<a href="${href}"${cur(href)}>${t}</a>`).join('');
   // mobil alt sekmeler: rol başına en sık kullanılan dördü, gerisi "Menü"de
   const TAB = u?.role === 'client' ? [['/portal', 'home'], ['/portal/siteler', 'globe'], ['/portal/teklifler', 'doc'], ['/portal/faturalar', 'check']]
-    : u?.role === 'freelancer' ? [['/gorevler', 'check']]
+    : u?.role === 'freelancer' ? [['/paketler', 'doc'], ['/gorevler', 'check']]
     : [['/panel', 'home'], ['/musteriler', 'users'], ['/gorevler', 'check'], [u?.role === 'admin' ? '/faturalar' : '/onaylar', 'doc']];
   const tabSet = new Set(TAB.map(t => t[0]));
   const label = Object.fromEntries(links);
@@ -356,7 +358,7 @@ route('GET', '/healthz', async (ctx, res) => { await q('SELECT 1'); res.writeHea
 
 route('GET', '/', async (ctx, res) => {
   if (!ctx.user) return redirect(res, (await usersExist()) ? '/giris' : '/kurulum');
-  redirect(res, ctx.user.role === 'client' ? '/portal' : ctx.user.role === 'freelancer' ? '/gorevler' : '/panel');
+  redirect(res, ctx.user.role === 'client' ? '/portal' : ctx.user.role === 'freelancer' ? '/paketler' : '/panel');
 });
 
 const usersExist = async () => (await one('SELECT count(*)::int n FROM users')).n > 0;
@@ -651,8 +653,9 @@ registerInvoices({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney
 hooks = registerAutomation({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, STAFF, TK_ST, PR_ST, audit, safeEqual, SETUP_TOKEN, APP_URL: process.env.APP_URL });
 const forge = registerForge({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, safeEqual, audit, SETUP_TOKEN, VERSION });
 const crm = registerCrm({ route, all, one, q, need, layout, h, badge, fmtMoney, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, opts });
-const todayPage = registerToday({ all, one, h, layout, need, STAFF, forgePending: forge.pendingCount, extraActions: async (a) => crmActions(await crm.openLeads(a)) });
+const freelance = registerFreelance({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, opts });
+const todayPage = registerToday({ all, one, h, layout, need, STAFF, forgePending: forge.pendingCount, extraActions: async (a) => [...crmActions(await crm.openLeads(a)), ...packageActions(await freelance.awaitingReview(a))] });
 registerSync({ route, one, all, q, HttpError, safeEqual, SETUP_TOKEN, onSynced: (a, before) => hooks?.onSiteSync(a, before) });
 registerWork({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send });
 
-migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
+migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => migrateFreelance({ q })).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
