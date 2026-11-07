@@ -2,13 +2,13 @@
  "server.js": [
   "  const x = Buffer.from(String(a)); const y = Buffer.from(String(b));",
   ".auth .card{width:100%;max-width:420px;border-radius:24px;padding:32px}",
-  "table.rs tr:first-child{display:none}table.rs tr{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px}",
-  "${u ? `<aside class=\"side\"><a class=\"brand\" href=\"/\">Arvela<span>OS</span></a>${staffish ? `<form class=\"side-search\" method=\"get\" action=\"/ara\" role=\"search\"><input type=\"search\" name=\"q\" placeholder=\"Ara…\" aria-label=\"Ara\"></form>` : ''}<nav aria-label=\"Ana menü\">${side}</nav><div class=\"who\"><span><strong>${h(u.name)}</strong><br>${h(ROLE[u.role])}</span><div class=\"who-row\">${out}${langSwitch(ctx, 'dark')}</div></div></aside>` : ''}",
-  "  if (!validPassword(b.password) || !nn(b.email) || !nn(b.name)) return send(res, 400, authPage('Kurulum', `<div class=\"err\">Bilgiler eksik ya da şifre çok kısa.</div><a href=\"/kurulum\">Geri dön</a>`));",
-  "  const prjs = await all(`SELECT p.*, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id)::int total, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id AND t.status='bitti')::int done FROM projects p WHERE p.client_id=$1 ORDER BY p.created_at DESC`, [c.id]);",
-  "  await q('UPDATE clients SET name=$1, sector=$2, contact_name=$3, phone=$4, email=$5, notes=$6, status=$7 WHERE id=$8',",
-  "  const u = await one('UPDATE users SET active = NOT active WHERE id=$1 AND agency_id=$2 RETURNING id, active', [id, ctx.user.agency_id]);",
-  "import { registerInvoices, migrateInvoices } from './ext-invoices.js';"
+  "tr.is-late td:first-child{box-shadow:inset 3px 0 0 var(--bad)}",
+  "  const flash = ctx.flash ? `<div class=\"flash\" role=\"status\">${h(ctx.flash)}</div>` : '';",
+  "  send(res, 200, authPage('Kurulum', `<h1>İlk kurulum</h1><p class=\"muted\">Yönetici hesabını oluşturun. Kurulum anahtarı sunucu ayarlarındadır; bir kez kullanılır.</p>",
+  "    [ctx.user.agency_id, nn(b.name), nn(b.sector), nn(b.contact_name), nn(b.phone), nn(b.email), nn(b.notes), CLIENT_ST[b.status] ? b.status : 'lead']);",
+  "${cu.length ? `<div class=\"tbl\"><table><tr><th>Ad</th><th>E-posta</th><th>Son giriş</th></tr>${cu.map(x => `<tr><td>${h(x.name)}</td><td>${h(x.email)}</td><td>${fmtDate(x.last_login)}</td></tr>`).join('')}</table></div>` : '<p class=\"muted\">Müşteri henüz portala davet edilmedi.</p>'}",
+  "  if (!nn(b.name) || !nn(b.email) || !validPassword(b.password)) throw new HttpError(400, 'Ad, e-posta ve en az 10 karakterlik şifre gerekli.');",
+  "      const m = url.pathname.match(r.re); if (!m) continue;"
  ],
  "ext-sites.js": [
   "  route('POST', '/siteler', async (ctx, res) => {"
@@ -42,7 +42,23 @@
  "i18n-en.json": [
   "\"Yok\": \"None\",",
   "\"Müşteri portaldan karar verir. Onayı telefonda ya da WhatsApp'ta aldıysanız buradan işleyin.\": \"The client decides in the portal. If you got the approval by phone or WhatsApp, record it here.\",",
-  "\"Sayfa bulunamadı.\": \"Page not found.\","
+  "\"Sayfa bulunamadı.\": \"Page not found.\",",
+  "\"İptal edildi\": \"Revoked\","
  ],
- "ext-sync.js": []
+ "ext-sync.js": [],
+ "ext-automation.js": [
+  "    if (kind === 'client') return one(`SELECT id, name, sector, contact_name, phone, email, status, '${BASE}/musteriler/' || id url FROM clients WHERE id=$1`, [id]);",
+  "    if (scope && !k.scopes.includes(scope)) throw new HttpError(403, `Bu anahtarın \"${scope}\" yetkisi yok.`);",
+  "      all(`SELECT t.id, t.title, u.name assignee, p.name project FROM tasks t JOIN projects p ON p.id=t.project_id LEFT JOIN users u ON u.id=t.assignee_id WHERE t.agency_id=$1 AND t.status<>'bitti' AND t.due_date = CURRENT_DATE ORDER BY t.id LIMIT 50`, [a]),",
+  "  route('GET', '/api/n8n-seed', async (ctx, res) => {",
+  "${eventChecks(['*'])}<div><button class=\"gold\">Bağlantıyı ekle</button></div></form></details>` : ''}</section>",
+  "    await deliver({ url: x.url, secret: x.secret, agency_id: x.agency_id }, x.id, JSON.stringify({ ...x.payload, delivery: x.id, redelivery: true }), RETRY.length - 1);"
+ ],
+ "n8n-seed.json": [
+  "720",
+  "\"expression\": \"0 10 * * 1-5\"",
+  "\"node\": \"Gecikmiş faturalar\",",
+  "\"path\": \"arvela-task-assigned\",",
+  "\"fieldLabel\": \"Telefon\","
+ ]
 }

@@ -19,7 +19,7 @@ if not TOKEN:
     raise SystemExit('HOSTINGER_API_TOKEN boş: GitHub → Settings → Secrets and variables → Actions')
 VM = os.environ.get('VPS_ID', '1249062')
 # Projeler arvela-src-NN olarak sıralı numaralanır; sıra deploy/boundaries.json ile birlikte sabittir.
-ORDER = [(n, None) for n in ['server.js', 'package.json', 'seed-catalog.json', 'ext-sites.js', 'import-sites.json', 'ext-quotes.js', 'ext-invoices.js', 'ext-today.js', 'ext-work.js', 'i18n.js', 'i18n-en.json', 'ext-sync.js']]
+ORDER = [(n, None) for n in ['server.js', 'package.json', 'seed-catalog.json', 'ext-sites.js', 'import-sites.json', 'ext-quotes.js', 'ext-invoices.js', 'ext-today.js', 'ext-work.js', 'i18n.js', 'i18n-en.json', 'ext-sync.js', 'ext-automation.js', 'n8n-seed.json']]
 
 
 def call(method, path, body=None):

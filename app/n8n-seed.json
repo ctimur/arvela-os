@@ -1,0 +1,1532 @@
+{
+"version": 1,
+"workflows": [
+{
+"id": "5d628bb41d3154c2",
+"name": "Arvela · Olay yönlendirici",
+"nodes": [
+{
+"id": "16fb2c48-977f-5011-b255-37681eeb2486",
+"name": "Nasıl çalışır",
+"type": "n8n-nodes-base.stickyNote",
+"typeVersion": 1,
+"position": [
+-40,
+-60
+],
+"parameters": {
+"content": "## Arvela · Olay yönlendirici\nArvela OS'teki her olay (görev, proje, onay, müşteri, teklif, fatura, site) buraya gelir ve türüne göre ayrılır.\n\nHer çıkışa istediğin adımı ekle: Slack/Telegram mesajı, Google Sheets satırı, e-posta…\n\n`$json.body.data` kaydın ayrıntısıdır; `url` alanı Arvela OS'teki sayfasıdır.\n\nArvela OS → Otomasyonlar → \"n8n · Olay yönlendirici\" bağlantısını Etkin yap.",
+"width": 460,
+"height": 300
+}
+},
+{
+"id": "172d2d31-db1a-578b-81c5-634d715a70ec",
+"name": "Arvela olayı",
+"type": "n8n-nodes-base.webhook",
+"typeVersion": 2,
+"position": [
+200,
+300
+],
+"parameters": {
+"httpMethod": "POST",
+"path": "arvela-events",
+"authentication": "headerAuth",
+"responseMode": "onReceived",
+"options": {}
+},
+"credentials": {
+"httpHeaderAuth": {
+"id": "arvelaHookCred1",
+"name": "Arvela webhook"
+}
+},
+"webhookId": "c38b230f-6327-5b99-a620-e8852528c94f"
+},
+{
+"id": "6f375e3f-51ce-53a6-a5fa-34f27aaa2f7e",
+"name": "Olay türü",
+"type": "n8n-nodes-base.switch",
+"typeVersion": 3.2,
+"position": [
+440,
+300
+],
+"parameters": {
+"rules": {
+"values": [
+{
+"conditions": {
+"options": {
+"caseSensitive": true,
+"leftValue": "",
+"typeValidation": "strict",
+"version": 2
+},
+"conditions": [
+{
+"id": "b490f6d6-4af4-5687-bf39-c99a83a77f67",
+"leftValue": "={{ $json.body.event }}",
+"operator": {
+"type": "string",
+"operation": "startsWith"
+},
+"rightValue": "task."
+}
+],
+"combinator": "and"
+},
+"renameOutput": true,
+"outputKey": "Görev"
+},
+{
+"conditions": {
+"options": {
+"caseSensitive": true,
+"leftValue": "",
+"typeValidation": "strict",
+"version": 2
+},
+"conditions": [
+{
+"id": "4ee04a07-2c4f-510e-a5b3-9b4d5a14ca84",
+"leftValue": "={{ $json.body.event }}",
+"operator": {
+"type": "string",
+"operation": "startsWith"
+},
+"rightValue": "project."
+}
+],
+"combinator": "and"
+},
+"renameOutput": true,
+"outputKey": "Proje"
+},
+{
+"conditions": {
+"options": {
+"caseSensitive": true,
+"leftValue": "",
+"typeValidation": "strict",
+"version": 2
+},
+"conditions": [
+{
+"id": "b062257a-adf6-5d14-b1c0-479a6e5ea97d",
+"leftValue": "={{ $json.body.event }}",
+"operator": {
+"type": "string",
+"operation": "startsWith"
+},
+"rightValue": "approval."
+}
+],
+"combinator": "and"
+},
+"renameOutput": true,
+"outputKey": "Onay"
+},
+{
+"conditions": {
+"options": {
+"caseSensitive": true,
+"leftValue": "",
+"typeValidation": "strict",
+"version": 2
+},
+"conditions": [
+{
+"id": "24e6f1a3-dc27-5718-b947-3a1bc3b58bca",
+"leftValue": "={{ $json.body.event }}",
+"operator": {
+"type": "string",
+"operation": "startsWith"
+},
+"rightValue": "client"
+}
+],
+"combinator": "and"
+},
+"renameOutput": true,
+"outputKey": "Müşteri"
+},
+{
+"conditions": {
+"options": {
+"caseSensitive": true,
+"leftValue": "",
+"typeValidation": "strict",
+"version": 2
+},
+"conditions": [
+{
+"id": "03bde814-96af-50cd-b6ae-ebf6754f9993",
+"leftValue": "={{ $json.body.event }}",
+"operator": {
+"type": "string",
+"operation": "startsWith"
+},
+"rightValue": "quote."
+}
+],
+"combinator": "and"
+},
+"renameOutput": true,
+"outputKey": "Teklif"
+},
+{
+"conditions": {
+"options": {
+"caseSensitive": true,
+"leftValue": "",
+"typeValidation": "strict",
+"version": 2
+},
+"conditions": [
+{
+"id": "14de6321-92b6-5e22-b696-7683bb29ed38",
+"leftValue": "={{ $json.body.event }}",
+"operator": {
+"type": "string",
+"operation": "startsWith"
+},
+"rightValue": "invoice."
+}
+],
+"combinator": "and"
+},
+"renameOutput": true,
+"outputKey": "Fatura"
+},
+{
+"conditions": {
+"options": {
+"caseSensitive": true,
+"leftValue": "",
+"typeValidation": "strict",
+"version": 2
+},
+"conditions": [
+{
+"id": "9e68ebb0-50b9-558f-8513-e962a8cf30ba",
+"leftValue": "={{ $json.body.event }}",
+"operator": {
+"type": "string",
+"operation": "startsWith"
+},
+"rightValue": "site."
+}
+],
+"combinator": "and"
+},
+"renameOutput": true,
+"outputKey": "Site"
+}
+]
+},
+"options": {
+"fallbackOutput": "extra",
+"renameFallbackOutput": "Diğer"
+}
+}
+},
+{
+"id": "cc5f0ca6-0d64-5628-806f-d2727ac4c495",
+"name": "Görev olayları",
+"type": "n8n-nodes-base.noOp",
+"typeVersion": 1,
+"position": [
+720,
+60
+],
+"parameters": {}
+},
+{
+"id": "4c3b0563-3ff5-5355-9527-51741f2ab315",
+"name": "Proje olayları",
+"type": "n8n-nodes-base.noOp",
+"typeVersion": 1,
+"position": [
+720,
+170
+],
+"parameters": {}
+},
+{
+"id": "6c55c660-17e4-5a50-a982-8756980292ac",
+"name": "Onay olayları",
+"type": "n8n-nodes-base.noOp",
+"typeVersion": 1,
+"position": [
+720,
+280
+],
+"parameters": {}
+},
+{
+"id": "b0118530-4579-599f-afdd-eef3a3bb2e4c",
+"name": "Müşteri olayları",
+"type": "n8n-nodes-base.noOp",
+"typeVersion": 1,
+"position": [
+720,
+390
+],
+"parameters": {}
+},
+{
+"id": "0e690b23-d213-57ea-9ecd-af4644de22c0",
+"name": "Teklif olayları",
+"type": "n8n-nodes-base.noOp",
+"typeVersion": 1,
+"position": [
+720,
+500
+],
+"parameters": {}
+},
+{
+"id": "da5f578c-46c3-548a-9c93-302274125732",
+"name": "Fatura olayları",
+"type": "n8n-nodes-base.noOp",
+"typeVersion": 1,
+"position": [
+720,
+610
+],
+"parameters": {}
+},
+{
+"id": "859347ea-0184-5f9c-b90a-503356db7793",
+"name": "Site olayları",
+"type": "n8n-nodes-base.noOp",
+"typeVersion": 1,
+"position": [
+720,
+720
+],
+"parameters": {}
+},
+{
+"id": "836673df-3666-5860-850b-c9add2d8cff9",
+"name": "Diğer olayları",
+"type": "n8n-nodes-base.noOp",
+"typeVersion": 1,
+"position": [
+720,
+830
+],
+"parameters": {}
+}
+],
+"connections": {
+"Arvela olayı": {
+"main": [
+[
+{
+"node": "Olay türü",
+"type": "main",
+"index": 0
+}
+]
+]
+},
+"Olay türü": {
+"main": [
+[
+{
+"node": "Görev olayları",
+"type": "main",
+"index": 0
+}
+],
+[
+{
+"node": "Proje olayları",
+"type": "main",
+"index": 0
+}
+],
+[
+{
+"node": "Onay olayları",
+"type": "main",
+"index": 0
+}
+],
+[
+{
+"node": "Müşteri olayları",
+"type": "main",
+"index": 0
+}
+],
+[
+{
+"node": "Teklif olayları",
+"type": "main",
+"index": 0
+}
+],
+[
+{
+"node": "Fatura olayları",
+"type": "main",
+"index": 0
+}
+],
+[
+{
+"node": "Site olayları",
+"type": "main",
+"index": 0
+}
+],
+[
+{
+"node": "Diğer olayları",
+"type": "main",
+"index": 0
+}
+]
+]
+}
+},
+"active": false,
+"settings": {
+"executionOrder": "v1",
+"timezone": "Europe/Istanbul",
+"saveManualExecutions": true
+},
+"pinData": {},
+"meta": {
+"templateCredsSetupCompleted": false
+},
+"tags": []
+},
+{
+"id": "3f9b5075be7859c0",
+"name": "Arvela · Sabah özeti",
+"nodes": [
+{
+"id": "16fb2c48-977f-5011-b255-37681eeb2486",
+"name": "Nasıl çalışır",
+"type": "n8n-nodes-base.stickyNote",
+"typeVersion": 1,
+"position": [
+-40,
+-120
+],
+"parameters": {
+"content": "## Arvela · Sabah özeti\nHafta içi 08:30'da günün özetini e-postayla gönderir.\nAlıcıyı \"E-posta gönder\" düğümünden değiştir. Finans yetkili anahtarla gecikmiş faturalar da eklenir.",
+"width": 380,
+"height": 180
+}
+},
+{
+"id": "dd003744-e4d2-5bfb-850e-2c07505b5efd",
+"name": "Hafta içi 08:30",
+"type": "n8n-nodes-base.scheduleTrigger",
+"typeVersion": 1.2,
+"position": [
+0,
+300
+],
+"parameters": {
+"rule": {
+"interval": [
+{
+"field": "cronExpression",
+"expression": "30 8 * * 1-5"
+}
+]
+}
+}
+},
+{
+"id": "1252bad3-08b2-56a9-9e94-499842cfb5ae",
+"name": "Günün özeti",
+"type": "n8n-nodes-base.httpRequest",
+"typeVersion": 4.2,
+"position": [
+240,
+300
+],
+"parameters": {
+"method": "GET",
+"url": "https://os.arveladigital.com/api/v1/summary",
+"authentication": "genericCredentialType",
+"genericAuthType": "httpHeaderAuth",
+"options": {}
+},
+"credentials": {
+"httpHeaderAuth": {
+"id": "arvelaApiCred01",
+"name": "Arvela OS API"
+}
+}
+},
+{
+"id": "f0c44fed-6f33-58ab-83ee-994de85b2f4d",
+"name": "Özeti hazırla",
+"type": "n8n-nodes-base.code",
+"typeVersion": 2,
+"position": [
+480,
+300
+],
+"parameters": {
+"jsCode": "const esc = (s) => String(s ?? '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));\nconst li = (arr, f) => arr && arr.length ? '<ul>' + arr.map(x => '<li>' + f(x) + '</li>').join('') + '</ul>' : '<p style=\"color:#6B6558\">Yok.</p>';\nconst s = $input.first().json;\nconst n = s.counts || {};\nconst html = `<h2 style=\"font-family:Arial\">Günaydın · ${s.date}</h2>\n<p>${n.clients} aktif müşteri · ${n.open_projects} açık proje · ${n.open_tasks} açık görev · ${n.pending_approvals} bekleyen onay</p>\n<h3>Geciken görevler</h3>${li(s.overdue_tasks, t => `${esc(t.title)} — ${esc(t.project)} · ${esc(t.assignee || 'atanmadı')} · ${String(t.due_date).slice(0,10)}`)}\n<h3>Bugün teslim</h3>${li(s.due_today, t => `${esc(t.title)} — ${esc(t.project)} · ${esc(t.assignee || 'atanmadı')}`)}\n<h3>Onay bekleyenler</h3>${li(s.pending_approvals, a => `${esc(a.title)} — ${esc(a.client)}`)}\n<h3>Acil siteler</h3>${li(s.urgent_sites, x => `${esc(x.domain)} — ${esc(x.client || '')} ${esc(x.issue || x.ssl_status || '')}`)}\n${s.overdue_invoices ? '<h3>Gecikmiş faturalar</h3>' + li(s.overdue_invoices, i => `${esc(i.number)} — ${esc(i.client)}`) : ''}\n<p><a href=\"${s.url}\">Arvela OS'te Bugün sayfasını aç</a></p>`;\nreturn [{ json: { html, subject: `Arvela · ${s.date} günlük özet` } }];"
+}
+},
+{
+"id": "b96863a7-271c-5b26-a9b8-b37a4e71465c",
+"name": "E-posta gönder",
+"type": "n8n-nodes-base.emailSend",
+"typeVersion": 2.1,
+"position": [
+720,
+300
+],
+"parameters": {
+"fromEmail": "Arvela OS <bildirim@arveladigital.com>",
+"toEmail": "alici@arveladigital.com",
+"subject": "={{ $json.subject }}",
+"emailFormat": "html",
+"html": "={{ $json.html }}",
+"options": {}
+},
+"credentials": {
+"smtp": {
+"id": "arvelaSmtpCred1",
+"name": "SMTP"
+}
+}
+}
+],
+"connections": {
+"Hafta içi 08:30": {
+"main": [
+[
+{
+"node": "Günün özeti",
+"type": "main",
+"index": 0
+}
+]
+]
+},
+"Günün özeti": {
+"main": [
+[
+{
+"node": "Özeti hazırla",
+"type": "main",
+"index": 0
+}
+]
+]
+},
+"Özeti hazırla": {
+"main": [
+[
+{
+"node": "E-posta gönder",
+"type": "main",
+"index": 0
+}
+]
+]
+}
+},
+"active": false,
+"settings": {
+"executionOrder": "v1",
+"timezone": "Europe/Istanbul",
+"saveManualExecutions": true
+},
+"pinData": {},
+"meta": {
+"templateCredsSetupCompleted": false
+},
+"tags": []
+},
+{
+"id": "8ba30d788ad15cb1",
+"name": "Arvela · Onay hatırlatma",
+"nodes": [
+{
+"id": "16fb2c48-977f-5011-b255-37681eeb2486",
+"name": "Nasıl çalışır",
+"type": "n8n-nodes-base.stickyNote",
+"typeVersion": 1,
+"position": [
+-40,
+-120
+],
+"parameters": {
+"content": "## Arvela · Onay hatırlatma\nHer iş günü 10:00'da 2 günden uzun bekleyen onayları listeler; müşteriye tek dokunuşla WhatsApp hatırlatması için bağlantı verir. Bekleyen yoksa e-posta gitmez.",
+"width": 400,
+"height": 180
+}
+},
+{
+"id": "2fc1c392-c9ec-52c7-8cd8-e46cdc93d5ec",
+"name": "Her iş günü 10:00",
+"type": "n8n-nodes-base.scheduleTrigger",
+"typeVersion": 1.2,
+"position": [
+0,
+300
+],
+"parameters": {
+"rule": {
+"interval": [
+{
+"field": "cronExpression",
+"expression": "0 10 * * 1-5"
+}
+]
+}
+}
+},
+{
+"id": "1f675642-87aa-51b6-986a-d62b7ceac216",
+"name": "Bekleyen onaylar",
+"type": "n8n-nodes-base.httpRequest",
+"typeVersion": 4.2,
+"position": [
+240,
+300
+],
+"parameters": {
+"method": "GET",
+"url": "https://os.arveladigital.com/api/v1/approvals",
+"authentication": "genericCredentialType",
+"genericAuthType": "httpHeaderAuth",
+"options": {},
+"sendQuery": true,
+"queryParameters": {
+"parameters": [
+{
+"name": "status",
+"value": "bekliyor"
+}
+]
+}
+},
+"credentials": {
+"httpHeaderAuth": {
+"id": "arvelaApiCred01",
+"name": "Arvela OS API"
+}
+}
+},
+{
+"id": "ace2b5c3-dd58-50a7-95db-0efe25e68455",
+"name": "Eskileri seç",
+"type": "n8n-nodes-base.code",
+"typeVersion": 2,
+"position": [
+480,
+300
+],
+"parameters": {
+"jsCode": "const esc = (s) => String(s ?? '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));\nconst now = Date.now(); const rows = $input.first().json.data || [];\nconst wa = (p, t) => { let d = String(p || '').replace(/\\D/g, ''); if (d.length === 11 && d.startsWith('0')) d = '90' + d.slice(1); if (d.length === 10 && d.startsWith('5')) d = '90' + d; return d.length >= 11 ? `https://wa.me/${d}?text=${encodeURIComponent(`Merhaba, \"${t}\" onayınızı bekliyor. Portalınızdan bakabilirsiniz.`)}` : null; };\nconst old = rows.filter(a => now - new Date(a.created_at) >= 2 * 864e5);\nif (!old.length) return [];\nconst html = '<h2 style=\"font-family:Arial\">2 günden uzun süredir onay bekleyenler</h2><ul>' + old.map(a => { const l = wa(a.client_phone, a.title); return `<li><strong>${esc(a.title)}</strong> — ${esc(a.client)} · ${Math.floor((now - new Date(a.created_at)) / 864e5)} gün ${l ? `· <a href=\"${l}\">WhatsApp'tan hatırlat</a>` : ''}</li>`; }).join('') + '</ul><p style=\"color:#6B6558\">Müşteriye mesaj göndermeden önce İYS/KVKK iznini kontrol et.</p>';\nreturn [{ json: { html, count: old.length } }];"
+}
+},
+{
+"id": "fe72fa10-d71c-56d4-8d69-858b4c73e9a1",
+"name": "Ekibe gönder",
+"type": "n8n-nodes-base.emailSend",
+"typeVersion": 2.1,
+"position": [
+720,
+300
+],
+"parameters": {
+"fromEmail": "Arvela OS <bildirim@arveladigital.com>",
+"toEmail": "alici@arveladigital.com",
+"subject": "=Arvela · {{ $json.count }} onay bekliyor",
+"emailFormat": "html",
+"html": "={{ $json.html }}",
+"options": {}
+},
+"credentials": {
+"smtp": {
+"id": "arvelaSmtpCred1",
+"name": "SMTP"
+}
+}
+}
+],
+"connections": {
+"Her iş günü 10:00": {
+"main": [
+[
+{
+"node": "Bekleyen onaylar",
+"type": "main",
+"index": 0
+}
+]
+]
+},
+"Bekleyen onaylar": {
+"main": [
+[
+{
+"node": "Eskileri seç",
+"type": "main",
+"index": 0
+}
+]
+]
+},
+"Eskileri seç": {
+"main": [
+[
+{
+"node": "Ekibe gönder",
+"type": "main",
+"index": 0
+}
+]
+]
+}
+},
+"active": false,
+"settings": {
+"executionOrder": "v1",
+"timezone": "Europe/Istanbul",
+"saveManualExecutions": true
+},
+"pinData": {},
+"meta": {
+"templateCredsSetupCompleted": false
+},
+"tags": []
+},
+{
+"id": "b6af8195070f5da4",
+"name": "Arvela · Gecikmiş faturalar",
+"nodes": [
+{
+"id": "16fb2c48-977f-5011-b255-37681eeb2486",
+"name": "Nasıl çalışır",
+"type": "n8n-nodes-base.stickyNote",
+"typeVersion": 1,
+"position": [
+-40,
+-120
+],
+"parameters": {
+"content": "## Arvela · Gecikmiş faturalar\nPazartesi 09:00'da vadesi geçmiş faturaları özetler.\nAPI anahtarında **Finans** yetkisi gerekir.",
+"width": 380,
+"height": 160
+}
+},
+{
+"id": "f81e51f6-7fb9-539d-8c8e-1004229dea96",
+"name": "Pazartesi 09:00",
+"type": "n8n-nodes-base.scheduleTrigger",
+"typeVersion": 1.2,
+"position": [
+0,
+300
+],
+"parameters": {
+"rule": {
+"interval": [
+{
+"field": "cronExpression",
+"expression": "0 9 * * 1"
+}
+]
+}
+}
+},
+{
+"id": "8057c66c-6d35-580b-a577-793c5cb31e3c",
+"name": "Gecikmiş faturalar",
+"type": "n8n-nodes-base.httpRequest",
+"typeVersion": 4.2,
+"position": [
+240,
+300
+],
+"parameters": {
+"method": "GET",
+"url": "https://os.arveladigital.com/api/v1/invoices",
+"authentication": "genericCredentialType",
+"genericAuthType": "httpHeaderAuth",
+"options": {},
+"sendQuery": true,
+"queryParameters": {
+"parameters": [
+{
+"name": "status",
+"value": "overdue"
+}
+]
+}
+},
+"credentials": {
+"httpHeaderAuth": {
+"id": "arvelaApiCred01",
+"name": "Arvela OS API"
+}
+}
+},
+{
+"id": "818e5843-3b58-535a-943f-c91863501e35",
+"name": "Listeyi hazırla",
+"type": "n8n-nodes-base.code",
+"typeVersion": 2,
+"position": [
+480,
+300
+],
+"parameters": {
+"jsCode": "const esc = (s) => String(s ?? '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));\nconst rows = $input.first().json.data || [];\nif (!rows.length) return [];\nconst sum = rows.reduce((a, i) => a + (i.total || 0), 0);\nconst html = '<h2 style=\"font-family:Arial\">Gecikmiş faturalar</h2><ul>' + rows.map(i => `<li><strong>${esc(i.number)}</strong> — ${esc(i.client)} · ${new Intl.NumberFormat('tr-TR').format(i.total || 0)} ${i.currency === 'EUR' ? '€' : 'TL'} · vade ${String(i.due_date).slice(0, 10)}${i.client_notified_at ? ' · <em>müşteri ödedim dedi</em>' : ''}</li>`).join('') + `</ul><p>Toplam: ${new Intl.NumberFormat('tr-TR').format(sum)}</p><p><a href=\"https://os.arveladigital.com/faturalar\">Faturaları aç</a></p>`;\nreturn [{ json: { html, count: rows.length } }];"
+}
+},
+{
+"id": "7164536f-8dae-5f0f-8aac-0f47c7dfb2d9",
+"name": "Yöneticiye gönder",
+"type": "n8n-nodes-base.emailSend",
+"typeVersion": 2.1,
+"position": [
+720,
+300
+],
+"parameters": {
+"fromEmail": "Arvela OS <bildirim@arveladigital.com>",
+"toEmail": "alici@arveladigital.com",
+"subject": "=Arvela · {{ $json.count }} gecikmiş fatura",
+"emailFormat": "html",
+"html": "={{ $json.html }}",
+"options": {}
+},
+"credentials": {
+"smtp": {
+"id": "arvelaSmtpCred1",
+"name": "SMTP"
+}
+}
+}
+],
+"connections": {
+"Pazartesi 09:00": {
+"main": [
+[
+{
+"node": "Gecikmiş faturalar",
+"type": "main",
+"index": 0
+}
+]
+]
+},
+"Gecikmiş faturalar": {
+"main": [
+[
+{
+"node": "Listeyi hazırla",
+"type": "main",
+"index": 0
+}
+]
+]
+},
+"Listeyi hazırla": {
+"main": [
+[
+{
+"node": "Yöneticiye gönder",
+"type": "main",
+"index": 0
+}
+]
+]
+}
+},
+"active": false,
+"settings": {
+"executionOrder": "v1",
+"timezone": "Europe/Istanbul",
+"saveManualExecutions": true
+},
+"pinData": {},
+"meta": {
+"templateCredsSetupCompleted": false
+},
+"tags": []
+},
+{
+"id": "983c0a3a6e125638",
+"name": "Arvela · Yeni müşteri karşılama",
+"nodes": [
+{
+"id": "16fb2c48-977f-5011-b255-37681eeb2486",
+"name": "Nasıl çalışır",
+"type": "n8n-nodes-base.stickyNote",
+"typeVersion": 1,
+"position": [
+-40,
+-140
+],
+"parameters": {
+"content": "## Arvela · Yeni müşteri karşılama\nArvela OS'te yeni müşteri eklenince \"Karşılama\" projesi açar ve 4 başlangıç görevi ekler.\nGörev listesini \"Görevleri hazırla\" düğümünden değiştir.\nArvela OS → Otomasyonlar → \"n8n · Yeni müşteri karşılama\" bağlantısını Etkin yap.",
+"width": 460,
+"height": 200
+}
+},
+{
+"id": "cac7edbf-5f00-5c2e-b3bf-8c618fb29d39",
+"name": "Yeni müşteri",
+"type": "n8n-nodes-base.webhook",
+"typeVersion": 2,
+"position": [
+0,
+300
+],
+"parameters": {
+"httpMethod": "POST",
+"path": "arvela-new-client",
+"authentication": "headerAuth",
+"responseMode": "onReceived",
+"options": {}
+},
+"credentials": {
+"httpHeaderAuth": {
+"id": "arvelaHookCred1",
+"name": "Arvela webhook"
+}
+},
+"webhookId": "91206a08-30d0-52f9-b072-d7571608627b"
+},
+{
+"id": "83ebdca3-4b72-5328-bb23-ac41bb52e191",
+"name": "Müşteri eklendi mi",
+"type": "n8n-nodes-base.if",
+"typeVersion": 2.2,
+"position": [
+220,
+300
+],
+"parameters": {
+"conditions": {
+"options": {
+"caseSensitive": true,
+"leftValue": "",
+"typeValidation": "loose",
+"version": 2
+},
+"conditions": [
+{
+"id": "89bc7fb2-d08e-54c5-8230-6c51d4d34f99",
+"leftValue": "={{ $json.body.event }}",
+"operator": {
+"type": "string",
+"operation": "equals"
+},
+"rightValue": "client.create"
+}
+],
+"combinator": "and"
+},
+"options": {}
+}
+},
+{
+"id": "4e32f735-dc32-53c8-8dfa-b22404b4b7be",
+"name": "Karşılama projesi",
+"type": "n8n-nodes-base.httpRequest",
+"typeVersion": 4.2,
+"position": [
+460,
+280
+],
+"parameters": {
+"method": "POST",
+"url": "https://os.arveladigital.com/api/v1/projects",
+"authentication": "genericCredentialType",
+"genericAuthType": "httpHeaderAuth",
+"options": {},
+"sendBody": true,
+"specifyBody": "json",
+"jsonBody": "={{ JSON.stringify({ client_id: $json.body.data.id, name: \"Karşılama · \" + $json.body.data.name, description: \"Yeni müşteri başlangıç adımları (n8n).\" }) }}"
+},
+"credentials": {
+"httpHeaderAuth": {
+"id": "arvelaApiCred01",
+"name": "Arvela OS API"
+}
+}
+},
+{
+"id": "e99e057f-3e37-51c9-907f-13ddf7bfdf88",
+"name": "Görevleri hazırla",
+"type": "n8n-nodes-base.code",
+"typeVersion": 2,
+"position": [
+700,
+280
+],
+"parameters": {
+"jsCode": "const p = $input.first().json; const due = (d) => new Date(Date.now() + d * 864e5).toISOString().slice(0, 10);\nconst tasks = [\n  ['Karşılama görüşmesi yap', 'Hedefleri, marka varlıklarını ve erişimleri konuş.', 1, 'yuksek'],\n  ['Erişimleri topla', 'Alan adı, hosting, sosyal medya ve reklam hesabı erişimleri.', 3, 'normal'],\n  ['Marka dosyasını oluştur', 'Logo, renkler, yazı tipleri, ton.', 5, 'normal'],\n  ['İlk ay planını hazırla', 'İçerik takvimi ya da iş planı; müşteriye onaya gönder.', 7, 'normal'],\n];\nreturn tasks.map(([title, description, d, priority]) => ({ json: { project_id: p.id, title, description, due_date: due(d), priority } }));"
+}
+},
+{
+"id": "089f9be1-03a2-5a73-b961-18cf0edca03f",
+"name": "Görevi ekle",
+"type": "n8n-nodes-base.httpRequest",
+"typeVersion": 4.2,
+"position": [
+940,
+280
+],
+"parameters": {
+"method": "POST",
+"url": "https://os.arveladigital.com/api/v1/tasks",
+"authentication": "genericCredentialType",
+"genericAuthType": "httpHeaderAuth",
+"options": {},
+"sendBody": true,
+"specifyBody": "json",
+"jsonBody": "={{ JSON.stringify($json) }}"
+},
+"credentials": {
+"httpHeaderAuth": {
+"id": "arvelaApiCred01",
+"name": "Arvela OS API"
+}
+}
+}
+],
+"connections": {
+"Yeni müşteri": {
+"main": [
+[
+{
+"node": "Müşteri eklendi mi",
+"type": "main",
+"index": 0
+}
+]
+]
+},
+"Karşılama projesi": {
+"main": [
+[
+{
+"node": "Görevleri hazırla",
+"type": "main",
+"index": 0
+}
+]
+]
+},
+"Görevleri hazırla": {
+"main": [
+[
+{
+"node": "Görevi ekle",
+"type": "main",
+"index": 0
+}
+]
+]
+},
+"Müşteri eklendi mi": {
+"main": [
+[
+{
+"node": "Karşılama projesi",
+"type": "main",
+"index": 0
+}
+]
+]
+}
+},
+"active": false,
+"settings": {
+"executionOrder": "v1",
+"timezone": "Europe/Istanbul",
+"saveManualExecutions": true
+},
+"pinData": {},
+"meta": {
+"templateCredsSetupCompleted": false
+},
+"tags": []
+},
+{
+"id": "4c35a1d111415770",
+"name": "Arvela · Görev bildirimi",
+"nodes": [
+{
+"id": "16fb2c48-977f-5011-b255-37681eeb2486",
+"name": "Nasıl çalışır",
+"type": "n8n-nodes-base.stickyNote",
+"typeVersion": 1,
+"position": [
+-40,
+-120
+],
+"parameters": {
+"content": "## Arvela · Görev bildirimi\nGörev oluşturulunca ya da güncellenince sorumlusuna e-posta gönderir (kendi yaptığı değişiklik hariç).\nArvela OS → Otomasyonlar → \"n8n · Görev bildirimi\" bağlantısını Etkin yap.",
+"width": 420,
+"height": 180
+}
+},
+{
+"id": "cfddb622-c59d-5036-af5e-4f766fe59ab3",
+"name": "Görev olayı",
+"type": "n8n-nodes-base.webhook",
+"typeVersion": 2,
+"position": [
+0,
+300
+],
+"parameters": {
+"httpMethod": "POST",
+"path": "arvela-task-assigned",
+"authentication": "headerAuth",
+"responseMode": "onReceived",
+"options": {}
+},
+"credentials": {
+"httpHeaderAuth": {
+"id": "arvelaHookCred1",
+"name": "Arvela webhook"
+}
+},
+"webhookId": "ac31f420-5338-5004-9fa8-a778f28510f1"
+},
+{
+"id": "a68128ed-92f3-5b00-8231-5e7177ad26b9",
+"name": "E-postayı hazırla",
+"type": "n8n-nodes-base.code",
+"typeVersion": 2,
+"position": [
+240,
+300
+],
+"parameters": {
+"jsCode": "const esc = (s) => String(s ?? '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));\nconst e = $input.first().json.body; const t = e.data || {};\nif (!t.assignee_email) return [];\nif (e.event === 'task.update' && e.actor && e.actor.id === t.assignee_id) return [];\nconst html = `<h2 style=\"font-family:Arial\">${e.event === 'task.create' ? 'Sana yeni bir görev atandı' : 'Görevin güncellendi'}</h2>\n<p><strong>${esc(t.title)}</strong><br>${esc(t.project)} · ${esc(t.client)}${t.due_date ? ' · teslim ' + String(t.due_date).slice(0, 10) : ''}${t.priority === 'yuksek' ? ' · <strong>öncelikli</strong>' : ''}</p>\n${t.description ? `<p style=\"white-space:pre-wrap\">${esc(t.description)}</p>` : ''}<p><a href=\"${t.url}\">Görevi Arvela OS'te aç</a></p>`;\nreturn [{ json: { to: t.assignee_email, subject: `Arvela · ${t.title}`, html } }];"
+}
+},
+{
+"id": "d906a606-4e7f-5631-8c65-fb08b0492d56",
+"name": "Sorumluya gönder",
+"type": "n8n-nodes-base.emailSend",
+"typeVersion": 2.1,
+"position": [
+480,
+300
+],
+"parameters": {
+"fromEmail": "Arvela OS <bildirim@arveladigital.com>",
+"toEmail": "={{ $json.to }}",
+"subject": "={{ $json.subject }}",
+"emailFormat": "html",
+"html": "={{ $json.html }}",
+"options": {}
+},
+"credentials": {
+"smtp": {
+"id": "arvelaSmtpCred1",
+"name": "SMTP"
+}
+}
+}
+],
+"connections": {
+"Görev olayı": {
+"main": [
+[
+{
+"node": "E-postayı hazırla",
+"type": "main",
+"index": 0
+}
+]
+]
+},
+"E-postayı hazırla": {
+"main": [
+[
+{
+"node": "Sorumluya gönder",
+"type": "main",
+"index": 0
+}
+]
+]
+}
+},
+"active": false,
+"settings": {
+"executionOrder": "v1",
+"timezone": "Europe/Istanbul",
+"saveManualExecutions": true
+},
+"pinData": {},
+"meta": {
+"templateCredsSetupCompleted": false
+},
+"tags": []
+},
+{
+"id": "a61b9e9a93f550d4",
+"name": "Arvela · Acil site uyarısı",
+"nodes": [
+{
+"id": "16fb2c48-977f-5011-b255-37681eeb2486",
+"name": "Nasıl çalışır",
+"type": "n8n-nodes-base.stickyNote",
+"typeVersion": 1,
+"position": [
+-40,
+-120
+],
+"parameters": {
+"content": "## Arvela · Acil site uyarısı\nSabahki Hostinger eşitlemesinde bir site acil duruma düşerse hemen e-posta gönderir.\nTelegram ya da Slack düğümü ekleyerek mesaj olarak da alabilirsin.",
+"width": 420,
+"height": 170
+}
+},
+{
+"id": "edab1a2c-66f1-55a1-8453-8d37a6ff6da4",
+"name": "Site uyarısı",
+"type": "n8n-nodes-base.webhook",
+"typeVersion": 2,
+"position": [
+0,
+300
+],
+"parameters": {
+"httpMethod": "POST",
+"path": "arvela-site-alert",
+"authentication": "headerAuth",
+"responseMode": "onReceived",
+"options": {}
+},
+"credentials": {
+"httpHeaderAuth": {
+"id": "arvelaHookCred1",
+"name": "Arvela webhook"
+}
+},
+"webhookId": "f6b4a448-d08a-592f-a0d6-8867a310c7a1"
+},
+{
+"id": "037f1056-8e71-54bd-b692-070a567ab99a",
+"name": "Mesajı hazırla",
+"type": "n8n-nodes-base.code",
+"typeVersion": 2,
+"position": [
+240,
+300
+],
+"parameters": {
+"jsCode": "const esc = (s) => String(s ?? '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));\nconst s = ($input.first().json.body || {}).data || {};\nreturn [{ json: { subject: `Acil: ${s.domain}`, html: `<h2 style=\"font-family:Arial\">${esc(s.domain)} acil duruma düştü</h2><p>${esc(s.client || 'Müşterisiz')}</p><p>${esc(s.issue || '')} SSL: ${esc(s.ssl_status || '—')} · WordPress: ${esc(s.wp_version || '—')}</p><p><a href=\"${s.url}\">Arvela OS'te aç</a></p>` } }];"
+}
+},
+{
+"id": "64e6d79d-9271-55e8-8a7a-38301eb7b004",
+"name": "Uyarı gönder",
+"type": "n8n-nodes-base.emailSend",
+"typeVersion": 2.1,
+"position": [
+480,
+300
+],
+"parameters": {
+"fromEmail": "Arvela OS <bildirim@arveladigital.com>",
+"toEmail": "alici@arveladigital.com",
+"subject": "={{ $json.subject }}",
+"emailFormat": "html",
+"html": "={{ $json.html }}",
+"options": {}
+},
+"credentials": {
+"smtp": {
+"id": "arvelaSmtpCred1",
+"name": "SMTP"
+}
+}
+}
+],
+"connections": {
+"Site uyarısı": {
+"main": [
+[
+{
+"node": "Mesajı hazırla",
+"type": "main",
+"index": 0
+}
+]
+]
+},
+"Mesajı hazırla": {
+"main": [
+[
+{
+"node": "Uyarı gönder",
+"type": "main",
+"index": 0
+}
+]
+]
+}
+},
+"active": false,
+"settings": {
+"executionOrder": "v1",
+"timezone": "Europe/Istanbul",
+"saveManualExecutions": true
+},
+"pinData": {},
+"meta": {
+"templateCredsSetupCompleted": false
+},
+"tags": []
+},
+{
+"id": "00ba2c3d2dd25d35",
+"name": "Arvela · Web formu → aday",
+"nodes": [
+{
+"id": "16fb2c48-977f-5011-b255-37681eeb2486",
+"name": "Nasıl çalışır",
+"type": "n8n-nodes-base.stickyNote",
+"typeVersion": 1,
+"position": [
+-40,
+-160
+],
+"parameters": {
+"content": "## Arvela · Web formu → aday\nn8n'in barındırdığı iletişim formu (adresi düğümde, \"Production URL\"). Gönderilince Arvela OS'e aday müşteri, \"İlk görüşme\" projesi ve \"Adayı ara\" görevi ekler.\nSitene bağlantı ya da iframe olarak koyabilirsin. KVKK metnini kendi metninle güncelle.",
+"width": 460,
+"height": 220
+}
+},
+{
+"id": "92d3c7bb-cf60-5c03-82fd-0e97035eacc3",
+"name": "İletişim formu",
+"type": "n8n-nodes-base.formTrigger",
+"typeVersion": 2.2,
+"position": [
+0,
+300
+],
+"parameters": {
+"formTitle": "Arvela Digital & AI · İletişim",
+"formDescription": "Projenizi kısaca anlatın, aynı gün dönüş yapalım.",
+"formFields": {
+"values": [
+{
+"fieldLabel": "Ad Soyad",
+"requiredField": true
+},
+{
+"fieldLabel": "Firma",
+"requiredField": true
+},
+{
+"fieldLabel": "Telefon",
+"requiredField": true
+},
+{
+"fieldLabel": "E-posta",
+"fieldType": "email"
+},
+{
+"fieldLabel": "İlgilendiğiniz hizmet",
+"fieldType": "dropdown",
+"fieldOptions": {
+"values": [
+{
+"option": "Web sitesi / e-ticaret"
+},
+{
+"option": "Sosyal medya yönetimi"
+},
+{
+"option": "Dijital pazarlama"
+},
+{
+"option": "Yapay zekâ çözümleri"
+},
+{
+"option": "Emlak yazılımları"
+},
+{
+"option": "Diğer"
+}
+]
+}
+},
+{
+"fieldLabel": "Mesaj",
+"fieldType": "textarea"
+},
+{
+"fieldLabel": "KVKK aydınlatma metnini okudum, iletişim için verilerimin işlenmesine izin veriyorum.",
+"fieldType": "dropdown",
+"fieldOptions": {
+"values": [
+{
+"option": "Evet"
+}
+]
+},
+"requiredField": true
+}
+]
+},
+"options": {
+"respondWithOptions": {
+"values": {
+"formSubmittedText": "Teşekkürler! En kısa sürede size dönüş yapacağız."
+}
+}
+}
+},
+"webhookId": "b95b048c-98fc-587e-91fa-d50e75bc18c7"
+},
+{
+"id": "5775a2df-ed15-5cc7-8a12-357d2d43c181",
+"name": "Aday müşteri",
+"type": "n8n-nodes-base.httpRequest",
+"typeVersion": 4.2,
+"position": [
+240,
+300
+],
+"parameters": {
+"method": "POST",
+"url": "https://os.arveladigital.com/api/v1/clients",
+"authentication": "genericCredentialType",
+"genericAuthType": "httpHeaderAuth",
+"options": {},
+"sendBody": true,
+"specifyBody": "json",
+"jsonBody": "={{ JSON.stringify({ name: $json[\"Firma\"], contact_name: $json[\"Ad Soyad\"], phone: $json[\"Telefon\"], email: $json[\"E-posta\"] || null, status: \"lead\", notes: \"Web formu · \" + ($json[\"İlgilendiğiniz hizmet\"] || \"\") + \"\\n\" + ($json[\"Mesaj\"] || \"\") }) }}"
+},
+"credentials": {
+"httpHeaderAuth": {
+"id": "arvelaApiCred01",
+"name": "Arvela OS API"
+}
+}
+},
+{
+"id": "da9cf621-d6d6-56a2-9045-143172b5786a",
+"name": "İlk görüşme projesi",
+"type": "n8n-nodes-base.httpRequest",
+"typeVersion": 4.2,
+"position": [
+480,
+300
+],
+"parameters": {
+"method": "POST",
+"url": "https://os.arveladigital.com/api/v1/projects",
+"authentication": "genericCredentialType",
+"genericAuthType": "httpHeaderAuth",
+"options": {},
+"sendBody": true,
+"specifyBody": "json",
+"jsonBody": "={{ JSON.stringify({ client_id: $json.id, name: \"İlk görüşme\", description: \"Web formundan gelen aday (n8n).\" }) }}"
+},
+"credentials": {
+"httpHeaderAuth": {
+"id": "arvelaApiCred01",
+"name": "Arvela OS API"
+}
+}
+},
+{
+"id": "a036cbe4-661a-5827-a14a-6aa36bb9c7a8",
+"name": "Adayı ara görevi",
+"type": "n8n-nodes-base.httpRequest",
+"typeVersion": 4.2,
+"position": [
+720,
+300
+],
+"parameters": {
+"method": "POST",
+"url": "https://os.arveladigital.com/api/v1/tasks",
+"authentication": "genericCredentialType",
+"genericAuthType": "httpHeaderAuth",
+"options": {},
+"sendBody": true,
+"specifyBody": "json",
+"jsonBody": "={{ JSON.stringify({ project_id: $json.id, title: \"Adayı ara: \" + $(\"İletişim formu\").first().json[\"Ad Soyad\"], description: \"Tel: \" + $(\"İletişim formu\").first().json[\"Telefon\"] + \"\\nHizmet: \" + ($(\"İletişim formu\").first().json[\"İlgilendiğiniz hizmet\"] || \"\") + \"\\n\" + ($(\"İletişim formu\").first().json[\"Mesaj\"] || \"\"), due_date: new Date().toISOString().slice(0,10), priority: \"yuksek\" }) }}"
+},
+"credentials": {
+"httpHeaderAuth": {
+"id": "arvelaApiCred01",
+"name": "Arvela OS API"
+}
+}
+}
+],
+"connections": {
+"İletişim formu": {
+"main": [
+[
+{
+"node": "Aday müşteri",
+"type": "main",
+"index": 0
+}
+]
+]
+},
+"Aday müşteri": {
+"main": [
+[
+{
+"node": "İlk görüşme projesi",
+"type": "main",
+"index": 0
+}
+]
+]
+},
+"İlk görüşme projesi": {
+"main": [
+[
+{
+"node": "Adayı ara görevi",
+"type": "main",
+"index": 0
+}
+]
+]
+}
+},
+"active": false,
+"settings": {
+"executionOrder": "v1",
+"timezone": "Europe/Istanbul",
+"saveManualExecutions": true
+},
+"pinData": {},
+"meta": {
+"templateCredsSetupCompleted": false
+},
+"tags": []
+}
+]
+}

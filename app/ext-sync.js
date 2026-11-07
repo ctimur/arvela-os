@@ -1,7 +1,7 @@
 // Arvela OS — site durumu eşitleme: GitHub Actions her sabah Hostinger'dan SSL ve WordPress durumunu okuyup buraya gönderir.
 // Uygulama Hostinger anahtarını görmez; istek, kurulum anahtarından türetilen bir anahtarla imzalanır.
 import crypto from 'node:crypto';
-import { setLatestWp } from './ext-sites.js';
+import { setLatestWp, siteHealth } from './ext-sites.js';
 
 export const syncKey = (setupToken) => setupToken ? crypto.createHmac('sha256', setupToken).update('arvela-site-sync').digest('hex') : '';
 const clean = (s, n = 200) => s == null ? null : String(s).replace(/\s+/g, ' ').trim().slice(0, n) || null;
@@ -34,7 +34,7 @@ export async function migrateSync({ q, one }) {
   if (last?.wp_latest) setLatestWp(last.wp_latest);
 }
 
-export function registerSync({ route, one, q, HttpError, safeEqual, SETUP_TOKEN }) {
+export function registerSync({ route, one, all, q, HttpError, safeEqual, SETUP_TOKEN, onSynced }) {
   const key = syncKey(SETUP_TOKEN);
   route('POST', '/api/site-sync', async (ctx, res) => {
     const auth = String(ctx.req.headers.authorization || '').replace(/^Bearer\s+/i, '');
@@ -42,6 +42,7 @@ export function registerSync({ route, one, q, HttpError, safeEqual, SETUP_TOKEN 
     let body; try { body = JSON.parse(ctx.body.payload || '{}'); } catch { throw new HttpError(400, 'Geçersiz veri.'); }
     const agency = await one('SELECT id FROM agencies WHERE slug=$1', ['arvela']);
     const list = (Array.isArray(body.sites) ? body.sites : []).map(normalize).filter(Boolean);
+    const before = new Map((all ? await all('SELECT * FROM sites WHERE agency_id=$1', [agency.id]) : []).map(s => [s.domain, siteHealth(s).label]));
     let updated = 0, added = 0;
     for (const s of list) {
       const r = await one(`UPDATE sites SET platform=COALESCE($3, platform), wp_version=$4, wp_vulns=$5, ssl_status=$6, ssl_expires=$7, issue=$8, synced_at=now(), checked_at=now()
@@ -56,6 +57,7 @@ export function registerSync({ route, one, q, HttpError, safeEqual, SETUP_TOKEN 
     if (latest) setLatestWp(latest);
     await q('INSERT INTO site_sync_runs (agency_id, total, updated, added, wp_latest, note) VALUES ($1,$2,$3,$4,$5,$6)', [agency.id, list.length, updated, added, latest, clean(body.note, 500)]);
     await q('INSERT INTO audit (agency_id, user_id, action, detail) VALUES ($1,NULL,$2,$3)', [agency.id, 'site.sync', { total: list.length, updated, added }]);
+    if (onSynced) await Promise.resolve(onSynced(agency.id, before)).catch((e) => console.error('otomasyon:', e.message));
     res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: true, total: list.length, updated, added }));
   });
 }
