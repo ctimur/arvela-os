@@ -3,8 +3,9 @@ import http from 'node:http';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import pg from 'pg';
+import { als, lang, M1, M2, exact, translateHtml, pickLang, locale, LANGS } from './i18n.js';
 
-const VERSION = '0.6.0';
+const VERSION = '0.7.0';
 const PORT = Number(process.env.PORT || 3000);
 const SETUP_TOKEN = process.env.SETUP_TOKEN || '';
 const COOKIE_SECURE = process.env.COOKIE_SECURE !== '0';
@@ -95,9 +96,11 @@ function rateLimited(ip) {
 function validPassword(pw) { return typeof pw === 'string' && pw.length >= 10; }
 
 // ---------- HTML ----------
-const h = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const fmtDate = (d) => d ? new Date(d).toLocaleDateString('tr-TR') : '—';
-const fmtMoney = (n) => n == null ? '—' : new Intl.NumberFormat('tr-TR').format(n);
+const escHtml = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// İngilizcede kullanıcı verisi işaretlenir (çeviriye girmez); sabit etiketler tam eşleşmeyle çevrilir.
+const h = (v) => lang() === 'en' ? M1 + escHtml(exact(v ?? '')) + M2 : escHtml(v);
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString(locale()) : '—';
+const fmtMoney = (n) => n == null ? '—' : new Intl.NumberFormat(locale()).format(n);
 const ROLE = { admin: 'Yönetici', staff: 'Çalışan', freelancer: 'Freelancer', client: 'Müşteri' };
 const CLIENT_ST = { lead: 'Aday', active: 'Aktif', paused: 'Duraklatıldı', churned: 'Ayrıldı' };
 const CS_ST = { teklif: 'Teklifte', kurulum: 'Kurulumda', aktif: 'Aktif', durduruldu: 'Durduruldu' };
@@ -170,6 +173,9 @@ details summary{cursor:pointer;font-weight:600}
 .pulse{position:sticky;top:24px;border:0;border-radius:24px;gap:0}.pulse h2{margin-bottom:8px}
 .pulse-row{padding:12px 0;border-top:1px solid var(--line2);font-size:14px}.pulse-row:first-of-type{border-top:0}.pulse-row:hover .grow{color:#7A5A1E}
 .pulse-all{margin-top:12px;font-size:14px}
+.lang{display:inline-flex;border:1px solid #DDD6C7;border-radius:10px;overflow:hidden}.lang button{min-height:34px;padding:4px 10px;font-size:12px;border-radius:0;background:transparent;color:var(--stone);font-weight:600}.lang button.on{background:var(--ink);color:#fff}.lang button:hover{background:var(--sand);color:var(--ink)}
+.lang.dark{border-color:var(--graphite)}.lang.dark button{color:#A3ABB8}.lang.dark button.on{background:var(--champ);color:var(--night)}.lang.dark button:hover{background:#1A1F27;color:#fff}
+.who-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px 16px;flex-wrap:wrap}
 .chips{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-top:8px;font-size:14px}
 .crumb{font-size:14px;color:var(--stone);display:flex;flex-wrap:wrap;gap:6px}.crumb a{text-decoration:none}
@@ -266,16 +272,20 @@ function layout(ctx, title, body, active = '') {
   return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#F7F4EE">
 <title>${h(title)} · Arvela OS</title><link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500&display=swap" rel="stylesheet"><style>${CSS}</style></head><body>
-${u ? `<aside class="side"><a class="brand" href="/">Arvela<span>OS</span></a>${staffish ? `<form class="side-search" method="get" action="/ara" role="search"><input type="search" name="q" placeholder="Ara…" aria-label="Ara"></form>` : ''}<nav aria-label="Ana menü">${side}</nav><div class="who"><span><strong>${h(u.name)}</strong><br>${ROLE[u.role]}</span>${out}</div></aside>` : ''}
-<div class="shell${u ? '' : ' bare'}">${u ? `<header class="mtop"><a class="brand" href="/">Arvela<span>OS</span></a><div class="who">${staffish ? `<a class="icon-btn" href="/ara" aria-label="Ara">${icon('search').replace('class="ti"', 'class="ti" style="width:auto;height:auto"')}</a>` : ''}${out}</div></header>` : ''}
+${u ? `<aside class="side"><a class="brand" href="/">Arvela<span>OS</span></a>${staffish ? `<form class="side-search" method="get" action="/ara" role="search"><input type="search" name="q" placeholder="Ara…" aria-label="Ara"></form>` : ''}<nav aria-label="Ana menü">${side}</nav><div class="who"><span><strong>${h(u.name)}</strong><br>${h(ROLE[u.role])}</span><div class="who-row">${out}${langSwitch(ctx, 'dark')}</div></div></aside>` : ''}
+<div class="shell${u ? '' : ' bare'}">${u ? `<header class="mtop"><a class="brand" href="/">Arvela<span>OS</span></a><div class="who">${langSwitch(ctx)}${staffish ? `<a class="icon-btn" href="/ara" aria-label="Ara">${icon('search').replace('class="ti"', 'class="ti" style="width:auto;height:auto"')}</a>` : ''}${out}</div></header>` : ''}
 <main>${flash}${body}</main></div>${tabs}<script src="/app.js" defer></script></body></html>`;
 }
+const langSwitch = (ctx, cls = '') => {
+  const cur = lang(); const back = ctx.url ? ctx.url.pathname + ctx.url.search : '/';
+  return `<form class="lang ${cls}" method="post" action="/dil"><input type="hidden" name="back" value="${escHtml(back)}">${Object.keys(LANGS).map(k => `<button name="lang" value="${k}"${k === cur ? ' aria-pressed="true" class="on"' : ''} title="${LANGS[k]}">${k.toUpperCase()}</button>`).join('')}</form>`;
+};
 const csrfField = (ctx) => ctx.session ? `<input type="hidden" name="csrf" value="${h(ctx.session.csrf)}">` : '';
 
 function authPage(title, body) {
-  return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${h(title)} · Arvela OS</title>
+  return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0B0D12"><title>${h(title)} · Arvela OS</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@500&display=swap" rel="stylesheet"><style>${CSS}</style></head>
-<body><div class="auth"><div class="card"><p class="brand" style="color:var(--ink);margin:0">Arvela<span>OS</span></p>${body}</div></div></body></html>`;
+<body><div class="auth"><div class="card"><div class="row" style="justify-content:space-between;align-items:center"><p class="brand" style="color:var(--ink);margin:0">Arvela<span>OS</span></p>${langSwitch({ url: { pathname: '/giris', search: '' } })}</div>${body}</div></div></body></html>`;
 }
 
 // ---------- istek altyapısı ----------
@@ -303,7 +313,7 @@ function send(res, status, html, headers = {}) {
     'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; form-action 'self'; frame-ancestors 'none'",
     ...headers,
   });
-  res.end(html);
+  res.end(translateHtml(html));
 }
 const redirect = (res, to, headers = {}) => { res.writeHead(303, { Location: to, ...headers }); res.end(); };
 const cookie = (name, val, maxAgeSec) => `${name}=${encodeURIComponent(val)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSec}${COOKIE_SECURE ? '; Secure' : ''}`;
@@ -374,6 +384,13 @@ route('POST', '/giris', async (ctx, res) => {
   await q('UPDATE users SET last_login=now() WHERE id=$1', [u.id]);
   await q('DELETE FROM sessions WHERE expires_at < now()');
   redirect(res, '/', { 'Set-Cookie': cookie('sid', sid, SESSION_DAYS * 86400) });
+});
+// Dil seçimi: giriş öncesi çerezde, giriş sonrası kullanıcı tercihinde tutulur.
+route('POST', '/dil', async (ctx, res) => {
+  const l = LANGS[ctx.body.lang] ? ctx.body.lang : 'tr';
+  if (ctx.user) await q('UPDATE users SET lang=$1 WHERE id=$2', [l, ctx.user.id]);
+  const back = String(ctx.body.back || '/');
+  redirect(res, back.startsWith('/') && !back.startsWith('//') ? back : '/', { 'Set-Cookie': `lang=${l}; Path=/; SameSite=Lax; Max-Age=31536000${COOKIE_SECURE ? '; Secure' : ''}` });
 });
 route('POST', '/cikis', async (ctx, res) => {
   if (ctx.session) await q('DELETE FROM sessions WHERE id=$1', [ctx.session.id]);
@@ -572,12 +589,13 @@ route('POST', '/portal/onay/:id', async (ctx, res, p) => {
 // ---------- sunucu ----------
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
-  const ctx = { req, url };
-  try {
+  const ctx = { req, url }; const store = { lang: 'tr' };
+  return als.run(store, async () => { try {
     Object.assign(ctx, await loadSession(req));
+    store.lang = ctx.lang = pickLang(ctx.user, parseCookies(req), req.headers['accept-language']);
     if (req.method === 'POST') {
       ctx.body = await readBody(req);
-      const open = ['/giris', '/kurulum'].includes(url.pathname);
+      const open = ['/giris', '/kurulum', '/dil'].includes(url.pathname);
       if (!open && (!ctx.session || !safeEqual(ctx.body.csrf || '', ctx.session.csrf))) throw new HttpError(403, 'Oturum doğrulanamadı. Sayfayı yenileyip tekrar deneyin.');
       if (open) {
         const origin = req.headers.origin; const host = req.headers['x-forwarded-host'] || req.headers.host;
@@ -598,7 +616,7 @@ const server = http.createServer(async (req, res) => {
     const msg = status === 500 ? 'Beklenmeyen bir hata oluştu.' : (e.message || 'Hata');
     const body = `<h1>${status === 404 ? 'Bulunamadı' : 'Olmadı'}</h1><div class="err">${h(msg)}</div><p><a href="/">Ana sayfaya dön</a></p>`;
     if (!res.headersSent) send(res, status, ctx.user ? layout(ctx, 'Hata', body) : authPage('Hata', body));
-  }
+  } });
 });
 
 import { registerSites, migrateSites } from './ext-sites.js';

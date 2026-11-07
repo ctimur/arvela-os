@@ -1,16 +1,17 @@
 {
  "server.js": [
-  "  return x.length === y.length && crypto.timingSafeEqual(x, y);",
-  ".grow{flex:1;min-width:0;display:flex;flex-direction:column}",
-  "@media (max-width:900px){",
-  "  return `<!doctype html><html lang=\"tr\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>${h(title)} · Arvela OS</title>",
-  "  await q(`INSERT INTO sessions (id, user_id, csrf, expires_at) VALUES ($1,$2,$3, now() + interval '${SESSION_DAYS} days')`, [sid, u.id, csrf]);",
-  "${svcs.length ? svcs.map(s => `<div class=\"svc\"><div class=\"svc-h\"><span class=\"grow\"><strong>${h(s.code)} · ${h(s.name)}</strong><span class=\"muted\">${h(s.billing || '')}${s.start_date ? ' · başlangıç ' + fmtDate(s.start_date) : ''}${s.end_date ? ' · bitiş ' + fmtDate(s.end_date) : ''}${s.notes ? ' · ' + h(s.notes) : ''}</span></span>",
-  "  await audit(ctx, 'approval.request', { id: r.id, client: c.id }); redirect(res, `/musteriler/${c.id}`);",
-  "  send(res, 200, layout(ctx, 'Portalım', `<div><p class=\"eyebrow\">Müşteri portalı</p><h1>${h(c?.name || 'Portal')}</h1></div>"
+  "  const x = Buffer.from(String(a)); const y = Buffer.from(String(b));",
+  ".auth .card{width:100%;max-width:420px;border-radius:24px;padding:32px}",
+  "table.rs tr:first-child{display:none}table.rs tr{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px}",
+  "${u ? `<aside class=\"side\"><a class=\"brand\" href=\"/\">Arvela<span>OS</span></a>${staffish ? `<form class=\"side-search\" method=\"get\" action=\"/ara\" role=\"search\"><input type=\"search\" name=\"q\" placeholder=\"Ara…\" aria-label=\"Ara\"></form>` : ''}<nav aria-label=\"Ana menü\">${side}</nav><div class=\"who\"><span><strong>${h(u.name)}</strong><br>${h(ROLE[u.role])}</span><div class=\"who-row\">${out}${langSwitch(ctx, 'dark')}</div></div></aside>` : ''}",
+  "  if (!validPassword(b.password) || !nn(b.email) || !nn(b.name)) return send(res, 400, authPage('Kurulum', `<div class=\"err\">Bilgiler eksik ya da şifre çok kısa.</div><a href=\"/kurulum\">Geri dön</a>`));",
+  "  const prjs = await all(`SELECT p.*, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id)::int total, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id AND t.status='bitti')::int done FROM projects p WHERE p.client_id=$1 ORDER BY p.created_at DESC`, [c.id]);",
+  "  await q('UPDATE clients SET name=$1, sector=$2, contact_name=$3, phone=$4, email=$5, notes=$6, status=$7 WHERE id=$8',",
+  "  const u = await one('UPDATE users SET active = NOT active WHERE id=$1 AND agency_id=$2 RETURNING id, active', [id, ctx.user.agency_id]);",
+  "import { registerToday, portalActions } from './ext-today.js';"
  ],
  "ext-sites.js": [
-  "<div class=\"tbl\"><table>${head(false)}${rows.map(s => row(s, false)).join('') || '<tr><td colspan=\"6\" class=\"muted\">Site yok.</td></tr>'}</table></div>`, '/siteler'));"
+  "  route('GET', '/musteriler/:id/siteler', async (ctx, res, p) => {"
  ],
  "seed-catalog.json": [
   "{\"code\":\"SOS-15\",\"category\":\"SOS\",\"sub\":\"Büyüme\",\"name\":\"Google İşletme Profili yönetimi\",\"billing\":\"Aylık\",\"unit\":\"konum\",\"try\":3500,\"eur\":200,\"status\":\"Hemen\"},",
@@ -19,23 +20,28 @@
  "package.json": [],
  "import-sites.json": [],
  "ext-quotes.js": [
-  "      [ctx.user.agency_id, c.id, nn(b.title), CUR[b.currency] ? b.currency : 'TRY', ctx.user.id]);",
-  "    await q(`UPDATE quotes SET status='taslak', sent_at=NULL WHERE id=$1`, [x.id]);"
+  "${rows.map(x => { const t = totals(x, its.filter(i => i.quote_id === x.id)); return `<tr><td><a href=\"/teklifler/${x.id}\">#${x.id} · ${h(x.title)}</a></td><td>${h(x.client)}</td><td>${badge(ST[x.status], TONE[x.status])}</td><td>${money(t.year, x.currency)}</td><td>${fmtDate(x.sent_at || x.created_at)}</td></tr>`; }).join('') || '<tr><td colspan=\"5\" class=\"muted\">Henüz teklif yok.</td></tr>'}</table></div>`, '/teklifler'));",
+  "  route('POST', '/teklifler/:id/kalem/:kid/sil', async (ctx, res, p) => {"
  ],
  "ext-invoices.js": [
-  "    const filter = ['taslak', 'gonderildi', 'odendi', 'iptal', 'gecikti'].includes(ctx.url.searchParams.get('durum')) ? ctx.url.searchParams.get('durum') : '';",
-  "<label>IBAN<input name=\"iban\" value=\"${h(s.iban)}\" placeholder=\"TR00 0000 0000 0000 0000 0000 00\" autocomplete=\"off\"></label><p class=\"muted\" style=\"margin:0\">Müşterinin portalında ve fatura sayfasında gösterilir.</p><div><button class=\"gold\">Kaydet</button></div></form>`, '/faturalar'));",
-  "    if (x.status !== 'gonderildi') throw new HttpError(400, 'Yalnız ödeme bekleyen fatura ödendi yapılabilir.');"
+  "<p class=\"muted\" style=\"margin:0\">Açıklamaya <strong>${h(x.number)}</strong> yazın.</p></div>` : '<div class=\"card\"><p class=\"muted\" style=\"margin:0\">Havale bilgileri henüz girilmedi.</p></div>';",
+  "    const id = await createInvoice(ctx, { clientId: x.client_id, quoteId: x.id, currency: x.currency, items });",
+  "    const vat = Math.min(100, Math.max(0, Number(b.vat_pct) || 0));"
  ],
  "ext-today.js": [
-  "export function buildPulse(d) {",
-  "export function registerToday({ all, one, h, layout, need, STAFF }) {"
+  "      all(`SELECT s.*, c.name client FROM sites s LEFT JOIN clients c ON c.id=s.client_id WHERE s.agency_id=$1`, [a]),"
  ],
  "ext-work.js": [
-  "<div class=\"tbl\"><table><tr><th>Proje</th><th>Müşteri</th><th>Durum</th><th>İlerleme</th><th>Teslim</th></tr>",
-  "      [nn(b.name) || p.name, PR_ST[b.status] ? b.status : p.status, nn(b.due_date), nn(b.description), cid, p.id]);",
-  "    await audit(ctx, 'task.status', { id: t.id, status: st }); redirect(res, backTo(ctx, t));",
-  "    send(res, 200, layout(ctx, x.title, `<nav class=\"crumb\"><a href=\"/onaylar\">Onaylar</a> › <a href=\"/musteriler/${x.client_id}\">${h(x.client)}</a>${x.project_id ? ` › <a href=\"/projeler/${x.project_id}\">${h(x.project)}</a>` : ''}</nav>",
-  "        all(`SELECT t.id, t.title, p.name project FROM tasks t JOIN projects p ON p.id=t.project_id WHERE t.agency_id=$1 AND (t.title ILIKE $2 OR t.description ILIKE $2) ORDER BY t.id DESC LIMIT 20`, [a, L]),"
+  "<select name=\"durum\" aria-label=\"Durum\" data-auto><option value=\"\">Açık projeler</option><option value=\"hepsi\"${durum === 'hepsi' ? ' selected' : ''}>Tümü</option>${opts(PR_ST, durum)}</select><button class=\"ghost\">Filtrele</button></form>",
+  "    if (ctx.user.role === 'admin' && int(b.client_id) && int(b.client_id) !== p.client_id && await one('SELECT 1 FROM clients WHERE id=$1 AND agency_id=$2', [int(b.client_id), ctx.user.agency_id])) cid = int(b.client_id);",
+  "    await audit(ctx, 'task.update', { id: t.id }); redirect(res, `/gorev/${t.id}`);",
+  "    need(ctx, ...STAFF); const x = await approvalFor(ctx, int(prm.id)); const f = csrfField(ctx);",
+  "        all(`SELECT p.id, p.name, c.name client FROM projects p JOIN clients c ON c.id=p.client_id WHERE p.agency_id=$1 AND (p.name ILIKE $2 OR p.description ILIKE $2) ORDER BY p.id DESC LIMIT 20`, [a, L]),"
+ ],
+ "i18n.js": [],
+ "i18n-en.json": [
+  "\"Yok\": \"None\",",
+  "\"Müşteri portaldan karar verir. Onayı telefonda ya da WhatsApp'ta aldıysanız buradan işleyin.\": \"The client decides in the portal. If you got the approval by phone or WhatsApp, record it here.\",",
+  "\"Sayfa bulunamadı.\": \"Page not found.\","
  ]
 }

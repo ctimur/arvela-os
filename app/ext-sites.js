@@ -1,4 +1,5 @@
 // Arvela OS — siteler modülü: müşteri siteleri, hosting/SSL/WordPress durumu, Hostinger içe aktarımı.
+import { translateHtml } from './i18n.js';
 import fs from 'node:fs';
 
 const LATEST_WP = '7.1.4';
@@ -103,6 +104,6 @@ export function registerSites({ route, all, one, q, need, layout, h, badge, fmtD
       'Strict-Transport-Security': 'max-age=31536000',
       'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; form-action 'self'; frame-ancestors 'none'",
     });
-    res.end(html);
+    res.end(translateHtml(html));
   }
 }

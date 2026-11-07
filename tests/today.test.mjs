@@ -14,7 +14,7 @@ const d = {
   overdue: [{ id: 5, client_id: 3, client: 'Türev Store', number: 'ARV-2026-0002', due_date: '2026-11-01', phone: '05321234567' }],
   notified: [{ id: 6, client: 'Redstone', number: 'ARV-2026-0003', client_notified_at: '2026-11-06' }],
   approvals: [{ client_id: 4, client: 'Century21', title: 'Kasım takvimi', created_at: '2026-11-04', phone: '' }],
-  tasks: [], draftQuotes: [{ id: 7, client: 'Türev Store', title: 'Site', created_at: '2026-11-07' }], draftInvoices: [],
+  tasks: [{ id: 3, project_id: 2, title: 'Banner', client: 'C21', project: 'Kasım', due_date: '2026-11-01' }], draftQuotes: [{ id: 7, client: 'Türev Store', title: 'Site', created_at: '2026-11-07' }], draftInvoices: [],
   clients: [{ id: 1, name: 'Tuzla Yelken' }, { id: 2, name: 'Lotus' }, { id: 3, name: 'Türev Store' }, { id: 4, name: 'Century21' }],
   monthlyDue: 2, period: '2026-11',
 };
@@ -28,4 +28,5 @@ const s = buildActions(d, { admin: false, now });
 assert.ok(!s.some(x => ['Havale', 'Gecikmiş fatura', 'Teklif · taslak', 'Fatura'].includes(x.tag)), 'çalışan para işlerini görmez');
 const p = buildPulse(d);
 assert.deepEqual(p.map(x => x.label), ['Site sorunu', 'Ödeme gecikti', 'Onay bekliyor', 'Sağlıklı']);
+assert.equal(a.find(x => x.tag === 'Görev · gecikti').actions[0][1], '/gorev/3');
 console.log('today: ok');

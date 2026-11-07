@@ -11,7 +11,7 @@ import hashlib, json, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 APP, OUT = ROOT / 'app', ROOT / 'chunks'
-FILES = ['server.js', 'package.json', 'seed-catalog.json', 'ext-sites.js', 'import-sites.json', 'ext-quotes.js', 'ext-invoices.js', 'ext-today.js', 'ext-work.js']
+FILES = ['server.js', 'package.json', 'seed-catalog.json', 'ext-sites.js', 'import-sites.json', 'ext-quotes.js', 'ext-invoices.js', 'ext-today.js', 'ext-work.js', 'i18n.js', 'i18n-en.json']
 LIMIT = 8192
 
 
@@ -31,6 +31,8 @@ def main():
     OUT.mkdir(exist_ok=True)
     for name in FILES:
         text = (APP / name).read_text()
+        if not text.endswith('\n') or text.endswith('\n\n'):
+            raise SystemExit(f'{name}: dosya tek bir satır sonuyla bitmeli (YAML parçası bunu korumaz)')
         parts, start = [], 0
         for m in bounds.get(name, []):
             if text.count('\n' + m + '\n') != 1:

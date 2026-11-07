@@ -1,9 +1,10 @@
 // Arvela OS — "Bugün" akışı: ekibe ve müşteriye sıradaki işi öne çıkaran aksiyon listesi.
 import { siteHealth } from './ext-sites.js';
+import { t, lang } from './i18n.js';
 
 const DAY = 86400000;
 const daysSince = (d, now) => d ? Math.max(0, Math.floor((now - new Date(d)) / DAY)) : 0;
-const ago = (n) => n === 0 ? 'bugün' : n === 1 ? 'dünden beri' : `${n} gündür`;
+const ago = (n) => n === 0 ? 'bugün' : n === 1 ? 'dünden beri' : t`${n} gündür`;
 
 // Türkiye numarasını wa.me biçimine çevirir; anlaşılmazsa null.
 export function waNumber(phone) {
@@ -21,40 +22,40 @@ export function buildActions(d, { admin, now = Date.now() }) {
   for (const s of d.sites || []) {
     const hl = siteHealth(s); if (hl.label !== 'Acil') continue;
     const why = s.issue || (s.ssl_status === 'expired' ? 'SSL sertifikasının süresi dolmuş.' : 'SSL kurulamadı.');
-    out.push({ score: 90, tone: 'bad', tag: 'Acil · Site', meta: `${s.client || 'Müşterisiz'} · ${ago(daysSince(s.checked_at, now))}`,
-      title: `${s.domain} için müdahale gerekiyor`, body: `${why} Önerilen sıra: yedek al, düzelt, siteyi dışarıdan kontrol et.`,
+    out.push({ score: 90, tone: 'bad', tag: 'Acil · Site', meta: t`${s.client || 'Müşterisiz'} · ${ago(daysSince(s.checked_at, now))}`,
+      title: t`${s.domain} için müdahale gerekiyor`, body: t`${why} Önerilen sıra: yedek al, düzelt, siteyi dışarıdan kontrol et.`,
       actions: [['Siteyi aç', s.client_id ? `/musteriler/${s.client_id}/siteler` : '/siteler', 'pri'], ...(admin ? [['Bakım teklifi hazırla', '/teklifler', 'sec']] : [])] });
   }
   if (admin) for (const i of d.notified || []) {
-    out.push({ score: 85, tone: 'warn', tag: 'Havale', meta: `${i.client} · ${ago(daysSince(i.client_notified_at, now))}`,
-      title: `${i.number}: müşteri ödediğini bildirdi`, body: 'Hesap hareketlerinde havaleyi bul, tutarı ve dekontu girip ödendi olarak işaretle.',
+    out.push({ score: 85, tone: 'warn', tag: 'Havale', meta: t`${i.client} · ${ago(daysSince(i.client_notified_at, now))}`,
+      title: t`${i.number}: müşteri ödediğini bildirdi`, body: 'Hesap hareketlerinde havaleyi bul, tutarı ve dekontu girip ödendi olarak işaretle.',
       actions: [['Faturayı aç', `/faturalar/${i.id}`, 'pri']] });
   }
   if (admin) for (const i of d.overdue || []) {
     const n = daysSince(i.due_date, now); const link = wa(i.phone, `Merhaba, ${i.number} numaralı faturanın vadesi geçti. Ödeme bilgileri portalınızda: Faturalarım.`);
-    out.push({ score: 70 + Math.min(n, 10), tone: 'bad', tag: 'Gecikmiş fatura', meta: `${i.client} · vade ${n} gün geçti`,
-      title: `${i.number} ödenmedi`, body: 'Müşteriye nazik bir hatırlatma gönder; ödeme bildirimi gelince buraya düşer.',
+    out.push({ score: 70 + Math.min(n, 10), tone: 'bad', tag: 'Gecikmiş fatura', meta: t`${i.client} · vade ${n} gün geçti`,
+      title: t`${i.number} ödenmedi`, body: 'Müşteriye nazik bir hatırlatma gönder; ödeme bildirimi gelince buraya düşer.',
       actions: [...(link ? [["WhatsApp'tan hatırlat", link, 'pri', true]] : []), ['Faturayı aç', `/faturalar/${i.id}`, link ? 'sec' : 'pri']] });
   }
-  for (const t of d.tasks || []) {
-    const late = t.due_date && new Date(t.due_date) < new Date(new Date(now).toDateString());
-    const today = t.due_date && new Date(t.due_date).toDateString() === new Date(now).toDateString();
+  for (const k of d.tasks || []) {
+    const late = k.due_date && new Date(k.due_date) < new Date(new Date(now).toDateString());
+    const today = k.due_date && new Date(k.due_date).toDateString() === new Date(now).toDateString();
     out.push({ score: late ? 75 : today ? 65 : 40, tone: late ? 'bad' : today ? 'warn' : '', tag: late ? 'Görev · gecikti' : today ? 'Görev · bugün' : 'Görev',
-      meta: `${t.client} · ${t.project}`, title: t.title, body: '',
-      actions: [['Görevi aç', `/gorev/${t.id}`, 'pri'], ['Projeye git', `/projeler/${t.project_id}`, 'sec']] });
+      meta: t`${k.client} · ${k.project}`, title: k.title, body: '',
+      actions: [['Görevi aç', `/gorev/${k.id}`, 'pri'], ['Projeye git', `/projeler/${k.project_id}`, 'sec']] });
   }
   for (const a of d.approvals || []) {
     const n = daysSince(a.created_at, now); const link = wa(a.phone, `Merhaba, "${a.title}" onayınızı bekliyor. Portalınızdan bakabilirsiniz.`);
-    out.push({ score: n >= 2 ? 60 : 35, tone: 'warn', tag: 'Onay', meta: `${a.client} · ${ago(n)} müşteride`, title: a.title, body: '',
+    out.push({ score: n >= 2 ? 60 : 35, tone: 'warn', tag: 'Onay', meta: t`${a.client} · ${ago(n)} müşteride`, title: a.title, body: '',
       actions: [...(link && n >= 1 ? [["WhatsApp'tan hatırlat", link, 'pri', true]] : []), ['Onayı aç', `/onaylar/${a.id}`, link && n >= 1 ? 'sec' : 'pri']] });
   }
-  if (admin && d.monthlyDue) out.push({ score: 55, tone: 'warn', tag: 'Fatura', meta: `${d.monthlyDue} müşteri · ${d.period}`,
+  if (admin && d.monthlyDue) out.push({ score: 55, tone: 'warn', tag: 'Fatura', meta: t`${d.monthlyDue} müşteri · ${d.period}`,
     title: 'Bu ayın aylık faturaları henüz açılmadı', body: 'Aktif aylık hizmetlerden taslakları tek tuşla oluştur, kontrol edip gönder.',
     actions: [['Faturalara git', '/faturalar', 'pri']] });
-  if (admin) for (const x of d.draftQuotes || []) out.push({ score: 45, tone: '', tag: 'Teklif · taslak', meta: `${x.client} · ${ago(daysSince(x.created_at, now))}`,
-    title: `#${x.id} · ${x.title}`, body: '', actions: [['Gözden geçir, gönder', `/teklifler/${x.id}`, 'pri']] });
+  if (admin) for (const x of d.draftQuotes || []) out.push({ score: 45, tone: '', tag: 'Teklif · taslak', meta: t`${x.client} · ${ago(daysSince(x.created_at, now))}`,
+    title: t`#${x.id} · ${x.title}`, body: '', actions: [['Gözden geçir, gönder', `/teklifler/${x.id}`, 'pri']] });
   if (admin) for (const i of d.draftInvoices || []) out.push({ score: 42, tone: '', tag: 'Fatura · taslak', meta: i.client,
-    title: `${i.number} gönderilmeyi bekliyor`, body: '', actions: [['Faturayı aç', `/faturalar/${i.id}`, 'pri']] });
+    title: t`${i.number} gönderilmeyi bekliyor`, body: '', actions: [['Faturayı aç', `/faturalar/${i.id}`, 'pri']] });
   return out.sort((a, b) => b.score - a.score);
 }
 
@@ -97,7 +98,7 @@ export function registerToday({ all, one, h, layout, need, STAFF }) {
     const acts = buildActions(d, { admin }); const pulse = buildPulse(d);
     const first = ctx.user.name.split(' ')[0];
     const [hero, ...rest] = acts; const pair = rest.slice(0, 2); const later = rest.slice(2);
-    const head = acts.length ? `Bugün ${acts.length} iş var.` : 'Bugün her şey yolunda.';
+    const head = !acts.length ? 'Bugün her şey yolunda.' : lang() === 'en' ? `${acts.length} things to do today.` : `Bugün ${acts.length} iş var.`;
     const later_ = later.length ? `<section class="later"><p class="eyebrow">Sonra</p>${later.map(x => `<a class="later-row" href="${h(x.actions[0][1])}"${x.actions[0][3] ? ' target="_blank" rel="noopener"' : ''}><span class="dot ${x.tone}"></span><span class="grow"><strong>${h(x.title)}</strong><span class="muted">${h(x.tag)} · ${h(x.meta)}</span></span><span class="chev" aria-hidden="true">›</span></a>`).join('')}</section>` : '';
     const body = `<div class="today">
 <section class="today-main">
@@ -124,7 +125,7 @@ export async function portalActions({ all, cid, h, fmtMoney }) {
   const rows = [
     ...invoices.filter(i => !i.client_notified_at).map(i => {
       const late = new Date(i.due_date) < new Date(new Date().toDateString()); const total = Math.round(i.sub * (1 + Number(i.vat_pct) / 100));
-      return { tone: late ? 'bad' : 'warn', title: `${i.number} · ${fmtMoney(total)} TL`, meta: late ? 'Vadesi geçti' : 'Ödeme bekliyor', href: `/portal/faturalar/${i.id}` };
+      return { tone: late ? 'bad' : 'warn', title: t`${i.number} · ${fmtMoney(total)} TL`, meta: late ? 'Vadesi geçti' : 'Ödeme bekliyor', href: `/portal/faturalar/${i.id}` };
     }),
     ...quotes.map(x => ({ tone: 'warn', title: x.title, meta: 'Teklif · kararınızı bekliyor', href: `/portal/teklifler/${x.id}` })),
   ];

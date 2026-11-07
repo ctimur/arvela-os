@@ -1,4 +1,5 @@
 // Arvela OS — fatura ve havale takibi. Resmî e-Arşiv/e-Fatura muhasebe yazılımından kesilir; burada takip edilir.
+import { translateHtml } from './i18n.js';
 const ST = { taslak: 'Taslak', gonderildi: 'Ödeme bekleniyor', odendi: 'Ödendi', iptal: 'İptal' };
 const TONE = { taslak: '', gonderildi: 'warn', odendi: 'ok', iptal: 'bad' };
 const CUR = { TRY: 'TL', EUR: 'EUR' };
@@ -33,7 +34,7 @@ export function registerInvoices(d) {
       'Strict-Transport-Security': 'max-age=31536000',
       'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; form-action 'self'; frame-ancestors 'none'",
     });
-    res.end(html);
+    res.end(translateHtml(html));
   };
   const dateIn = (v) => v ? new Date(v).toISOString().slice(0, 10) : '';
   const statusBadge = (x) => isOverdue(x) ? badge('Gecikti', 'bad') : badge(ST[x.status], TONE[x.status]);

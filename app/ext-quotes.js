@@ -1,4 +1,5 @@
 // Arvela OS — teklif modülü: katalogdan kalem, TL/EUR, indirim, toplamlar, müşteri onayı.
+import { translateHtml } from './i18n.js';
 const ST = { taslak: 'Taslak', gonderildi: 'Onay bekliyor', onaylandi: 'Onaylandı', reddedildi: 'Reddedildi' };
 const TONE = { taslak: '', gonderildi: 'warn', onaylandi: 'ok', reddedildi: 'bad' };
 const CUR = { TRY: 'TL', EUR: 'EUR' };
@@ -31,7 +32,7 @@ export function registerQuotes(d) {
       'Strict-Transport-Security': 'max-age=31536000',
       'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; form-action 'self'; frame-ancestors 'none'",
     });
-    res.end(html);
+    res.end(translateHtml(html));
   };
   async function quoteFor(ctx, id) {
     const x = await one('SELECT qt.*, c.name client FROM quotes qt JOIN clients c ON c.id=qt.client_id WHERE qt.id=$1 AND qt.agency_id=$2', [id, ctx.user.agency_id]);

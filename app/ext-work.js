@@ -1,4 +1,5 @@
 // Arvela OS — iş yönetimi: projeler, görevler (açıklama, yorum, düzenleme), onaylar, hizmet kayıtları ve arama.
+import { locale } from './i18n.js';
 // Yönetici ve çalışan tüm iş ayrıntılarını görüp düzenler; freelancer yalnız kendine atanan görevi görür,
 // durumunu değiştirir ve not yazar.
 
@@ -7,6 +8,7 @@ export async function migrateWork({ q }) {
   await q(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS description TEXT`);
   await q(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS priority TEXT NOT NULL DEFAULT 'normal'`);
   await q(`ALTER TABLE client_services ADD COLUMN IF NOT EXISTS end_date DATE`);
+  await q(`ALTER TABLE users ADD COLUMN IF NOT EXISTS lang TEXT NOT NULL DEFAULT 'tr'`);
   await q(`CREATE TABLE IF NOT EXISTS task_comments (id SERIAL PRIMARY KEY, task_id INT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
     user_id INT REFERENCES users(id), body TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT now())`);
 }
@@ -173,7 +175,7 @@ ${ctx.user.role === 'admin' ? `<details class="danger"><summary>Projeyi sil</sum
 <div class="page-head"><div><h1>${h(t.title)}</h1><div class="chips">${badge(TK_ST[t.status], tkTone[t.status])}${t.priority === 'yuksek' ? badge('Öncelikli', 'bad') : ''}<span class="muted">${h(t.assignee || 'Atanmadı')}</span><span class="muted">Teslim ${dueTxt(t)}</span></div></div></div>
 <div class="two wide-first"><section class="card"><h2>Ayrıntılar</h2>${editForm}</section>
 <section class="card"><h2>Notlar <span class="muted">${notes.length}</span></h2>
-${notes.map(n => `<div class="note"><div class="note-h"><strong>${h(n.author || 'Silinmiş kullanıcı')}</strong><span class="muted">${new Date(n.created_at).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' })}</span></div><p>${h(n.body)}</p></div>`).join('') || '<p class="muted">Henüz not yok. İlerlemeyi, engelleri ve bağlantıları buraya yazın.</p>'}
+${notes.map(n => `<div class="note"><div class="note-h"><strong>${h(n.author || 'Silinmiş kullanıcı')}</strong><span class="muted">${new Date(n.created_at).toLocaleString(locale(), { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Istanbul' })}</span></div><p>${h(n.body)}</p></div>`).join('') || '<p class="muted">Henüz not yok. İlerlemeyi, engelleri ve bağlantıları buraya yazın.</p>'}
 <form class="stack" method="post" action="/gorev/${t.id}/not">${f}<label>Not ekle<textarea name="body" rows="3" required></textarea></label><div><button class="gold">Notu kaydet</button></div></form></section></div>
 ${staff ? `<details class="danger card"><summary>Görevi sil</summary><form method="post" action="/gorev/${t.id}/sil" data-confirm="Görev ve notları kalıcı olarak silinsin mi?">${f}<p class="muted">Görev ve ${notes.length} not kalıcı olarak silinir.</p><button class="danger">Kalıcı olarak sil</button></form></details>` : ''}`, staff ? '/projeler' : '/gorevler'));
   });
