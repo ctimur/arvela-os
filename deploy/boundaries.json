@@ -52,26 +52,26 @@
   "  const { route, all, one, q, need, layout, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, STAFF, TK_ST, PR_ST, APP_URL, safeEqual } = d;",
   "    if (action === 'client.create' && data.status === 'lead') { action = 'lead.create'; data = (await entity(action, detail).catch(() => null)) || data; }",
   "    FROM approvals ap JOIN clients c ON c.id=ap.client_id WHERE ap.agency_id=$1 AND ($2='' OR ap.status=$2) ORDER BY ap.created_at DESC LIMIT $3`, [a, qp(ctx, 'status'), lim(ctx)]) }));",
-  "  api('POST', '/projects', 'yaz', async (ctx, a) => {",
-  "    const [hooks, log, keys, stats] = await Promise.all([",
-  "${keys.map(k => `<div class=\"line\"><span class=\"grow\"><strong>${h(k.name)}</strong><span class=\"muted\">arv_${h(k.prefix)}_… · ${k.scopes.map(s => h(SCOPES[s] || s)).join(', ')} · ${k.last_used ? 'son kullanım ' + fmtDate(k.last_used) : 'hiç kullanılmadı'}</span></span>",
-  "  route('POST', '/otomasyonlar/anahtar/:id/iptal', async (ctx, res, p) => {"
+  "    await auditApi(ctx, status === 'lead' ? 'lead.create' : 'client.create', { id: r.id, name: b.name });",
+  "  const pickEvents = (b) => { const ev = ALL_EVENTS.filter(e => b['ev_' + e]); return ev.length === ALL_EVENTS.length ? ['*'] : ev; };",
+  "${admin ? `<section class=\"card\"><h2>API anahtarları</h2><p class=\"muted\">n8n'in Arvela OS'ten veri okuması ve görev/not/proje eklemesi için. Anahtar yalnız oluşturulduğunda gösterilir.</p>",
+  "    const tok = crypto.randomBytes(12).toString('hex'); shown.set(tok, { key, user: ctx.user.id, at: Date.now() });"
  ],
  "n8n-seed.json": [
   "500",
   "\"content\": \"## Arvela · Onay hatırlatma\\nHer iş günü 10:00'da 2 günden uzun bekleyen onayları listeler; müşteriye tek dokunuşla WhatsApp hatırlatması için bağlantı verir. Bekleyen yoksa e-posta gitmez.\",",
   "\"name\": \"Yöneticiye gönder\",",
   "\"content\": \"## Arvela · Görev bildirimi\\nGörev oluşturulunca ya da güncellenince sorumlusuna e-posta gönderir (kendi yaptığı değişiklik hariç).\\nArvela OS → Otomasyonlar → \\\"n8n · Görev bildirimi\\\" bağlantısını Etkin yap.\",",
-  "\"name\": \"İletişim formu\","
+  "\"content\": \"## Arvela · Web formu → aday\\nn8n'in barındırdığı iletişim formu (adresi düğümde, \\\"Production URL\\\"). Gönderilince Arvela OS'e aday müşteri, \\\"İlk görüşme\\\" projesi ve \\\"Adayı ara\\\" görevi ekler.\\nSitene bağlantı ya da iframe olarak koyabilirsin. Aydınlatma metni arveladigital.com/kvkk adresinde yayınlanmalı. Pazarlama onayı isteğe bağlıdır; \\\"Evet\\\" seçilirse adayın kaydına onay tarihi yazılır (İYS'ye yüklenmeli).\","
  ],
  "ext-forge.js": [
   "      await q(`UPDATE forge_changes SET status=$1, error=$2, merged_sha=COALESCE($3, merged_sha), deployed_at=CASE WHEN $1='yayinda' THEN now() ELSE deployed_at END, updated_at=now() WHERE pr=$4`,",
   "    if (ctx.body.sha !== c.head_sha) throw new HttpError(409, 'Değişiklik siz bakarken güncellendi. Sayfayı yenileyip yeniden inceleyin.');"
  ],
  "ext-crm.js": [
-  "${list.map(l => { const late = l.next_action_at && new Date(l.next_action_at) <= now; return `<article class=\"kcard${late ? ' is-late' : ''}\"><a class=\"kt\" href=\"/satis/${l.id}\">${h(l.name)}</a>",
-  "<div class=\"act-btns\">${l.phone ? `<a class=\"btn\" href=\"tel:${h(String(l.phone).replace(/[^+\\d]/g, ''))}\">Telefonla ara</a>` : ''}${wa ? `<a class=\"btn ghost\" href=\"${h(wa)}\" target=\"_blank\" rel=\"noopener\">WhatsApp</a>` : ''}${l.email ? `<a class=\"btn ghost\" href=\"mailto:${h(l.email)}\">E-posta</a>` : ''}</div></div>",
-  "  return { openLeads: (a) => all(`SELECT id, name, contact_name, phone, stage, lead_source, interest, call_at, next_action, next_action_at, created_at FROM clients WHERE agency_id=$1 AND status='lead' AND stage = ANY($2)`, [a, OPEN_STAGES]) };"
+  "      return `<section class=\"kcol\" aria-label=\"${STAGES[st]}\"><h3>${STAGES[st]} <span class=\"muted\">${list.length}${admin && sum ? ' · ' + fmtMoney(sum) + ' TL' : ''}</span></h3>",
+  "<div class=\"page-head\"><div><h1>${h(l.name)}</h1><div class=\"chips\">${badge(STAGES[l.stage] || 'Aday', STAGE_TONE[l.stage])}${badge(t`Puan ${score}`, scoreTone(score))}${l.contact_name ? `<span class=\"muted\">${h(l.contact_name)}</span>` : ''}${l.lead_source ? `<span class=\"muted\">${h(SOURCES[l.lead_source])}</span>` : ''}${l.owner ? `<span class=\"muted\">Sorumlu: ${h(l.owner)}</span>` : ''}${l.marketing_consent_at ? badge('Pazarlama onayı var', 'ok') : `<span class=\"muted\">Pazarlama onayı yok</span>`}</div></div>",
+  "    const nextStage = l.stage === 'yeni' && ['arama', 'whatsapp', 'eposta', 'gorusme'].includes(b.kind) ? 'ulasildi' : l.stage;"
  ],
  "ext-freelance.js": [
   "  const payTxt = (ctx, w) => !seesMoney(ctx, w) ? PAY[w.pay_type] : w.pay_type === 'saatlik' ? (w.hour_cap ? t`${tl(w.hourly_rate)}/saat · en çok ${w.hour_cap} saat` : t`${tl(w.hourly_rate)}/saat`) : tl(w.amount);",

@@ -29,7 +29,7 @@ export const dtParse = (v) => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v || '') ? 
 const fmtDT = (d) => d ? new Date(d).toLocaleString('tr-TR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Istanbul' }) : '—';
 
 export async function migrateCrm({ q }) {
-  for (const col of ['stage TEXT', 'lead_source TEXT', 'lead_score INT', 'next_action TEXT', 'next_action_at TIMESTAMPTZ', 'call_at TIMESTAMPTZ', 'lost_reason TEXT', 'value_estimate INT', 'owner_id INT REFERENCES users(id)', 'interest TEXT', 'won_at TIMESTAMPTZ'])
+  for (const col of ['stage TEXT', 'lead_source TEXT', 'lead_score INT', 'next_action TEXT', 'next_action_at TIMESTAMPTZ', 'call_at TIMESTAMPTZ', 'lost_reason TEXT', 'value_estimate INT', 'owner_id INT REFERENCES users(id)', 'interest TEXT', 'won_at TIMESTAMPTZ', 'marketing_consent_at TIMESTAMPTZ', 'marketing_consent_source TEXT'])
     await q(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS ${col}`);
   await q(`UPDATE clients SET stage='yeni' WHERE status='lead' AND stage IS NULL`);
   await q(`CREATE TABLE IF NOT EXISTS client_notes (id SERIAL PRIMARY KEY, client_id INT NOT NULL REFERENCES clients(id) ON DELETE CASCADE, user_id INT REFERENCES users(id),
@@ -112,7 +112,7 @@ ${rows.some(r => !OPEN_STAGES.includes(r.stage)) ? `<section class="card"><h2>Ka
     const score = l.lead_score ?? leadScore(l); const wa = waLink(l.phone, `Merhaba ${l.contact_name || ''}, Arvela Digital & AI'dan yazıyorum.`.replace('  ', ' '));
     const open = OPEN_STAGES.includes(l.stage) || l.status === 'lead';
     send(res, 200, layout(ctx, l.name, `<nav class="crumb"><a href="/satis">Satış hattı</a>${l.status !== 'lead' ? ` › <a href="/musteriler/${l.id}">Müşteri sayfası</a>` : ''}</nav>
-<div class="page-head"><div><h1>${h(l.name)}</h1><div class="chips">${badge(STAGES[l.stage] || 'Aday', STAGE_TONE[l.stage])}${badge(t`Puan ${score}`, scoreTone(score))}${l.contact_name ? `<span class="muted">${h(l.contact_name)}</span>` : ''}${l.lead_source ? `<span class="muted">${h(SOURCES[l.lead_source])}</span>` : ''}${l.owner ? `<span class="muted">Sorumlu: ${h(l.owner)}</span>` : ''}</div></div>
+<div class="page-head"><div><h1>${h(l.name)}</h1><div class="chips">${badge(STAGES[l.stage] || 'Aday', STAGE_TONE[l.stage])}${badge(t`Puan ${score}`, scoreTone(score))}${l.contact_name ? `<span class="muted">${h(l.contact_name)}</span>` : ''}${l.lead_source ? `<span class="muted">${h(SOURCES[l.lead_source])}</span>` : ''}${l.owner ? `<span class="muted">Sorumlu: ${h(l.owner)}</span>` : ''}${l.marketing_consent_at ? badge('Pazarlama onayı var', 'ok') : `<span class="muted">Pazarlama onayı yok</span>`}</div></div>
 <div class="act-btns">${l.phone ? `<a class="btn" href="tel:${h(String(l.phone).replace(/[^+\d]/g, ''))}">Telefonla ara</a>` : ''}${wa ? `<a class="btn ghost" href="${h(wa)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}${l.email ? `<a class="btn ghost" href="mailto:${h(l.email)}">E-posta</a>` : ''}</div></div>
 ${l.call_at ? `<div class="flash"><strong>Ön görüşme:</strong> ${h(fmtDT(l.call_at))}</div>` : ''}
 <div class="two wide-first"><section class="card"><h2>İletişim geçmişi</h2>
@@ -125,6 +125,8 @@ ${notes.map(n => `<div class="note"><div class="note-h"><strong>${h(KINDS[n.kind
 <div class="row"><label>Aşama<select name="stage">${opts(STAGES, l.stage)}</select></label><label>Kaynak<select name="lead_source">${opts(SOURCES, l.lead_source)}</select></label><label>Puan<input name="lead_score" inputmode="numeric" value="${score}"></label></div>
 <label>İlgilendiği hizmet<input name="interest" value="${h(l.interest)}"></label>
 <div class="row"><label>Ön görüşme<input type="datetime-local" name="call_at" value="${dtVal(l.call_at)}"></label><label>Sorumlu<select name="owner_id"><option value="">—</option>${people.map(u => `<option value="${u.id}"${u.id === l.owner_id ? ' selected' : ''}>${h(u.name)}</option>`).join('')}</select></label>${admin ? `<label>Aylık değer (TL)<input name="value_estimate" inputmode="numeric" value="${h(l.value_estimate ?? '')}"></label>` : ''}</div>
+<label class="chk"><input type="checkbox" name="marketing_consent"${l.marketing_consent_at ? ' checked' : ''}> Kampanya ve duyuru iletisi onayı var</label>
+${l.marketing_consent_at ? `<p class="muted">Onay: ${h(fmtDT(l.marketing_consent_at))}${l.marketing_consent_source ? ' · ' + h(l.marketing_consent_source) : ''}</p>` : '<p class="muted">Yalnız kişi açıkça onay verdiyse işaretleyin (İYS).</p>'}
 <label>Kaybedilme nedeni<input name="lost_reason" value="${h(l.lost_reason)}" placeholder="Yalnız kaybedildiyse"></label><div><button>Kaydet</button></div></form>
 ${open && l.status === 'lead' ? `<div class="row"><form method="post" action="/satis/${l.id}/kazanildi" data-confirm="Aday kazanıldı olarak işaretlenip aktif müşteriye çevrilsin mi?">${f(ctx)}<button class="gold">Kazanıldı · müşteriye çevir</button></form>${admin ? `<a class="btn ghost" href="/teklifler#yeni">Teklif hazırla</a>` : ''}</div>` : ''}
 <p class="muted">Puan; kaynak, iletişim bilgisi, ön görüşme ve tahmini değere göre önerilir, elle değiştirebilirsiniz.</p></section></div>`, '/satis'));
@@ -138,6 +140,8 @@ ${open && l.status === 'lead' ? `<div class="row"><form method="post" action="/s
     const value = ctx.user.role === 'admin' && 'value_estimate' in b ? int(String(b.value_estimate || '').replace(/\D/g, '')) : l.value_estimate;
     await q(`UPDATE clients SET name=$1, contact_name=$2, phone=$3, email=$4, sector=$5, stage=$6, lead_source=$7, lead_score=$8, interest=$9, call_at=$10, owner_id=$11, value_estimate=$12, lost_reason=$13 WHERE id=$14`,
       [nn(b.name) || l.name, nn(b.contact_name), nn(b.phone), nn(b.email), nn(b.sector), stage, SOURCES[b.lead_source] ? b.lead_source : l.lead_source, score, nn(b.interest), dtParse(b.call_at), owner, value, nn(b.lost_reason), l.id]);
+    const consent = !!b.marketing_consent;
+    if (consent !== !!l.marketing_consent_at) await q(`UPDATE clients SET marketing_consent_at=$1, marketing_consent_source=$2 WHERE id=$3`, consent ? [new Date().toISOString(), t`${ctx.user.name} işaretledi`, l.id] : [null, null, l.id]);
     if (stage !== l.stage) await audit(ctx, 'lead.stage', { id: l.id, from: l.stage, to: stage }); else await audit(ctx, 'lead.update', { id: l.id });
     redirect(res, `/satis/${l.id}`);
   });

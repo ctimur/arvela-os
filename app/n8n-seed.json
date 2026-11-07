@@ -1,5 +1,5 @@
 {
-"version": 2,
+"version": 3,
 "ids": {
 "Arvela · Olay yönlendirici": "5d628bb41d3154c2",
 "Arvela · Sabah özeti": "3f9b5075be7859c0",
@@ -1323,7 +1323,7 @@
 -160
 ],
 "parameters": {
-"content": "## Arvela · Web formu → aday\nn8n'in barındırdığı iletişim formu (adresi düğümde, \"Production URL\"). Gönderilince Arvela OS'e aday müşteri, \"İlk görüşme\" projesi ve \"Adayı ara\" görevi ekler.\nSitene bağlantı ya da iframe olarak koyabilirsin. KVKK metnini kendi metninle güncelle.",
+"content": "## Arvela · Web formu → aday\nn8n'in barındırdığı iletişim formu (adresi düğümde, \"Production URL\"). Gönderilince Arvela OS'e aday müşteri, \"İlk görüşme\" projesi ve \"Adayı ara\" görevi ekler.\nSitene bağlantı ya da iframe olarak koyabilirsin. Aydınlatma metni arveladigital.com/kvkk adresinde yayınlanmalı. Pazarlama onayı isteğe bağlıdır; \"Evet\" seçilirse adayın kaydına onay tarihi yazılır (İYS'ye yüklenmeli).",
 "width": 460,
 "height": 220
 }
@@ -1339,7 +1339,7 @@
 ],
 "parameters": {
 "formTitle": "Arvela Digital & AI · İletişim",
-"formDescription": "Projenizi kısaca anlatın, aynı gün dönüş yapalım.",
+"formDescription": "Projenizi kısaca anlatın, aynı gün dönüş yapalım. Bilgileriniz talebinize dönmek ve ön görüşmeyi planlamak için işlenir; ayrıntılar: arveladigital.com/kvkk",
 "formFields": {
 "values": [
 {
@@ -1389,16 +1389,18 @@
 "fieldType": "textarea"
 },
 {
-"fieldLabel": "KVKK aydınlatma metnini okudum, iletişim için verilerimin işlenmesine izin veriyorum.",
+"fieldLabel": "Kampanya ve duyuruları e-posta, SMS ve telefonla almak istiyorum (isteğe bağlı)",
 "fieldType": "dropdown",
 "fieldOptions": {
 "values": [
 {
+"option": "Hayır"
+},
+{
 "option": "Evet"
 }
 ]
-},
-"requiredField": true
+}
 }
 ]
 },
@@ -1429,7 +1431,7 @@
 "options": {},
 "sendBody": true,
 "specifyBody": "json",
-"jsonBody": "={{ JSON.stringify({ name: $json[\"Firma\"], contact_name: $json[\"Ad Soyad\"], phone: $json[\"Telefon\"], email: $json[\"E-posta\"] || null, status: \"lead\", notes: \"Web formu · \" + ($json[\"İlgilendiğiniz hizmet\"] || \"\") + \"\\n\" + ($json[\"Mesaj\"] || \"\") }) }}"
+"jsonBody": "={{ JSON.stringify({ name: $json[\"Firma\"], contact_name: $json[\"Ad Soyad\"], phone: $json[\"Telefon\"], email: $json[\"E-posta\"] || null, status: \"lead\", marketing_consent: $json[\"Kampanya ve duyuruları e-posta, SMS ve telefonla almak istiyorum (isteğe bağlı)\"] === \"Evet\", consent_source: \"Web formu\", notes: \"Web formu · \" + ($json[\"İlgilendiğiniz hizmet\"] || \"\") + \"\\n\" + ($json[\"Mesaj\"] || \"\") }) }}"
 },
 "credentials": {
 "httpHeaderAuth": {

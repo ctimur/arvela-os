@@ -7,7 +7,7 @@ import { als, lang, M1, M2, exact, translateHtml, pickLang, locale, LANGS } from
 import { registerCrm, migrateCrm, crmActions } from './ext-crm.js';
 import { registerFreelance, migrateFreelance, packageActions } from './ext-freelance.js';
 
-const VERSION = '0.12.0';
+const VERSION = '0.12.1';
 const PORT = Number(process.env.PORT || 3000);
 const SETUP_TOKEN = process.env.SETUP_TOKEN || '';
 const COOKIE_SECURE = process.env.COOKIE_SECURE !== '0';

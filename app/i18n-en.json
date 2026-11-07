@@ -793,5 +793,11 @@
 "İş paketi durumu değişti": "Work package status changed",
 "İş paketine süre kaydedildi": "Time logged on work package",
 "Freelancer ödemesi": "Freelancer payment",
-"Freelancer iş paketleri ve kayıtlı süre (ücretler finans yetkisiyle)": "Freelancer work packages and logged time (fees with the finance scope)"
+"Freelancer iş paketleri ve kayıtlı süre (ücretler finans yetkisiyle)": "Freelancer work packages and logged time (fees with the finance scope)",
+"Pazarlama onayı var": "Marketing consent given",
+"Pazarlama onayı yok": "No marketing consent",
+"Kampanya ve duyuru iletisi onayı var": "Consented to campaign and announcement messages",
+"Yalnız kişi açıkça onay verdiyse işaretleyin (İYS).": "Tick only if the person explicitly consented (İYS).",
+"Onay:": "Consent:",
+"işaretledi": "ticked it"
 }
