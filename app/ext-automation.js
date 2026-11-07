@@ -233,6 +233,7 @@ export function registerAutomation(d) {
     const src = ['web', 'whatsapp', 'referans', 'sosyal', 'outbound', 'etkinlik', 'diger'].includes(b.lead_source) ? b.lead_source : (status === 'lead' ? 'web' : null);
     const r = await one(`INSERT INTO clients (agency_id, name, sector, contact_name, phone, email, notes, status, stage, lead_source, interest, lead_score) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`,
       [a, nn(b.name), nn(b.sector), nn(b.contact_name), nn(b.phone), nn(b.email), nn(b.notes), status, status === 'lead' ? 'yeni' : null, src, nn(b.interest), status === 'lead' ? leadScore({ lead_source: src, phone: b.phone, email: b.email, sector: b.sector }) : null]);
+    if (b.marketing_consent === true || b.marketing_consent === 'Evet') await q(`UPDATE clients SET marketing_consent_at=now(), marketing_consent_source=$1 WHERE id=$2`, [String(nn(b.consent_source) || ctx.apiKey.name).slice(0, 200), r.id]);
     if (status === 'lead' && nn(b.notes)) await q('INSERT INTO client_notes (client_id, user_id, kind, body) VALUES ($1,NULL,$2,$3)', [r.id, 'not', `[${ctx.apiKey.name}] ${nn(b.notes)}`.slice(0, 4000)]);
     await auditApi(ctx, status === 'lead' ? 'lead.create' : 'client.create', { id: r.id, name: b.name });
     return { id: r.id, url: `${BASE}/${status === 'lead' ? 'satis' : 'musteriler'}/${r.id}` };

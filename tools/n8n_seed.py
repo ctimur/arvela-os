@@ -197,13 +197,14 @@ flows.append(wf('site-alert', 'Arvela · Acil site uyarısı', nodes, c))
 
 # 8 · Web formu → aday
 c = {}
-form = node('İletişim formu', 'n8n-nodes-base.formTrigger', 2.2, [0, 300], {'formTitle': 'Arvela Digital & AI · İletişim', 'formDescription': 'Projenizi kısaca anlatın, aynı gün dönüş yapalım.',
+CONSENT = 'Kampanya ve duyuruları e-posta, SMS ve telefonla almak istiyorum (isteğe bağlı)'
+form = node('İletişim formu', 'n8n-nodes-base.formTrigger', 2.2, [0, 300], {'formTitle': 'Arvela Digital & AI · İletişim', 'formDescription': 'Projenizi kısaca anlatın, aynı gün dönüş yapalım. Bilgileriniz talebinize dönmek ve ön görüşmeyi planlamak için işlenir; ayrıntılar: arveladigital.com/kvkk',
     'formFields': {'values': [{'fieldLabel': 'Ad Soyad', 'requiredField': True}, {'fieldLabel': 'Firma', 'requiredField': True}, {'fieldLabel': 'Telefon', 'requiredField': True},
                               {'fieldLabel': 'E-posta', 'fieldType': 'email'}, {'fieldLabel': 'İlgilendiğiniz hizmet', 'fieldType': 'dropdown', 'fieldOptions': {'values': [{'option': 'Web sitesi / e-ticaret'}, {'option': 'Sosyal medya yönetimi'}, {'option': 'Dijital pazarlama'}, {'option': 'Yapay zekâ çözümleri'}, {'option': 'Emlak yazılımları'}, {'option': 'Diğer'}]}},
-                              {'fieldLabel': 'Mesaj', 'fieldType': 'textarea'}, {'fieldLabel': 'KVKK aydınlatma metnini okudum, iletişim için verilerimin işlenmesine izin veriyorum.', 'fieldType': 'dropdown', 'fieldOptions': {'values': [{'option': 'Evet'}]}, 'requiredField': True}]},
+                              {'fieldLabel': 'Mesaj', 'fieldType': 'textarea'}, {'fieldLabel': CONSENT, 'fieldType': 'dropdown', 'fieldOptions': {'values': [{'option': 'Hayır'}, {'option': 'Evet'}]}}]},
     'options': {'respondWithOptions': {'values': {'formSubmittedText': 'Teşekkürler! En kısa sürede size dönüş yapacağız.'}}}}, extra={'webhookId': uid('form-lead')})
-nodes = [note('Nasıl çalışır', '## Arvela · Web formu → aday\nn8n\'in barındırdığı iletişim formu (adresi düğümde, "Production URL"). Gönderilince Arvela OS\'e aday müşteri, "İlk görüşme" projesi ve "Adayı ara" görevi ekler.\nSitene bağlantı ya da iframe olarak koyabilirsin. KVKK metnini kendi metninle güncelle.', [-40, -160], 460, 220), form,
-         http('Aday müşteri', [240, 300], '/clients', 'POST', '={{ JSON.stringify({ name: $json["Firma"], contact_name: $json["Ad Soyad"], phone: $json["Telefon"], email: $json["E-posta"] || null, status: "lead", notes: "Web formu · " + ($json["İlgilendiğiniz hizmet"] || "") + "\\n" + ($json["Mesaj"] || "") }) }}'),
+nodes = [note('Nasıl çalışır', '## Arvela · Web formu → aday\nn8n\'in barındırdığı iletişim formu (adresi düğümde, "Production URL"). Gönderilince Arvela OS\'e aday müşteri, "İlk görüşme" projesi ve "Adayı ara" görevi ekler.\nSitene bağlantı ya da iframe olarak koyabilirsin. Aydınlatma metni arveladigital.com/kvkk adresinde yayınlanmalı. Pazarlama onayı isteğe bağlıdır; "Evet" seçilirse adayın kaydına onay tarihi yazılır (İYS\'ye yüklenmeli).', [-40, -160], 460, 220), form,
+         http('Aday müşteri', [240, 300], '/clients', 'POST', '={{ JSON.stringify({ name: $json["Firma"], contact_name: $json["Ad Soyad"], phone: $json["Telefon"], email: $json["E-posta"] || null, status: "lead", marketing_consent: $json["' + CONSENT + '"] === "Evet", consent_source: "Web formu", notes: "Web formu · " + ($json["İlgilendiğiniz hizmet"] || "") + "\\n" + ($json["Mesaj"] || "") }) }}'),
          http('İlk görüşme projesi', [480, 300], '/projects', 'POST', '={{ JSON.stringify({ client_id: $json.id, name: "İlk görüşme", description: "Web formundan gelen aday (n8n)." }) }}'),
          http('Adayı ara görevi', [720, 300], '/tasks', 'POST', '={{ JSON.stringify({ project_id: $json.id, title: "Adayı ara: " + $("İletişim formu").first().json["Ad Soyad"], description: "Tel: " + $("İletişim formu").first().json["Telefon"] + "\\nHizmet: " + ($("İletişim formu").first().json["İlgilendiğiniz hizmet"] || "") + "\\n" + ($("İletişim formu").first().json["Mesaj"] || ""), due_date: new Date().toISOString().slice(0,10), priority: "yuksek" }) }}')]
 for a, b in [('İletişim formu', 'Aday müşteri'), ('Aday müşteri', 'İlk görüşme projesi'), ('İlk görüşme projesi', 'Adayı ara görevi')]:
@@ -212,5 +213,5 @@ flows.append(wf('lead-form', 'Arvela · Web formu → aday', nodes, c))
 
 out = pathlib.Path(__file__).resolve().parent.parent / 'app' / 'n8n-seed.json'
 IDS = {f['name']: f['id'] for f in flows}
-out.write_text(json.dumps({'version': 2, 'ids': IDS, 'workflows': flows}, ensure_ascii=False, indent=0) + '\n')
+out.write_text(json.dumps({'version': 3, 'ids': IDS, 'workflows': flows}, ensure_ascii=False, indent=0) + '\n')
 print(len(flows), 'akış', out.stat().st_size, 'bayt')

@@ -43,3 +43,10 @@ assert.equal(to, '/musteriler/9');
 await assert.rejects(routes['POST /satis/:id/not'](ctx({ body: ' ' }), {}, { id: '9' }), /boş/);
 assert.equal(Object.keys(STAGES).length, 6);
 console.log('crm: ok');
+
+// pazarlama onayı: işaretlenince tarih yazılır, kaldırılınca silinir
+writes.length = 0;
+await routes['POST /satis/:id'](ctx({ name: 'Aday', stage: 'yeni', marketing_consent: 'on' }), {}, { id: '9' });
+const cw = writes.find(w => w[0].includes('marketing_consent_at=$1'));
+assert.ok(cw && cw[1][0] && cw[1][2] === 9, 'onay tarihi yazılır');
+console.log('crm onay: ok');
