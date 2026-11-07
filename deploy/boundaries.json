@@ -1,11 +1,11 @@
 {
  "server.js": [
-  "function safeEqual(a, b) {",
-  ".auth .card{width:100%;max-width:420px;border-radius:24px;padding:32px}",
-  ".icon-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;border:1px solid #DDD6C7;background:#fff;color:var(--ink)}.icon-btn svg{width:20px;height:20px}",
-  "  const tabs = u ? `<nav class=\"tabs\" aria-label=\"Alt menü\">${TAB.map(([href, ic]) => `<a href=\"${href}\"${cur(href)}>${icon(ic)}${label[href]}</a>`).join('')}${rest.length ? `<details><summary>${icon('menu')}Menü</summary><div class=\"more\">${rest.map(([href, t]) => `<a href=\"${href}\"${cur(href)}>${t}</a>`).join('')}</div></details>` : ''}</nav>` : '';",
-  "  routes.push({ method, re, keys, fn });",
-  "${rows.map(c => `<tr><td><a href=\"/musteriler/${c.id}\"><strong>${h(c.name)}</strong></a></td><td>${h(c.sector || '—')}</td><td>${badge(CLIENT_ST[c.status], tone[c.status])}</td><td>${c.svc}</td><td>${c.prj}</td><td>${h(c.contact_name || '—')}</td></tr>`).join('') || '<tr><td colspan=\"6\" class=\"muted\">Bu filtreye uyan müşteri yok.</td></tr>'}",
+  "  return a.length === b.length && crypto.timingSafeEqual(a, b);",
+  ".err{background:#F6E1DE;border:1px solid #E2B1A9;padding:12px 16px;border-radius:14px;color:#7A2418}",
+  "details.danger summary{color:#7A2418;font-size:14px}details.danger form{margin-top:10px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}",
+  "    : u?.role === 'freelancer' ? [['/paketler', 'doc'], ['/gorevler', 'check']]",
+  "  const keys = []; const re = new RegExp('^' + pattern.replace(/:(\\w+)/g, (_, k) => { keys.push(k); return '(\\\\d+)'; }) + '$');",
+  "<div class=\"tbl\"><table><tr><th>Firma</th><th>Sektör</th><th>Durum</th><th>Aktif hizmet</th><th>Açık proje</th><th>Yetkili</th></tr>",
   "${aps.length ? `<div class=\"tbl\"><table><tr><th>Konu</th><th>Durum</th><th>Müşteri notu</th><th>Tarih</th></tr>${aps.map(x => `<tr><td><a href=\"/onaylar/${x.id}\">${h(x.title)}</a></td><td>${badge(AP_ST[x.status], x.status === 'onaylandi' ? 'ok' : x.status === 'reddedildi' ? 'bad' : 'warn')}</td><td>${h(x.comment || '—')}</td><td>${fmtDate(x.decided_at || x.created_at)}</td></tr>`).join('')}</table></div>` : '<p class=\"muted\">Henüz onay istenmedi.</p>'}",
   "<label>Rol<select name=\"role\"><option value=\"staff\">Çalışan</option><option value=\"freelancer\">Freelancer</option><option value=\"admin\">Yönetici</option></select></label>",
   "  await audit(ctx, 'approval.decide', { id: r.id, decision: d });"
@@ -44,16 +44,18 @@
   "\"Müşteri portaldan karar verir. Onayı telefonda ya da WhatsApp'ta aldıysanız buradan işleyin.\": \"The client decides in the portal. If you got the approval by phone or WhatsApp, record it here.\",",
   "\"Sayfa bulunamadı.\": \"Page not found.\",",
   "\"İptal edildi\": \"Revoked\",",
-  "\"Adayı ekle\": \"Add lead\","
+  "\"Adayı ekle\": \"Add lead\",",
+  "\"İş paketine süre kaydedildi\": \"Time logged on work package\","
  ],
  "ext-sync.js": [],
  "ext-automation.js": [
-  "  async function entity(event, detail) {",
-  "        await emit(agencyId, 'site.alert', { domain: s.domain, client_id: s.client_id, client: s.client, ssl_status: s.ssl_status, wp_version: s.wp_version, issue: s.issue, url: s.client_id ? `${BASE}/musteriler/${s.client_id}/siteler` : `${BASE}/siteler` });",
-  "    FROM clients c LEFT JOIN users u ON u.id=c.owner_id WHERE c.agency_id=$1 AND (CASE $2 WHEN '' THEN c.status='lead' AND c.stage = ANY($3) ELSE c.stage=$2 END) ORDER BY c.call_at NULLS LAST, c.created_at DESC LIMIT $4`, [a, qp(ctx, 'stage'), OPEN_STAGES, lim(ctx)]) }));",
-  "  api('POST', '/tasks/:id/status', 'yaz', async (ctx, a, p) => {",
-  "    send(res, 200, layout(ctx, 'Otomasyonlar', `<div class=\"page-head\"><div><h1>Otomasyonlar</h1><p class=\"muted lead\">Arvela OS'te olan her şey n8n'e bildirilir; n8n de API ile görev, not, proje ve müşteri ekleyebilir.</p></div>",
-  "${[['GET /summary', 'Günün özeti: geciken ve bugünkü görevler, bekleyen onaylar, acil siteler (finans yetkisiyle gecikmiş faturalar)', 'is'], ['GET /clients · /clients/{id}', 'Müşteriler; ayrıntıda hizmetler, projeler, siteler, onaylar', 'is'], ['GET /projects · /projects/{id}', 'Projeler; ayrıntıda görevler', 'is'], ['GET /tasks?status=open|overdue|today', 'Görevler (assignee_id, project_id ile süzülür)', 'is'], ['GET /tasks/{id}', 'Görev ve notları', 'is'], ['GET /approvals?status=bekliyor', 'Onaylar', 'is'], ['GET /sites?health=acil', 'Siteler ve sağlık durumu', 'is'], ['GET /leads?stage=yeni|ulasildi|gorusme|teklif', 'Satış hattındaki adaylar (aşama olmadan: tüm açık adaylar)', 'is'], ['GET /team', 'Ekip', 'is'], ['GET /quotes · /invoices?status=overdue', 'Teklifler ve faturalar', 'finans'], ['POST /clients', 'Aday ya da müşteri ekle: name, phone, email, sector, contact_name, interest, lead_source, notes, status (varsayılan: lead → Satış hattı)', 'yaz'], ['POST /projects', 'Proje aç: client_id, name, description, due_date', 'yaz'], ['POST /tasks', 'Görev ekle: project_id, title, description, assignee_id, due_date, priority', 'yaz'], ['POST /tasks/{id}/status', 'Görev durumu: yapilacak, yapiliyor, incelemede, bitti', 'yaz'], ['POST /tasks/{id}/notes', 'Göreve not: body', 'yaz'], ['POST /approvals', 'Onaya gönder: client_id, project_id, title, body', 'yaz']]"
+  "  const { route, all, one, q, need, layout, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, STAFF, TK_ST, PR_ST, APP_URL, safeEqual } = d;",
+  "    if (action === 'client.create' && data.status === 'lead') { action = 'lead.create'; data = (await entity(action, detail).catch(() => null)) || data; }",
+  "    FROM approvals ap JOIN clients c ON c.id=ap.client_id WHERE ap.agency_id=$1 AND ($2='' OR ap.status=$2) ORDER BY ap.created_at DESC LIMIT $3`, [a, qp(ctx, 'status'), lim(ctx)]) }));",
+  "  api('POST', '/projects', 'yaz', async (ctx, a) => {",
+  "    const [hooks, log, keys, stats] = await Promise.all([",
+  "${keys.map(k => `<div class=\"line\"><span class=\"grow\"><strong>${h(k.name)}</strong><span class=\"muted\">arv_${h(k.prefix)}_… · ${k.scopes.map(s => h(SCOPES[s] || s)).join(', ')} · ${k.last_used ? 'son kullanım ' + fmtDate(k.last_used) : 'hiç kullanılmadı'}</span></span>",
+  "  route('POST', '/otomasyonlar/anahtar/:id/iptal', async (ctx, res, p) => {"
  ],
  "n8n-seed.json": [
   "500",
@@ -70,5 +72,11 @@
   "${list.map(l => { const late = l.next_action_at && new Date(l.next_action_at) <= now; return `<article class=\"kcard${late ? ' is-late' : ''}\"><a class=\"kt\" href=\"/satis/${l.id}\">${h(l.name)}</a>",
   "<div class=\"act-btns\">${l.phone ? `<a class=\"btn\" href=\"tel:${h(String(l.phone).replace(/[^+\\d]/g, ''))}\">Telefonla ara</a>` : ''}${wa ? `<a class=\"btn ghost\" href=\"${h(wa)}\" target=\"_blank\" rel=\"noopener\">WhatsApp</a>` : ''}${l.email ? `<a class=\"btn ghost\" href=\"mailto:${h(l.email)}\">E-posta</a>` : ''}</div></div>",
   "  return { openLeads: (a) => all(`SELECT id, name, contact_name, phone, stage, lead_source, interest, call_at, next_action, next_action_at, created_at FROM clients WHERE agency_id=$1 AND status='lead' AND stage = ANY($2)`, [a, OPEN_STAGES]) };"
+ ],
+ "ext-freelance.js": [
+  "  const payTxt = (ctx, w) => !seesMoney(ctx, w) ? PAY[w.pay_type] : w.pay_type === 'saatlik' ? (w.hour_cap ? t`${tl(w.hourly_rate)}/saat · en çok ${w.hour_cap} saat` : t`${tl(w.hourly_rate)}/saat`) : tl(w.amount);",
+  "    const p = ctx.user.role === 'admin' ? readPay(b) : { pay_type: 'sabit', amount: null, hourly_rate: null, hour_cap: null };",
+  "<div class=\"page-head\"><div><h1>${h(w.title)}</h1><div class=\"chips\">${badge(PK_ST[w.status], PK_TONE[w.status])}${staff ? `<span class=\"muted\">${h(w.freelancer)}</span>` : ''}<span class=\"muted\">${h(PAY[w.pay_type])}</span></div></div><div class=\"act-btns\">${moveForms}</div></div>",
+  "<div class=\"row\"><label class=\"wide\">Freelancer<select name=\"freelancer_id\" required>${people.map(u => `<option value=\"${u.id}\"${u.id === kim ? ' selected' : ''}>${h(u.name)}${owedOf(u.id) > 0 ? ' · ' + h(t`borç ${tl(owedOf(u.id))}`) : ''}</option>`).join('')}</select></label>"
  ]
 }

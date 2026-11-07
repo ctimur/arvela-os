@@ -14,6 +14,7 @@ export const EVENTS = {
   'Teklif': ['quote.create', 'quote.send', 'quote.decide', 'quote.withdraw', 'quote.copy'],
   'Fatura': ['invoice.create', 'invoice.from_quote', 'invoice.monthly', 'invoice.send', 'invoice.client_notified', 'invoice.paid', 'invoice.cancel'],
   'Site': ['site.create', 'site.alert', 'site.sync'],
+  'Freelancer': ['package.create', 'package.update', 'package.status', 'package.time', 'freelancer.payment'],
 };
 export const EVENT_LABEL = {
   'lead.create': 'Yeni aday', 'lead.update': 'Aday güncellendi', 'lead.stage': 'Aday aşaması değişti', 'lead.note': 'Adayla iletişim kaydı', 'lead.won': 'Aday kazanıldı',
@@ -24,9 +25,10 @@ export const EVENT_LABEL = {
   'quote.create': 'Teklif oluşturuldu', 'quote.send': 'Teklif gönderildi', 'quote.decide': 'Müşteri teklife karar verdi', 'quote.withdraw': 'Teklif geri çekildi', 'quote.copy': 'Teklif kopyalandı',
   'invoice.create': 'Fatura oluşturuldu', 'invoice.from_quote': 'Tekliften fatura', 'invoice.monthly': 'Aylık faturalar oluşturuldu', 'invoice.send': 'Fatura gönderildi', 'invoice.client_notified': 'Müşteri ödediğini bildirdi', 'invoice.paid': 'Fatura ödendi', 'invoice.cancel': 'Fatura iptal edildi',
   'site.create': 'Site eklendi', 'site.alert': 'Site acil duruma düştü', 'site.sync': 'Site durumu eşitlendi', 'ping': 'Deneme',
+  'package.create': 'İş paketi teklif edildi', 'package.update': 'İş paketi güncellendi', 'package.status': 'İş paketi durumu değişti', 'package.time': 'İş paketine süre kaydedildi', 'freelancer.payment': 'Freelancer ödemesi',
 };
 const ALL_EVENTS = Object.values(EVENTS).flat();
-const FINANCE = (e) => e.startsWith('quote.') || e.startsWith('invoice.');
+const FINANCE = (e) => e.startsWith('quote.') || e.startsWith('invoice.') || e === 'freelancer.payment';
 export const SCOPES = { is: 'İş verisi (okuma)', yaz: 'Yazma (görev, not, proje, müşteri, onay)', finans: 'Finans (teklif ve fatura okuma)' };
 
 export const DEFAULT_HOOKS = [
@@ -85,6 +87,8 @@ export function registerAutomation(d) {
     if (kind === 'quote') return one(`SELECT x.id, x.title, x.status, x.currency, x.discount_pct, x.valid_until, x.comment, x.client_id, c.name client, c.phone client_phone, c.email client_email, '${BASE}/teklifler/' || x.id url FROM quotes x JOIN clients c ON c.id=x.client_id WHERE x.id=$1`, [id]);
     if (kind === 'invoice') return one(`SELECT i.id, i.number, i.status, i.period, i.currency, i.issue_date, i.due_date, i.paid_at, i.paid_amount, i.client_id, c.name client, c.phone client_phone, c.email client_email,
       ROUND((SELECT COALESCE(sum(qty*unit_price),0) FROM invoice_items WHERE invoice_id=i.id) * (1 + i.vat_pct/100))::int total, '${BASE}/faturalar/' || i.id url FROM invoices i JOIN clients c ON c.id=i.client_id WHERE i.id=$1`, [id]);
+    if (kind === 'package') return one(`SELECT w.id, w.title, w.status, w.pay_type, w.due_date, w.freelancer_id, u.name freelancer, u.email freelancer_email, w.project_id, p.name project,
+      COALESCE((SELECT sum(minutes) FROM time_entries WHERE package_id=w.id),0)::int minutes, '${BASE}/paketler/' || w.id url FROM work_packages w JOIN users u ON u.id=w.freelancer_id LEFT JOIN projects p ON p.id=w.project_id WHERE w.id=$1`, [id]);
     return { ...detail };
   }
 
@@ -193,6 +197,12 @@ export function registerAutomation(d) {
   });
   api('GET', '/leads', 'is', async (ctx, a) => ({ data: await all(`SELECT c.id, c.name, c.contact_name, c.phone, c.email, c.stage, c.lead_source, c.lead_score, c.interest, c.call_at, c.next_action, c.next_action_at, c.created_at, u.name owner
     FROM clients c LEFT JOIN users u ON u.id=c.owner_id WHERE c.agency_id=$1 AND (CASE $2 WHEN '' THEN c.status='lead' AND c.stage = ANY($3) ELSE c.stage=$2 END) ORDER BY c.call_at NULLS LAST, c.created_at DESC LIMIT $4`, [a, qp(ctx, 'stage'), OPEN_STAGES, lim(ctx)]) }));
+  api('GET', '/packages', 'is', async (ctx, a) => {
+    const fin = ctx.apiKey.scopes.includes('finans'); const st = qp(ctx, 'status');
+    return { data: await all(`SELECT w.id, w.title, w.status, w.pay_type, ${fin ? 'w.amount, w.hourly_rate, w.hour_cap,' : ''} w.due_date, w.freelancer_id, u.name freelancer, w.project_id, p.name project,
+      COALESCE((SELECT sum(minutes) FROM time_entries WHERE package_id=w.id),0)::int minutes, w.delivered_at, w.approved_at FROM work_packages w JOIN users u ON u.id=w.freelancer_id LEFT JOIN projects p ON p.id=w.project_id
+      WHERE w.agency_id=$1 AND ($2='' OR w.status=$2) ORDER BY w.id DESC LIMIT $3`, [a, st || '', lim(ctx)]) };
+  });
   api('GET', '/team', 'is', async (ctx, a) => ({ data: await all(`SELECT id, name, email, role FROM users WHERE agency_id=$1 AND active AND role<>'client' ORDER BY name`, [a]) }));
   api('GET', '/summary', 'is', async (ctx, a) => {
     const [counts, late, today, waiting, acil] = await Promise.all([
@@ -339,7 +349,7 @@ ${k.revoked_at ? badge('İptal edildi') : `<form method="post" action="/otomasyo
 ${Object.entries(SCOPES).map(([k, v]) => `<label class="chk"><input type="checkbox" name="scope_${k}" ${k !== 'finans' ? 'checked' : ''}> ${h(v)}</label>`).join('')}<div><button class="gold">Anahtar oluştur</button></div></form></details></section>` : ''}
 <section class="card"><h2>API başvuru</h2><p class="muted">Adres: <code>${BASE}/api/v1</code> · Başlık: <code>Authorization: Bearer arv_…</code> · Gövde: JSON</p>
 <div class="tbl"><table><tr><th>Uç</th><th>Ne yapar</th><th>Yetki</th></tr>
-${[['GET /summary', 'Günün özeti: geciken ve bugünkü görevler, bekleyen onaylar, acil siteler (finans yetkisiyle gecikmiş faturalar)', 'is'], ['GET /clients · /clients/{id}', 'Müşteriler; ayrıntıda hizmetler, projeler, siteler, onaylar', 'is'], ['GET /projects · /projects/{id}', 'Projeler; ayrıntıda görevler', 'is'], ['GET /tasks?status=open|overdue|today', 'Görevler (assignee_id, project_id ile süzülür)', 'is'], ['GET /tasks/{id}', 'Görev ve notları', 'is'], ['GET /approvals?status=bekliyor', 'Onaylar', 'is'], ['GET /sites?health=acil', 'Siteler ve sağlık durumu', 'is'], ['GET /leads?stage=yeni|ulasildi|gorusme|teklif', 'Satış hattındaki adaylar (aşama olmadan: tüm açık adaylar)', 'is'], ['GET /team', 'Ekip', 'is'], ['GET /quotes · /invoices?status=overdue', 'Teklifler ve faturalar', 'finans'], ['POST /clients', 'Aday ya da müşteri ekle: name, phone, email, sector, contact_name, interest, lead_source, notes, status (varsayılan: lead → Satış hattı)', 'yaz'], ['POST /projects', 'Proje aç: client_id, name, description, due_date', 'yaz'], ['POST /tasks', 'Görev ekle: project_id, title, description, assignee_id, due_date, priority', 'yaz'], ['POST /tasks/{id}/status', 'Görev durumu: yapilacak, yapiliyor, incelemede, bitti', 'yaz'], ['POST /tasks/{id}/notes', 'Göreve not: body', 'yaz'], ['POST /approvals', 'Onaya gönder: client_id, project_id, title, body', 'yaz']]
+${[['GET /summary', 'Günün özeti: geciken ve bugünkü görevler, bekleyen onaylar, acil siteler (finans yetkisiyle gecikmiş faturalar)', 'is'], ['GET /clients · /clients/{id}', 'Müşteriler; ayrıntıda hizmetler, projeler, siteler, onaylar', 'is'], ['GET /projects · /projects/{id}', 'Projeler; ayrıntıda görevler', 'is'], ['GET /tasks?status=open|overdue|today', 'Görevler (assignee_id, project_id ile süzülür)', 'is'], ['GET /tasks/{id}', 'Görev ve notları', 'is'], ['GET /approvals?status=bekliyor', 'Onaylar', 'is'], ['GET /sites?health=acil', 'Siteler ve sağlık durumu', 'is'], ['GET /leads?stage=yeni|ulasildi|gorusme|teklif', 'Satış hattındaki adaylar (aşama olmadan: tüm açık adaylar)', 'is'], ['GET /packages?status=teklif|kabul|surecte|teslim|onaylandi|iptal', 'Freelancer iş paketleri ve kayıtlı süre (ücretler finans yetkisiyle)', 'is'], ['GET /team', 'Ekip', 'is'], ['GET /quotes · /invoices?status=overdue', 'Teklifler ve faturalar', 'finans'], ['POST /clients', 'Aday ya da müşteri ekle: name, phone, email, sector, contact_name, interest, lead_source, notes, status (varsayılan: lead → Satış hattı)', 'yaz'], ['POST /projects', 'Proje aç: client_id, name, description, due_date', 'yaz'], ['POST /tasks', 'Görev ekle: project_id, title, description, assignee_id, due_date, priority', 'yaz'], ['POST /tasks/{id}/status', 'Görev durumu: yapilacak, yapiliyor, incelemede, bitti', 'yaz'], ['POST /tasks/{id}/notes', 'Göreve not: body', 'yaz'], ['POST /approvals', 'Onaya gönder: client_id, project_id, title, body', 'yaz']]
       .map(([e, t, s]) => `<tr><td><code>${e}</code></td><td>${t}</td><td>${h(SCOPES[s])}</td></tr>`).join('')}</table></div>
 <p class="muted">Webhook gövdesi: <code>{ event, label, at, source, actor, delivery, data }</code>. <code>data</code> ilgili kaydın ayrıntısıdır (müşteri, proje, görev, sorumlu, bağlantı). İmza: <code>X-Arvela-Signature: sha256=HMAC(imza anahtarı, gövde)</code>.</p></section>`, '/otomasyonlar'));
   });
