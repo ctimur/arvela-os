@@ -8,10 +8,10 @@
   "  const prjs = await all(`SELECT p.*, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id)::int total, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id AND t.status='bitti')::int done FROM projects p WHERE p.client_id=$1 ORDER BY p.created_at DESC`, [c.id]);",
   "  await q('UPDATE clients SET name=$1, sector=$2, contact_name=$3, phone=$4, email=$5, notes=$6, status=$7 WHERE id=$8',",
   "  const u = await one('UPDATE users SET active = NOT active WHERE id=$1 AND agency_id=$2 RETURNING id, active', [id, ctx.user.agency_id]);",
-  "import { registerToday, portalActions } from './ext-today.js';"
+  "import { registerInvoices, migrateInvoices } from './ext-invoices.js';"
  ],
  "ext-sites.js": [
-  "  route('GET', '/musteriler/:id/siteler', async (ctx, res, p) => {"
+  "  route('POST', '/siteler', async (ctx, res) => {"
  ],
  "seed-catalog.json": [
   "{\"code\":\"SOS-15\",\"category\":\"SOS\",\"sub\":\"Büyüme\",\"name\":\"Google İşletme Profili yönetimi\",\"billing\":\"Aylık\",\"unit\":\"konum\",\"try\":3500,\"eur\":200,\"status\":\"Hemen\"},",
@@ -43,5 +43,6 @@
   "\"Yok\": \"None\",",
   "\"Müşteri portaldan karar verir. Onayı telefonda ya da WhatsApp'ta aldıysanız buradan işleyin.\": \"The client decides in the portal. If you got the approval by phone or WhatsApp, record it here.\",",
   "\"Sayfa bulunamadı.\": \"Page not found.\","
- ]
+ ],
+ "ext-sync.js": []
 }

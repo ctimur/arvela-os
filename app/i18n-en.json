@@ -440,5 +440,14 @@
 "geciken": "overdue",
 "Müşteri sayfası": "Client page",
 "Dil": "Language",
-"not": "notes"
+"not": "notes",
+"SSL bitiyor": "SSL expiring",
+"bilinen açık": "known vulnerabilities",
+"Hostinger'dan son eşitleme:": "Last synced from Hostinger:",
+"İlk Hostinger denetimi: 7 Kasım 2026": "First Hostinger audit: 7 November 2026",
+"Güncel WordPress:": "Latest WordPress:",
+"Durum her sabah kendiliğinden yenilenir.": "Status refreshes automatically every morning.",
+"Site Hostinger'da askıya alınmış.": "The site is suspended on Hostinger.",
+"WordPress çalışmıyor:": "WordPress is not working:",
+"kurulum doğrulanamadı": "installation could not be verified"
 }

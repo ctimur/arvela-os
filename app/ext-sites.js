@@ -1,8 +1,10 @@
 // Arvela OS — siteler modülü: müşteri siteleri, hosting/SSL/WordPress durumu, Hostinger içe aktarımı.
-import { translateHtml } from './i18n.js';
+import { translateHtml, locale } from './i18n.js';
 import fs from 'node:fs';
 
-const LATEST_WP = '7.1.4';
+let LATEST_WP = '7.1.4';
+export const setLatestWp = (v) => { if (/^\d+\.\d+(\.\d+)?$/.test(v || '')) LATEST_WP = v; };
+export const latestWp = () => LATEST_WP;
 const SSL = { active: 'Aktif', failed: 'Kurulamadı', expired: 'Süresi dolmuş', not_installed: 'Yok' };
 
 function wpBehind(v) {
@@ -11,9 +13,10 @@ function wpBehind(v) {
   for (let i = 0; i < 3; i++) { if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) < (b[i] || 0); }
   return false;
 }
-export function siteHealth(s) {
+export function siteHealth(s, now = Date.now()) {
   if (s.issue || ['failed', 'expired'].includes(s.ssl_status)) return { tone: 'bad', label: 'Acil' };
-  if (wpBehind(s.wp_version)) return { tone: 'warn', label: 'Güncelleme' };
+  if (wpBehind(s.wp_version) || s.wp_vulns > 0) return { tone: 'warn', label: 'Güncelleme' };
+  if (s.ssl_status === 'active' && s.ssl_expires && new Date(s.ssl_expires) - now < 14 * 864e5) return { tone: 'warn', label: 'SSL bitiyor' };
   if (s.platform === 'WordPress' && s.ssl_status === 'active') return { tone: 'ok', label: 'Sağlıklı' };
   return { tone: '', label: 'Kontrol edilmedi' };
 }
@@ -51,7 +54,7 @@ export function registerSites({ route, all, one, q, need, layout, h, badge, fmtD
   const row = (s, withClient) => {
     const hl = siteHealth(s);
     return `<tr><td><a href="https://${h(s.domain)}" rel="noopener" target="_blank">${h(s.domain)}</a></td>${withClient ? `<td>${s.client_id ? `<a href="/musteriler/${s.client_id}">${h(s.client)}</a>` : '—'}</td>` : ''}
-<td>${h(s.platform || '—')}</td><td>${h(s.wp_version || '—')}</td><td>${h(SSL[s.ssl_status] || '—')}</td><td>${badge(hl.label, hl.tone)}</td><td>${h(s.issue || '')}</td></tr>`;
+<td>${h(s.platform || '—')}</td><td>${h(s.wp_version || '—')}${s.wp_vulns ? ` <span class="muted">· ${s.wp_vulns} bilinen açık</span>` : ''}</td><td>${h(SSL[s.ssl_status] || '—')}${s.ssl_expires && s.ssl_status === 'active' ? ` <span class="muted">· ${fmtDate(s.ssl_expires)}</span>` : ''}</td><td>${badge(hl.label, hl.tone)}</td><td>${h(s.issue || '')}</td></tr>`;
   };
   const head = (withClient) => `<tr><th>Alan adı</th>${withClient ? '<th>Müşteri</th>' : ''}<th>Platform</th><th>WordPress</th><th>SSL</th><th>Durum</th><th>Not</th></tr>`;
 
@@ -62,8 +65,9 @@ export function registerSites({ route, all, one, q, need, layout, h, badge, fmtD
     rows.forEach(s => { counts[siteHealth(s).tone]++; });
     const order = { bad: 0, warn: 1, '': 2, ok: 3 };
     rows.sort((a, b) => order[siteHealth(a).tone] - order[siteHealth(b).tone]);
+    const last = await one(`SELECT at FROM site_sync_runs WHERE agency_id=$1 ORDER BY at DESC LIMIT 1`, [ctx.user.agency_id]).catch(() => null);
     const stat = (n, t) => `<div class="card"><span class="muted">${t}</span><span class="stat">${n}</span></div>`;
-    send(ctx, res, layout(ctx, 'Siteler', `<h1>Siteler</h1><p class="muted">${rows.length} site · son kontrol: 7 Kasım 2026 Hostinger denetimi. Güncel WordPress: ${LATEST_WP}.</p>
+    send(ctx, res, layout(ctx, 'Siteler', `<h1>Siteler</h1><p class="muted">${rows.length} site · ${last ? `Hostinger'dan son eşitleme: ${new Date(last.at).toLocaleString(locale(), { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Istanbul' })}` : 'İlk Hostinger denetimi: 7 Kasım 2026'} · Güncel WordPress: ${LATEST_WP}. Durum her sabah kendiliğinden yenilenir.</p>
 <div class="grid">${stat(counts.bad, 'Acil')}${stat(counts.warn, 'Güncelleme bekliyor')}${stat(counts.ok, 'Sağlıklı')}${stat(counts[''], 'Kontrol edilmedi')}</div>
 <div class="tbl"><table>${head(true)}${rows.map(s => row(s, true)).join('') || '<tr><td colspan="7" class="muted">Site yok.</td></tr>'}</table></div>
 <details class="card"><summary>Site ekle</summary><form class="row" method="post" action="/siteler">${csrfField(ctx)}

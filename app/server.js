@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import pg from 'pg';
 import { als, lang, M1, M2, exact, translateHtml, pickLang, locale, LANGS } from './i18n.js';
 
-const VERSION = '0.7.0';
+const VERSION = '0.8.0';
 const PORT = Number(process.env.PORT || 3000);
 const SETUP_TOKEN = process.env.SETUP_TOKEN || '';
 const COOKIE_SECURE = process.env.COOKIE_SECURE !== '0';
@@ -595,7 +595,7 @@ const server = http.createServer(async (req, res) => {
     store.lang = ctx.lang = pickLang(ctx.user, parseCookies(req), req.headers['accept-language']);
     if (req.method === 'POST') {
       ctx.body = await readBody(req);
-      const open = ['/giris', '/kurulum', '/dil'].includes(url.pathname);
+      const open = ['/giris', '/kurulum', '/dil', '/api/site-sync'].includes(url.pathname);
       if (!open && (!ctx.session || !safeEqual(ctx.body.csrf || '', ctx.session.csrf))) throw new HttpError(403, 'Oturum doğrulanamadı. Sayfayı yenileyip tekrar deneyin.');
       if (open) {
         const origin = req.headers.origin; const host = req.headers['x-forwarded-host'] || req.headers.host;
@@ -624,10 +624,12 @@ import { registerQuotes, migrateQuotes } from './ext-quotes.js';
 import { registerInvoices, migrateInvoices } from './ext-invoices.js';
 import { registerToday, portalActions } from './ext-today.js';
 import { registerWork, migrateWork } from './ext-work.js';
+import { registerSync, migrateSync } from './ext-sync.js';
 registerSites({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, STAFF });
 registerQuotes({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, audit, HttpError, int, nn });
 registerInvoices({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, audit, HttpError, int, nn });
 const todayPage = registerToday({ all, one, h, layout, need, STAFF });
+registerSync({ route, one, q, HttpError, safeEqual, SETUP_TOKEN });
 registerWork({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send });
 
-migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
+migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
