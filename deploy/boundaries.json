@@ -1,12 +1,13 @@
 {
  "server.js": [
-  "const fmtDate = (d) => d ? new Date(d).toLocaleDateString('tr-TR') : '—';",
-  "    'X-Frame-Options': 'DENY', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'same-origin',",
-  "  send(res, 200, layout(ctx, 'Panel', `<h1>Günaydın, ${h(ctx.user.name.split(' ')[0])}</h1>",
-  "<form class=\"row\" method=\"post\" action=\"/musteriler/${c.id}/proje\">${f}<label style=\"flex:1;min-width:240px\">Proje adı<input name=\"name\" required></label><label>Teslim<input type=\"date\" name=\"due_date\"></label><button class=\"gold\">Proje aç</button></form></section>",
-  "<form class=\"row\" method=\"post\" action=\"/projeler/${p.id}\">${f}<select name=\"status\" aria-label=\"Proje durumu\">${opts(PR_ST, p.status)}</select><input type=\"date\" name=\"due_date\" value=\"${p.due_date ? new Date(p.due_date).toISOString().slice(0, 10) : ''}\" aria-label=\"Teslim tarihi\"><button class=\"ghost\">Kaydet</button></form></div>",
-  "<div class=\"grid\"><div class=\"card\"><h3>Yönetici</h3><p class=\"muted\">Her şeyi görür; fiyatları, ekibi ve kayıtları yönetir.</p></div><div class=\"card\"><h3>Çalışan</h3><p class=\"muted\">Müşteri, proje, görev ve onayları yönetir; fiyatları ve ekibi göremez.</p></div>",
-  "const server = http.createServer(async (req, res) => {"
+  "  return x.length === y.length && crypto.timingSafeEqual(x, y);",
+  ".grow{flex:1;min-width:0;display:flex;flex-direction:column}",
+  "  const out = u ? `<form class=\"inline\" method=\"post\" action=\"/cikis\">${csrfField(ctx)}<button class=\"btn-out\">Çıkış</button></form>` : '';",
+  "  await q('INSERT INTO users (agency_id, email, name, role, pass_hash) VALUES ($1,lower($2),$3,$4,$5)', [ag.id, b.email.trim(), b.name.trim(), 'admin', hashPassword(b.password)]);",
+  "<section class=\"card\"><h2>Hizmetler</h2>",
+  "  const rows = await all(`SELECT p.*, c.name client, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id)::int total, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id AND t.status='bitti')::int done",
+  "  send(res, 200, layout(ctx, 'Onaylar', `<h1>Onaylar</h1><p class=\"muted\">Müşteriye onay isteği müşteri sayfasından gönderilir; müşteri portalından onaylar ya da düzeltme ister.</p>",
+  "  const prjs = await all(`SELECT p.*, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id)::int total, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id AND t.status='bitti')::int done FROM projects p WHERE p.client_id=$1 ORDER BY (p.status='tamamlandi'), p.created_at DESC`, [cid]);"
  ],
  "ext-sites.js": [
   "<div class=\"tbl\"><table>${head(false)}${rows.map(s => row(s, false)).join('') || '<tr><td colspan=\"6\" class=\"muted\">Site yok.</td></tr>'}</table></div>`, '/siteler'));"
@@ -25,5 +26,9 @@
   "    const filter = ['taslak', 'gonderildi', 'odendi', 'iptal', 'gecikti'].includes(ctx.url.searchParams.get('durum')) ? ctx.url.searchParams.get('durum') : '';",
   "<label>IBAN<input name=\"iban\" value=\"${h(s.iban)}\" placeholder=\"TR00 0000 0000 0000 0000 0000 00\" autocomplete=\"off\"></label><p class=\"muted\" style=\"margin:0\">Müşterinin portalında ve fatura sayfasında gösterilir.</p><div><button class=\"gold\">Kaydet</button></div></form>`, '/faturalar'));",
   "    if (x.status !== 'gonderildi') throw new HttpError(400, 'Yalnız ödeme bekleyen fatura ödendi yapılabilir.');"
+ ],
+ "ext-today.js": [
+  "export function buildPulse(d) {",
+  "export function registerToday({ all, one, h, layout, need, STAFF }) {"
  ]
 }

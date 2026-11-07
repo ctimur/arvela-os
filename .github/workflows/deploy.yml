@@ -23,7 +23,7 @@ jobs:
           for f in app/*.js; do node --check "$f"; done
           for f in app/*.json; do node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))"; done
       - name: Testler
-        run: for t in tests/*.test.mjs; do node "$t"; done
+        run: for t in tests/*.test.mjs; do node "$t" || exit 1; done
       - name: Parçalar sınıra sığıyor mu
         run: python3 deploy/rechunk.py
 

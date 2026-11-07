@@ -19,7 +19,7 @@ if not TOKEN:
     raise SystemExit('HOSTINGER_API_TOKEN boş: GitHub → Settings → Secrets and variables → Actions')
 VM = os.environ.get('VPS_ID', '1249062')
 # Projeler arvela-src-NN olarak sıralı numaralanır; sıra deploy/boundaries.json ile birlikte sabittir.
-ORDER = [('server.js', 8), ('package.json', 1), ('seed-catalog.json', 3), ('ext-sites.js', 2), ('import-sites.json', 1), ('ext-quotes.js', 3), ('ext-invoices.js', 4)]
+ORDER = [('server.js', 9), ('package.json', 1), ('seed-catalog.json', 3), ('ext-sites.js', 2), ('import-sites.json', 1), ('ext-quotes.js', 3), ('ext-invoices.js', 4), ('ext-today.js', 3)]
 
 
 def call(method, path, body=None):
@@ -74,12 +74,13 @@ def main():
     call('POST', f'/virtual-machines/{VM}/docker', {'project_name': 'arvela-os', 'content': compose, 'environment': env})
     print('arvela-os yeniden yayınlandı; sağlık kontrolü bekleniyor')
 
+    want = re.search(r"const VERSION = '([^']+)'", (ROOT / 'app' / 'server.js').read_text()).group(1)
     for _ in range(30):
         time.sleep(10)
         try:
             with urllib.request.urlopen(urllib.request.Request('https://os.arveladigital.com/healthz', headers={'User-Agent': 'arvela-os-deploy/1.0'}), timeout=10) as r:
                 data = json.loads(r.read())
-                if data.get('ok'):
+                if data.get('ok') and data.get('version') == want:
                     print('sağlıklı:', data); return
         except Exception as e:  # noqa: BLE001
             print('bekleniyor:', e)

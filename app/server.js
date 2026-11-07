@@ -4,7 +4,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import pg from 'pg';
 
-const VERSION = '0.4.0';
+const VERSION = '0.5.0';
 const PORT = Number(process.env.PORT || 3000);
 const SETUP_TOKEN = process.env.SETUP_TOKEN || '';
 const COOKIE_SECURE = process.env.COOKIE_SECURE !== '0';
@@ -108,50 +108,127 @@ const opts = (map, sel) => Object.entries(map).map(([k, v]) => `<option value="$
 const badge = (txt, tone = '') => `<span class="badge ${tone}">${h(txt)}</span>`;
 
 const CSS = `
-:root{--night:#0B0D12;--ink:#141A22;--graphite:#2A2F38;--gold:#B08433;--champ:#E2BE7A;--champ-l:#F3E6CC;--stone:#6B6558;--paper:#F7F4EE;--line:#E3DDD0}
-*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--paper);color:var(--ink);font-size:15px;line-height:1.5}
-a{color:#7A5A1E}a:hover{color:var(--ink)}h1,h2,h3{font-family:Poppins,Inter,sans-serif;font-weight:500;margin:0}
-h1{font-size:28px}h2{font-size:20px}h3{font-size:16px}
-.top{background:var(--night);color:#fff}.top .in{max-width:1200px;margin:0 auto;padding:14px 24px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between}
-.brand{font-family:Poppins,sans-serif;font-size:20px;font-weight:500;color:#fff;text-decoration:none;letter-spacing:.5px}.brand span{color:var(--champ);font-size:12px;letter-spacing:3px;margin-left:8px}
-.nav{display:flex;flex-wrap:wrap;gap:4px 18px}.nav a{color:#D5DAE2;text-decoration:none;font-size:14px;padding:6px 0}.nav a:hover,.nav a.on{color:var(--champ)}
-.who{display:flex;gap:12px;align-items:center;font-size:13px;color:#A3ABB8}
-main{max-width:1200px;margin:0 auto;padding:28px 24px 64px;display:flex;flex-direction:column;gap:24px}
+:root{--night:#0B0D12;--ink:#141A22;--graphite:#2A2F38;--gold:#B08433;--champ:#E2BE7A;--champ-l:#F3E6CC;--stone:#5E5849;--paper:#F7F4EE;--sand:#F2EEE5;--line:#E6E0D3;--line2:#ECE6DA;--ok:#5E9E6A;--bad:#D9663A}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--paper);color:var(--ink);font-size:15px;line-height:1.5}
+a{color:#7A5A1E}a:hover{color:var(--ink)}h1,h2,h3{font-family:Poppins,Inter,sans-serif;font-weight:500;margin:0;letter-spacing:-.2px}
+h1{font-size:34px;line-height:1.15}h2{font-size:21px}h3{font-size:17px}
+:focus-visible{outline:3px solid var(--champ);outline-offset:2px}
+.side{position:fixed;inset:0 auto 0 0;width:248px;background:var(--night);color:#fff;display:flex;flex-direction:column;padding:24px 16px;gap:24px;z-index:20}
+.brand{font-family:Poppins,sans-serif;font-size:21px;font-weight:500;color:#fff;text-decoration:none;letter-spacing:.4px;padding:0 10px}.brand span{color:var(--champ);font-size:11px;letter-spacing:3px;margin-left:8px}
+.side nav{display:flex;flex-direction:column;gap:2px;overflow-y:auto}
+.side nav a{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;color:#C9CED6;text-decoration:none;font-size:15px}
+.side nav a:hover{background:#1A1F27;color:#fff}.side nav a.on{background:var(--graphite);color:#fff;box-shadow:inset 3px 0 0 var(--champ)}
+.side .who{margin-top:auto;border-top:1px solid #1F242C;padding:16px 10px 0;display:flex;flex-direction:column;gap:10px;font-size:13px;color:#A3ABB8}
+.who strong{color:#fff;font-weight:600;font-size:14px}
+.btn-out{font:inherit;font-size:13px;background:transparent;color:#C9CED6;border:1px solid var(--graphite);border-radius:10px;padding:8px 12px;cursor:pointer;min-height:36px;align-self:flex-start}
+.shell{margin-left:248px;min-height:100vh}
+.mtop,.tabs{display:none}.shell.bare{margin-left:0}
+main{max-width:1240px;margin:0 auto;padding:36px 40px 72px;display:flex;flex-direction:column;gap:24px}
 .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
-.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:12px}
-.stat{font-family:Poppins,sans-serif;font-size:34px;font-weight:500}.muted{color:var(--stone);font-size:13px}
-table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
-th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:12px;letter-spacing:.5px;text-transform:uppercase;color:var(--stone);background:#FBF9F5}
-.tbl{overflow-x:auto}
-form.inline{display:inline}form.stack{display:flex;flex-direction:column;gap:10px}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:12px}
+a.card:hover{border-color:var(--champ)}
+.stat{font-family:Poppins,sans-serif;font-size:34px;font-weight:500;line-height:1.1}.muted{color:var(--stone);font-size:13px}
+.eyebrow{margin:0;font-size:12px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:#7A5A1E}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line2);vertical-align:top}tr:last-child td{border-bottom:0}
+th{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--stone);background:#FBF9F5;font-weight:600}
+.tbl{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:16px}
+.card .tbl table,.card>table{border:0;border-radius:0}
+form.inline{display:inline}form.stack{display:flex;flex-direction:column;gap:12px}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
-label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600}
-input,select,textarea{font:inherit;padding:9px 11px;border:1px solid #CFC8BA;border-radius:9px;background:#fff;min-height:40px}
-button,.btn{font:inherit;font-weight:600;border:0;border-radius:9px;padding:10px 16px;background:var(--ink);color:#fff;cursor:pointer;text-decoration:none;display:inline-block;min-height:40px}
-button.gold,.btn.gold{background:var(--champ);color:var(--night)}button.ghost{background:transparent;color:var(--ink);border:1px solid #CFC8BA}
-.badge{display:inline-block;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:#EEE9DF;color:#4A4538}
+label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600}
+input,select,textarea{font:inherit;padding:10px 12px;border:1px solid #D6CFC0;border-radius:12px;background:#fff;min-height:44px;color:var(--ink)}
+input:focus,select:focus,textarea:focus{border-color:var(--gold);outline:0;box-shadow:0 0 0 3px rgba(226,190,122,.35)}
+button,.btn{font:inherit;font-weight:600;border:0;border-radius:14px;padding:11px 18px;background:var(--ink);color:#fff;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px}
+button:hover,.btn:hover{background:var(--graphite);color:#fff}button:disabled{opacity:.45;cursor:not-allowed}
+button.gold,.btn.gold{background:var(--champ);color:var(--night)}button.gold:hover,.btn.gold:hover{background:#D8B06A;color:var(--night)}
+button.ghost,.btn.ghost,.btn.sec{background:#fff;color:var(--ink);border:1px solid #DDD6C7}button.ghost:hover,.btn.sec:hover{background:var(--sand);color:var(--ink)}
+.btn.pri{background:var(--ink);color:#fff}
+.badge{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.4px;padding:4px 10px;border-radius:999px;background:#EEE9DF;color:#4A4538;text-transform:uppercase}
 .badge.ok{background:#E3EFE4;color:#24502B}.badge.warn{background:#F7E9CF;color:#6B4A0F}.badge.bad{background:#F6E1DE;color:#7A2418}
-.flash{background:var(--champ-l);border:1px solid var(--champ);padding:12px 16px;border-radius:10px}
-.err{background:#F6E1DE;border:1px solid #E2B1A9;padding:12px 16px;border-radius:10px;color:#7A2418}
+.flash{background:var(--champ-l);border:1px solid var(--champ);padding:12px 16px;border-radius:14px}
+.err{background:#F6E1DE;border:1px solid #E2B1A9;padding:12px 16px;border-radius:14px;color:#7A2418}
 .auth{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--night);padding:24px}
-.auth .card{width:100%;max-width:400px}
+.auth .card{width:100%;max-width:420px;border-radius:24px;padding:32px}
 details summary{cursor:pointer;font-weight:600}
+.dot{width:10px;height:10px;border-radius:50%;background:#C9C1B0;flex:none}.dot.bad{background:var(--bad)}.dot.warn{background:var(--gold)}.dot.ok{background:var(--ok)}
+.grow{flex:1;min-width:0;display:flex;flex-direction:column}
+.today{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:28px;align-items:start}
+.today-main{display:flex;flex-direction:column;gap:20px;min-width:0}
+.today-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.today-head h1{font-size:40px;letter-spacing:-.5px}.lead{font-size:16px;margin:6px 0 0}
+.today-count{display:flex;flex-direction:column;align-items:flex-end}
+.act{background:#fff;border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:12px;box-shadow:0 1px 0 var(--line),0 10px 30px rgba(20,26,34,.06)}
+.act.hero{border:2px solid var(--champ)}.act.hero h2{font-size:28px;line-height:1.2}.act p{margin:0;color:#4A4538;font-size:16px;line-height:1.55;max-width:720px}
+.act-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.act-btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}.act-btns .btn{min-height:48px}
+.act-pair{display:grid;grid-template-columns:1fr 1fr;gap:20px}.act.mid h3{font-size:20px}
+.later{display:flex;flex-direction:column;gap:10px}
+.later-row,.pulse-row{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ink)}
+.later-row{background:#fff;border-radius:18px;padding:14px 16px;border:1px solid transparent}.later-row:hover{border-color:var(--champ);color:var(--ink)}
+.later-row strong{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chev{font-size:22px;color:#6B6558;line-height:1}
+.pulse{position:sticky;top:24px;border:0;border-radius:24px;gap:0}.pulse h2{margin-bottom:8px}
+.pulse-row{padding:12px 0;border-top:1px solid var(--line2);font-size:14px}.pulse-row:first-of-type{border-top:0}.pulse-row:hover .grow{color:#7A5A1E}
+.pulse-all{margin-top:12px;font-size:14px}
+@media (max-width:1100px){.today{grid-template-columns:1fr}.pulse{position:static}}
+@media (max-width:900px){
+.side{display:none}.shell{margin-left:0;padding-bottom:84px}
+.mtop{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px 4px;position:sticky;top:0;background:var(--paper);z-index:15}
+.mtop .brand{color:var(--ink);padding:0;font-size:19px}.mtop .who{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--stone)}
+.mtop .btn-out{color:var(--ink);border-color:#DDD6C7}
+.tabs{display:flex;position:fixed;left:0;right:0;bottom:0;height:72px;padding:6px 6px calc(6px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--line);justify-content:space-around;align-items:stretch;z-index:30;box-sizing:content-box}
+.tabs a,.tabs summary{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:500;color:#6B6558;text-decoration:none;border-radius:14px;list-style:none;min-width:56px}
+.tabs summary::-webkit-details-marker{display:none}
+.tabs a.on{color:var(--ink);font-weight:600}.tabs a.on .ti{background:var(--champ-l)}
+.ti{width:44px;height:28px;border-radius:999px;display:flex;align-items:center;justify-content:center}.ti svg{width:20px;height:20px}
+.tabs details{flex:1;display:flex}.tabs details summary{height:100%}
+.more{position:fixed;left:12px;right:12px;bottom:calc(92px + env(safe-area-inset-bottom));background:#fff;border-radius:20px;box-shadow:0 20px 50px rgba(11,13,18,.25);padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.more a{flex:none;flex-direction:row;justify-content:flex-start;font-size:15px;padding:14px;color:var(--ink);border-radius:12px}.more a:hover,.more a.on{background:var(--sand)}
+main{padding:12px 20px 32px;gap:18px}
+h1{font-size:28px}.today-head h1{font-size:30px}.today-count{display:none}
+.act{padding:20px;border-radius:22px}.act.hero h2{font-size:22px}.act p{font-size:15px}
+.act-pair{grid-template-columns:1fr}.act-btns .btn{flex:1 1 140px;min-height:52px}.act.hero .act-btns .btn:first-child{flex-basis:100%}
+.card{padding:18px;border-radius:18px}
+th,td{padding:10px 12px}
+.row>label,.row>input,.row>select{flex:1 1 160px}
+}
 `;
+
+const ICON = {
+  home: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.5 3.3-5.5 6.5-5.5s5.9 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5c2 .7 3.2 2.6 3.5 5.5"/>',
+  check: '<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8 12.5l3 3 5-6"/>',
+  doc: '<path d="M6 2.5h8l4.5 4.5V21a.5.5 0 0 1-.5.5H6a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5z"/><path d="M14 2.5V7h4.5M9 12h6M9 16h6"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>',
+  menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+};
+const icon = (k) => `<span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg></span>`;
 
 function layout(ctx, title, body, active = '') {
   const u = ctx.user;
   const links = !u ? [] :
     u.role === 'client' ? [['/portal', 'Portalım'], ['/portal/siteler', 'Sitelerim'], ['/portal/teklifler', 'Tekliflerim'], ['/portal/faturalar', 'Faturalarım']] :
     u.role === 'freelancer' ? [['/gorevler', 'Görevlerim']] :
-    [['/panel', 'Panel'], ['/musteriler', 'Müşteriler'], ['/siteler', 'Siteler'], ['/projeler', 'Projeler'], ['/gorevler', 'Görevlerim'], ['/onaylar', 'Onaylar'], ['/katalog', 'Katalog'], ...(u.role === 'admin' ? [['/teklifler', 'Teklifler'], ['/faturalar', 'Faturalar'], ['/ekip', 'Ekip'], ['/kayitlar', 'Kayıtlar']] : [])];
-  const nav = links.map(([href, t]) => `<a href="${href}"${active === href ? ' class="on" aria-current="page"' : ''}>${t}</a>`).join('');
+    [['/panel', 'Bugün'], ['/musteriler', 'Müşteriler'], ['/gorevler', 'Görevlerim'], ['/onaylar', 'Onaylar'], ['/siteler', 'Siteler'], ['/projeler', 'Projeler'], ['/katalog', 'Katalog'], ...(u.role === 'admin' ? [['/teklifler', 'Teklifler'], ['/faturalar', 'Faturalar'], ['/ekip', 'Ekip'], ['/kayitlar', 'Kayıtlar']] : [])];
+  const isOn = (href) => active === href;
+  const cur = (href) => isOn(href) ? ' class="on" aria-current="page"' : '';
+  const side = links.map(([href, t]) => `<a href="${href}"${cur(href)}>${t}</a>`).join('');
+  // mobil alt sekmeler: rol başına en sık kullanılan dördü, gerisi "Menü"de
+  const TAB = u?.role === 'client' ? [['/portal', 'home'], ['/portal/siteler', 'globe'], ['/portal/teklifler', 'doc'], ['/portal/faturalar', 'check']]
+    : u?.role === 'freelancer' ? [['/gorevler', 'check']]
+    : [['/panel', 'home'], ['/musteriler', 'users'], ['/gorevler', 'check'], [u?.role === 'admin' ? '/faturalar' : '/onaylar', 'doc']];
+  const tabSet = new Set(TAB.map(t => t[0]));
+  const label = Object.fromEntries(links);
+  const rest = links.filter(([href]) => !tabSet.has(href));
+  const tabs = u ? `<nav class="tabs" aria-label="Alt menü">${TAB.map(([href, ic]) => `<a href="${href}"${cur(href)}>${icon(ic)}${label[href]}</a>`).join('')}${rest.length ? `<details><summary>${icon('menu')}Menü</summary><div class="more">${rest.map(([href, t]) => `<a href="${href}"${cur(href)}>${t}</a>`).join('')}</div></details>` : ''}</nav>` : '';
+  const out = u ? `<form class="inline" method="post" action="/cikis">${csrfField(ctx)}<button class="btn-out">Çıkış</button></form>` : '';
   const flash = ctx.flash ? `<div class="flash" role="status">${h(ctx.flash)}</div>` : '';
-  return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#F7F4EE">
 <title>${h(title)} · Arvela OS</title><link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@500&display=swap" rel="stylesheet"><style>${CSS}</style></head><body>
-<header class="top"><div class="in"><a class="brand" href="/">Arvela<span>OS</span></a><nav class="nav" aria-label="Ana menü">${nav}</nav>
-${u ? `<div class="who">${h(u.name)} · ${ROLE[u.role]}<form class="inline" method="post" action="/cikis">${csrfField(ctx)}<button class="ghost" style="color:#fff;border-color:#2A2F38;padding:6px 12px;min-height:32px">Çıkış</button></form></div>` : ''}
-</div></header><main>${flash}${body}</main></body></html>`;
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500&display=swap" rel="stylesheet"><style>${CSS}</style></head><body>
+${u ? `<aside class="side"><a class="brand" href="/">Arvela<span>OS</span></a><nav aria-label="Ana menü">${side}</nav><div class="who"><span><strong>${h(u.name)}</strong><br>${ROLE[u.role]}</span>${out}</div></aside>` : ''}
+<div class="shell${u ? '' : ' bare'}">${u ? `<header class="mtop"><a class="brand" href="/">Arvela<span>OS</span></a><div class="who">${h(u.name.split(' ')[0])}${out}</div></header>` : ''}
+<main>${flash}${body}</main></div>${tabs}</body></html>`;
 }
 const csrfField = (ctx) => ctx.session ? `<input type="hidden" name="csrf" value="${h(ctx.session.csrf)}">` : '';
 
@@ -264,25 +341,7 @@ route('POST', '/cikis', async (ctx, res) => {
 });
 
 // ----- panel -----
-route('GET', '/panel', async (ctx, res) => {
-  need(ctx, ...STAFF); const a = ctx.user.agency_id;
-  const s = await one(`SELECT
-    (SELECT count(*) FROM clients WHERE agency_id=$1 AND status='active')::int clients,
-    (SELECT count(*) FROM clients WHERE agency_id=$1 AND status='lead')::int leads,
-    (SELECT count(*) FROM tasks WHERE agency_id=$1 AND status<>'bitti')::int tasks,
-    (SELECT count(*) FROM approvals WHERE agency_id=$1 AND status='bekliyor')::int approvals,
-    (SELECT count(*) FROM client_services WHERE agency_id=$1 AND status='aktif')::int services`, [a]);
-  const mine = await all(`SELECT t.*, p.name project, c.name client FROM tasks t JOIN projects p ON p.id=t.project_id JOIN clients c ON c.id=p.client_id
-    WHERE t.agency_id=$1 AND t.assignee_id=$2 AND t.status<>'bitti' ORDER BY t.due_date NULLS LAST LIMIT 8`, [a, ctx.user.id]);
-  const pend = await all(`SELECT ap.*, c.name client FROM approvals ap JOIN clients c ON c.id=ap.client_id WHERE ap.agency_id=$1 AND ap.status='bekliyor' ORDER BY ap.created_at LIMIT 8`, [a]);
-  const stat = (n, t, href) => `<a class="card" href="${href}" style="text-decoration:none;color:inherit"><span class="muted">${t}</span><span class="stat">${n}</span></a>`;
-  send(res, 200, layout(ctx, 'Panel', `<h1>Günaydın, ${h(ctx.user.name.split(' ')[0])}</h1>
-<div class="grid">${stat(s.clients, 'Aktif müşteri', '/musteriler')}${stat(s.leads, 'Aday', '/musteriler')}${stat(s.services, 'Aktif hizmet', '/musteriler')}${stat(s.tasks, 'Açık görev', '/projeler')}${stat(s.approvals, 'Onay bekleyen', '/onaylar')}</div>
-<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(340px,1fr))">
-<section class="card"><h2>Bana atanan görevler</h2>${mine.length ? `<div class="tbl"><table><tr><th>Görev</th><th>Müşteri</th><th>Teslim</th></tr>${mine.map(t => `<tr><td><a href="/projeler/${t.project_id}">${h(t.title)}</a></td><td>${h(t.client)}</td><td>${fmtDate(t.due_date)}</td></tr>`).join('')}</table></div>` : '<p class="muted">Açık görev yok.</p>'}</section>
-<section class="card"><h2>Müşteri onayı bekleyenler</h2>${pend.length ? `<div class="tbl"><table><tr><th>Konu</th><th>Müşteri</th><th>Gönderildi</th></tr>${pend.map(p => `<tr><td>${h(p.title)}</td><td><a href="/musteriler/${p.client_id}">${h(p.client)}</a></td><td>${fmtDate(p.created_at)}</td></tr>`).join('')}</table></div>` : '<p class="muted">Bekleyen onay yok.</p>'}</section>
-</div>`, '/panel'));
-});
+route('GET', '/panel', async (ctx, res) => todayPage(ctx, res, send));
 
 // ----- müşteriler -----
 route('GET', '/musteriler', async (ctx, res) => {
@@ -519,7 +578,9 @@ route('GET', '/portal', async (ctx, res) => {
   const aps = await all(`SELECT * FROM approvals WHERE client_id=$1 ORDER BY (status<>'bekliyor'), created_at DESC LIMIT 30`, [cid]);
   const prjs = await all(`SELECT p.*, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id)::int total, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id AND t.status='bitti')::int done FROM projects p WHERE p.client_id=$1 ORDER BY (p.status='tamamlandi'), p.created_at DESC`, [cid]);
   const f = csrfField(ctx); const pending = aps.filter(a => a.status === 'bekliyor');
-  send(res, 200, layout(ctx, 'Portalım', `<h1>${h(c?.name || 'Portal')}</h1>
+  const todo = await portalActions({ all, cid, h, fmtMoney });
+  send(res, 200, layout(ctx, 'Portalım', `<div><p class="eyebrow">Müşteri portalı</p><h1>${h(c?.name || 'Portal')}</h1></div>
+${todo}
 ${pending.length ? `<section class="card" style="border-color:var(--champ)"><h2>Onayınızı bekleyenler (${pending.length})</h2>${pending.map(a => `<div class="card" style="background:#FBF9F5"><h3>${h(a.title)}</h3>${a.body ? `<p style="white-space:pre-wrap;margin:0">${h(a.body)}</p>` : ''}
 <form class="stack" method="post" action="/portal/onay/${a.id}">${f}<label>Notunuz (isteğe bağlı)<textarea name="comment" rows="2"></textarea></label>
 <div class="row"><button class="gold" name="decision" value="onaylandi">Onayla</button><button class="ghost" name="decision" value="reddedildi">Düzeltme iste</button></div></form></div>`).join('')}</section>` : ''}
@@ -573,8 +634,10 @@ const server = http.createServer(async (req, res) => {
 import { registerSites, migrateSites } from './ext-sites.js';
 import { registerQuotes, migrateQuotes } from './ext-quotes.js';
 import { registerInvoices, migrateInvoices } from './ext-invoices.js';
+import { registerToday, portalActions } from './ext-today.js';
 registerSites({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, STAFF });
 registerQuotes({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, audit, HttpError, int, nn });
 registerInvoices({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, audit, HttpError, int, nn });
+const todayPage = registerToday({ all, one, h, layout, need, STAFF });
 
 migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
