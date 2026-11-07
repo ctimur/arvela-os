@@ -22,7 +22,7 @@ const a = buildActions(d, { admin: true, now });
 assert.equal(a[0].tag, 'Acil · Site');
 assert.equal(a[1].tag, 'Havale');
 assert.ok(a.find(x => x.tag === 'Gecikmiş fatura').actions[0][1].startsWith('https://wa.me/905321234567?text='));
-assert.equal(a.find(x => x.tag === 'Onay').actions[0][0], 'Müşteriyi aç'); // telefonsuz: WhatsApp yok
+assert.equal(a.find(x => x.tag === 'Onay').actions[0][0], 'Onayı aç'); // telefonsuz: WhatsApp yok
 assert.ok(a.some(x => x.title.includes('aylık faturaları')));
 const s = buildActions(d, { admin: false, now });
 assert.ok(!s.some(x => ['Havale', 'Gecikmiş fatura', 'Teklif · taslak', 'Fatura'].includes(x.tag)), 'çalışan para işlerini görmez');

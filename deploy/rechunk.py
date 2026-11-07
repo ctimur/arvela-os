@@ -11,7 +11,7 @@ import hashlib, json, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 APP, OUT = ROOT / 'app', ROOT / 'chunks'
-FILES = ['server.js', 'package.json', 'seed-catalog.json', 'ext-sites.js', 'import-sites.json', 'ext-quotes.js', 'ext-invoices.js', 'ext-today.js']
+FILES = ['server.js', 'package.json', 'seed-catalog.json', 'ext-sites.js', 'import-sites.json', 'ext-quotes.js', 'ext-invoices.js', 'ext-today.js', 'ext-work.js']
 LIMIT = 8192
 
 

@@ -2,12 +2,12 @@
  "server.js": [
   "  return x.length === y.length && crypto.timingSafeEqual(x, y);",
   ".grow{flex:1;min-width:0;display:flex;flex-direction:column}",
-  "  const out = u ? `<form class=\"inline\" method=\"post\" action=\"/cikis\">${csrfField(ctx)}<button class=\"btn-out\">Çıkış</button></form>` : '';",
-  "  await q('INSERT INTO users (agency_id, email, name, role, pass_hash) VALUES ($1,lower($2),$3,$4,$5)', [ag.id, b.email.trim(), b.name.trim(), 'admin', hashPassword(b.password)]);",
-  "${svcs.length ? `<div class=\"tbl\"><table><tr><th>Modül</th><th>Faturalama</th><th>Durum</th><th>Başlangıç</th><th></th></tr>${svcs.map(s => `<tr><td>${h(s.code)} · ${h(s.name)}</td><td>${h(s.billing)}</td>",
-  "  const rows = await all(`SELECT p.*, c.name client, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id)::int total, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id AND t.status='bitti')::int done",
-  "  send(res, 200, layout(ctx, 'Onaylar', `<h1>Onaylar</h1><p class=\"muted\">Müşteriye onay isteği müşteri sayfasından gönderilir; müşteri portalından onaylar ya da düzeltme ister.</p>",
-  "  const prjs = await all(`SELECT p.*, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id)::int total, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id AND t.status='bitti')::int done FROM projects p WHERE p.client_id=$1 ORDER BY (p.status='tamamlandi'), p.created_at DESC`, [cid]);"
+  "@media (max-width:900px){",
+  "  return `<!doctype html><html lang=\"tr\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>${h(title)} · Arvela OS</title>",
+  "  await q(`INSERT INTO sessions (id, user_id, csrf, expires_at) VALUES ($1,$2,$3, now() + interval '${SESSION_DAYS} days')`, [sid, u.id, csrf]);",
+  "${svcs.length ? svcs.map(s => `<div class=\"svc\"><div class=\"svc-h\"><span class=\"grow\"><strong>${h(s.code)} · ${h(s.name)}</strong><span class=\"muted\">${h(s.billing || '')}${s.start_date ? ' · başlangıç ' + fmtDate(s.start_date) : ''}${s.end_date ? ' · bitiş ' + fmtDate(s.end_date) : ''}${s.notes ? ' · ' + h(s.notes) : ''}</span></span>",
+  "  await audit(ctx, 'approval.request', { id: r.id, client: c.id }); redirect(res, `/musteriler/${c.id}`);",
+  "  send(res, 200, layout(ctx, 'Portalım', `<div><p class=\"eyebrow\">Müşteri portalı</p><h1>${h(c?.name || 'Portal')}</h1></div>"
  ],
  "ext-sites.js": [
   "<div class=\"tbl\"><table>${head(false)}${rows.map(s => row(s, false)).join('') || '<tr><td colspan=\"6\" class=\"muted\">Site yok.</td></tr>'}</table></div>`, '/siteler'));"
@@ -30,5 +30,12 @@
  "ext-today.js": [
   "export function buildPulse(d) {",
   "export function registerToday({ all, one, h, layout, need, STAFF }) {"
+ ],
+ "ext-work.js": [
+  "<div class=\"tbl\"><table><tr><th>Proje</th><th>Müşteri</th><th>Durum</th><th>İlerleme</th><th>Teslim</th></tr>",
+  "      [nn(b.name) || p.name, PR_ST[b.status] ? b.status : p.status, nn(b.due_date), nn(b.description), cid, p.id]);",
+  "    await audit(ctx, 'task.status', { id: t.id, status: st }); redirect(res, backTo(ctx, t));",
+  "    send(res, 200, layout(ctx, x.title, `<nav class=\"crumb\"><a href=\"/onaylar\">Onaylar</a> › <a href=\"/musteriler/${x.client_id}\">${h(x.client)}</a>${x.project_id ? ` › <a href=\"/projeler/${x.project_id}\">${h(x.project)}</a>` : ''}</nav>",
+  "        all(`SELECT t.id, t.title, p.name project FROM tasks t JOIN projects p ON p.id=t.project_id WHERE t.agency_id=$1 AND (t.title ILIKE $2 OR t.description ILIKE $2) ORDER BY t.id DESC LIMIT 20`, [a, L]),"
  ]
 }

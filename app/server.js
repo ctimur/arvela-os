@@ -4,7 +4,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import pg from 'pg';
 
-const VERSION = '0.5.0';
+const VERSION = '0.6.0';
 const PORT = Number(process.env.PORT || 3000);
 const SETUP_TOKEN = process.env.SETUP_TOKEN || '';
 const COOKIE_SECURE = process.env.COOKIE_SECURE !== '0';
@@ -170,6 +170,44 @@ details summary{cursor:pointer;font-weight:600}
 .pulse{position:sticky;top:24px;border:0;border-radius:24px;gap:0}.pulse h2{margin-bottom:8px}
 .pulse-row{padding:12px 0;border-top:1px solid var(--line2);font-size:14px}.pulse-row:first-of-type{border-top:0}.pulse-row:hover .grow{color:#7A5A1E}
 .pulse-all{margin-top:12px;font-size:14px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px 16px;flex-wrap:wrap}
+.chips{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-top:8px;font-size:14px}
+.crumb{font-size:14px;color:var(--stone);display:flex;flex-wrap:wrap;gap:6px}.crumb a{text-decoration:none}
+.jump{display:flex;gap:6px;flex-wrap:wrap}.jump a{padding:8px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);text-decoration:none;color:var(--ink);font-size:14px}.jump a:hover{border-color:var(--champ)}
+.desc{margin:0;white-space:pre-wrap;color:#4A4538;max-width:860px}
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.filters input[type=search]{flex:1 1 260px}
+.prog{height:6px;border-radius:999px;background:#E3DCCD;overflow:hidden;min-width:80px}.prog span{display:block;height:100%;background:var(--gold);border-radius:999px}.prog.big{height:8px}
+.late{color:#A33A1F;font-weight:600}
+.kanban{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:start}
+.kcol{background:var(--sand);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:120px}.kcol h3{font-size:14px;font-family:Inter,sans-serif;font-weight:600;padding:4px 4px 0}
+.kcard{background:#fff;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;border:1px solid transparent}.kcard:hover{border-color:var(--champ)}.kcard.is-late{border-left:3px solid var(--bad)}
+.kt{color:var(--ink);text-decoration:none;font-weight:600;line-height:1.35}.kmeta{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12px;color:var(--stone)}.kempty{padding:4px}
+.inline-status{display:flex;gap:6px;align-items:center}.inline-status select{min-height:36px;padding:6px 10px;font-size:13px;border-radius:10px}.inline-status button{min-height:36px;padding:6px 12px;font-size:13px}
+.auto-hide{display:none}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}.two.wide-first{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
+.line{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line2);text-decoration:none;color:var(--ink)}.line:first-of-type{border-top:0}.line:hover strong{color:#7A5A1E}
+.note{border-top:1px solid var(--line2);padding-top:10px}.note:first-of-type{border-top:0;padding-top:0}.note-h{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:14px}.note p{margin:4px 0 0;white-space:pre-wrap}
+.svc{border-top:1px solid var(--line2);padding-top:12px}.svc:first-of-type{border-top:0;padding-top:0}.svc-h{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.svc details{margin-top:6px}.svc details summary{font-size:13px;color:#7A5A1E}.svc details form{margin-top:10px}
+details.danger summary{color:#7A2418;font-size:14px}details.danger form{margin-top:10px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+button.danger{background:#fff;color:#7A2418;border:1px solid #E2B1A9}button.danger:hover{background:#F6E1DE;color:#7A2418}
+label.wide{flex:2 1 260px}
+.side-search{display:flex;padding:0 4px}.side-search input{width:100%;background:#1A1F27;border:1px solid #262B34;color:#fff;min-height:40px;border-radius:10px;font-size:14px}.side-search input::placeholder{color:#7C8492}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;border:1px solid #DDD6C7;background:#fff;color:var(--ink)}.icon-btn svg{width:20px;height:20px}
+tr.is-late td:first-child{box-shadow:inset 3px 0 0 var(--bad)}
+@media (max-width:1100px){.kanban{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:900px){.two,.two.wide-first{grid-template-columns:1fr}}
+@media (max-width:700px){
+.kanban{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -20px;padding:0 20px 6px;gap:12px}.kcol{flex:0 0 82%;scroll-snap-align:start}
+table.rs,table.rs tbody,table.rs tr,table.rs td{display:block;width:100%}table.rs{border:0;background:transparent}
+table.rs tr:first-child{display:none}table.rs tr{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px}
+table.rs td{border:0;padding:4px 0;display:flex;gap:12px;justify-content:space-between;align-items:center;text-align:right}
+table.rs td[data-label]::before{content:attr(data-label);font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--stone);text-align:left;flex:none}
+table.rs td:first-child{display:block;text-align:left;font-size:16px;padding-bottom:8px}table.rs td:first-child::before{display:none}
+table.rs td[colspan]{display:block;text-align:left}table.rs td[colspan]::before{display:none}
+table.rs tr.is-late{border-left:3px solid var(--bad)}tr.is-late td:first-child{box-shadow:none}
+.tbl{overflow:visible}.filters select,.filters button{flex:1 1 auto}
+.svc-h .inline-status{width:100%}.svc-h .inline-status select{flex:1}
+}
 @media (max-width:1100px){.today{grid-template-columns:1fr}.pulse{position:static}}
 @media (max-width:900px){
 .side{display:none}.shell{margin-left:0;padding-bottom:84px}
@@ -201,6 +239,7 @@ const ICON = {
   doc: '<path d="M6 2.5h8l4.5 4.5V21a.5.5 0 0 1-.5.5H6a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5z"/><path d="M14 2.5V7h4.5M9 12h6M9 16h6"/>',
   globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>',
   menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
 };
 const icon = (k) => `<span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg></span>`;
 
@@ -210,6 +249,7 @@ function layout(ctx, title, body, active = '') {
     u.role === 'client' ? [['/portal', 'Portalım'], ['/portal/siteler', 'Sitelerim'], ['/portal/teklifler', 'Tekliflerim'], ['/portal/faturalar', 'Faturalarım']] :
     u.role === 'freelancer' ? [['/gorevler', 'Görevlerim']] :
     [['/panel', 'Bugün'], ['/musteriler', 'Müşteriler'], ['/gorevler', 'Görevlerim'], ['/onaylar', 'Onaylar'], ['/siteler', 'Siteler'], ['/projeler', 'Projeler'], ['/katalog', 'Katalog'], ...(u.role === 'admin' ? [['/teklifler', 'Teklifler'], ['/faturalar', 'Faturalar'], ['/ekip', 'Ekip'], ['/kayitlar', 'Kayıtlar']] : [])];
+  const staffish = u && (u.role === 'admin' || u.role === 'staff');
   const isOn = (href) => active === href;
   const cur = (href) => isOn(href) ? ' class="on" aria-current="page"' : '';
   const side = links.map(([href, t]) => `<a href="${href}"${cur(href)}>${t}</a>`).join('');
@@ -226,9 +266,9 @@ function layout(ctx, title, body, active = '') {
   return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#F7F4EE">
 <title>${h(title)} · Arvela OS</title><link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500&display=swap" rel="stylesheet"><style>${CSS}</style></head><body>
-${u ? `<aside class="side"><a class="brand" href="/">Arvela<span>OS</span></a><nav aria-label="Ana menü">${side}</nav><div class="who"><span><strong>${h(u.name)}</strong><br>${ROLE[u.role]}</span>${out}</div></aside>` : ''}
-<div class="shell${u ? '' : ' bare'}">${u ? `<header class="mtop"><a class="brand" href="/">Arvela<span>OS</span></a><div class="who">${h(u.name.split(' ')[0])}${out}</div></header>` : ''}
-<main>${flash}${body}</main></div>${tabs}</body></html>`;
+${u ? `<aside class="side"><a class="brand" href="/">Arvela<span>OS</span></a>${staffish ? `<form class="side-search" method="get" action="/ara" role="search"><input type="search" name="q" placeholder="Ara…" aria-label="Ara"></form>` : ''}<nav aria-label="Ana menü">${side}</nav><div class="who"><span><strong>${h(u.name)}</strong><br>${ROLE[u.role]}</span>${out}</div></aside>` : ''}
+<div class="shell${u ? '' : ' bare'}">${u ? `<header class="mtop"><a class="brand" href="/">Arvela<span>OS</span></a><div class="who">${staffish ? `<a class="icon-btn" href="/ara" aria-label="Ara">${icon('search').replace('class="ti"', 'class="ti" style="width:auto;height:auto"')}</a>` : ''}${out}</div></header>` : ''}
+<main>${flash}${body}</main></div>${tabs}<script src="/app.js" defer></script></body></html>`;
 }
 const csrfField = (ctx) => ctx.session ? `<input type="hidden" name="csrf" value="${h(ctx.session.csrf)}">` : '';
 
@@ -347,15 +387,19 @@ route('GET', '/panel', async (ctx, res) => todayPage(ctx, res, send));
 route('GET', '/musteriler', async (ctx, res) => {
   need(ctx, ...STAFF);
   const rows = await all(`SELECT c.*, (SELECT count(*) FROM client_services cs WHERE cs.client_id=c.id AND cs.status='aktif')::int svc,
-    (SELECT count(*) FROM projects p WHERE p.client_id=c.id AND p.status<>'tamamlandi')::int prj FROM clients c WHERE c.agency_id=$1 ORDER BY c.status, c.name`, [ctx.user.agency_id]);
+    (SELECT count(*) FROM projects p WHERE p.client_id=c.id AND p.status<>'tamamlandi')::int prj FROM clients c WHERE c.agency_id=$1
+    AND ($2 = '' OR c.status = $2) AND ($3 = '' OR c.name ILIKE $4 OR c.contact_name ILIKE $4 OR c.sector ILIKE $4 OR c.phone ILIKE $4) ORDER BY c.status, c.name`,
+    [ctx.user.agency_id, CLIENT_ST[ctx.url.searchParams.get('durum')] ? ctx.url.searchParams.get('durum') : '', (ctx.url.searchParams.get('q') || '').trim(), '%' + (ctx.url.searchParams.get('q') || '').trim().slice(0, 80).replace(/[\\%_]/g, (x) => '\\' + x) + '%']);
+  const sq = ctx.url.searchParams.get('q') || ''; const sd = ctx.url.searchParams.get('durum') || '';
   const tone = { active: 'ok', lead: 'warn', paused: '', churned: 'bad' };
-  send(res, 200, layout(ctx, 'Müşteriler', `<div class="row" style="justify-content:space-between"><h1>Müşteriler</h1></div>
+  send(res, 200, layout(ctx, 'Müşteriler', `<div class="page-head"><h1>Müşteriler</h1></div>
 <details class="card"><summary>Yeni müşteri ekle</summary><form class="stack" method="post" action="/musteriler">${csrfField(ctx)}
 <div class="row"><label>Firma adı<input name="name" required></label><label>Sektör<input name="sector" placeholder="Emlak, e-ticaret…"></label><label>Durum<select name="status">${opts(CLIENT_ST, 'lead')}</select></label></div>
 <div class="row"><label>Yetkili<input name="contact_name"></label><label>Telefon<input name="phone"></label><label>E-posta<input type="email" name="email"></label></div>
 <label>Not<textarea name="notes" rows="2"></textarea></label><div><button class="gold">Kaydet</button></div></form></details>
+<form class="filters" method="get" action="/musteriler"><input type="search" name="q" value="${h(sq)}" placeholder="Firma, yetkili, sektör ya da telefon" aria-label="Ara"><select name="durum" aria-label="Durum" data-auto><option value="">Tüm durumlar</option>${opts(CLIENT_ST, sd)}</select><button class="ghost">Filtrele</button></form>
 <div class="tbl"><table><tr><th>Firma</th><th>Sektör</th><th>Durum</th><th>Aktif hizmet</th><th>Açık proje</th><th>Yetkili</th></tr>
-${rows.map(c => `<tr><td><a href="/musteriler/${c.id}">${h(c.name)}</a></td><td>${h(c.sector || '—')}</td><td>${badge(CLIENT_ST[c.status], tone[c.status])}</td><td>${c.svc}</td><td>${c.prj}</td><td>${h(c.contact_name || '—')}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">Henüz müşteri yok.</td></tr>'}
+${rows.map(c => `<tr><td><a href="/musteriler/${c.id}"><strong>${h(c.name)}</strong></a></td><td>${h(c.sector || '—')}</td><td>${badge(CLIENT_ST[c.status], tone[c.status])}</td><td>${c.svc}</td><td>${c.prj}</td><td>${h(c.contact_name || '—')}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">Bu filtreye uyan müşteri yok.</td></tr>'}
 </table></div>`, '/musteriler'));
 });
 route('POST', '/musteriler', async (ctx, res) => {
@@ -378,25 +422,29 @@ route('GET', '/musteriler/:id', async (ctx, res, p) => {
   const cu = await all(`SELECT id, name, email, last_login, active FROM users WHERE client_id=$1 AND role='client'`, [c.id]);
   const catalog = await all(`SELECT s.id, s.code, s.name, sc.name cat FROM services s JOIN service_categories sc ON sc.id=s.category_id WHERE s.agency_id=$1 AND s.active ORDER BY sc.sort, s.code`, [a]);
   const f = csrfField(ctx);
-  send(res, 200, layout(ctx, c.name, `<div><a href="/musteriler">← Müşteriler</a></div>
-<div class="row" style="justify-content:space-between"><h1>${h(c.name)}</h1>${badge(CLIENT_ST[c.status])}</div>
+  send(res, 200, layout(ctx, c.name, `<nav class="crumb"><a href="/musteriler">Müşteriler</a></nav>
+<div class="page-head"><div><h1>${h(c.name)}</h1><div class="chips">${badge(CLIENT_ST[c.status])}${c.contact_name ? `<span class="muted">${h(c.contact_name)}</span>` : ''}${c.phone ? `<a href="tel:${h(c.phone.replace(/[^+\d]/g, ''))}">${h(c.phone)}</a>` : ''}${c.email ? `<a href="mailto:${h(c.email)}">${h(c.email)}</a>` : ''}</div></div>
+<nav class="jump" aria-label="Sayfa içi"><a href="#hizmetler">Hizmetler</a><a href="#projeler">Projeler</a><a href="#onaylar">Onaylar</a><a href="/musteriler/${c.id}/siteler">Siteler</a></nav></div>
 <details class="card"><summary>Firma bilgileri</summary><form class="stack" method="post" action="/musteriler/${c.id}">${f}
 <div class="row"><label>Firma adı<input name="name" value="${h(c.name)}" required></label><label>Sektör<input name="sector" value="${h(c.sector)}"></label><label>Durum<select name="status">${opts(CLIENT_ST, c.status)}</select></label></div>
 <div class="row"><label>Yetkili<input name="contact_name" value="${h(c.contact_name)}"></label><label>Telefon<input name="phone" value="${h(c.phone)}"></label><label>E-posta<input type="email" name="email" value="${h(c.email)}"></label></div>
 <label>Not<textarea name="notes" rows="3">${h(c.notes)}</textarea></label><div><button>Güncelle</button></div></form></details>
 
-<section class="card"><h2>Hizmetler</h2>
-${svcs.length ? `<div class="tbl"><table><tr><th>Modül</th><th>Faturalama</th><th>Durum</th><th>Başlangıç</th><th></th></tr>${svcs.map(s => `<tr><td>${h(s.code)} · ${h(s.name)}</td><td>${h(s.billing)}</td>
-<td><form class="row" method="post" action="/hizmet/${s.id}">${f}<select name="status" aria-label="Durum">${opts(CS_ST, s.status)}</select><button class="ghost">Kaydet</button></form></td><td>${fmtDate(s.start_date)}</td><td></td></tr>`).join('')}</table></div>` : '<p class="muted">Bu müşteriye henüz hizmet eklenmedi.</p>'}
+<section class="card" id="hizmetler"><h2>Hizmetler</h2>
+${svcs.length ? svcs.map(s => `<div class="svc"><div class="svc-h"><span class="grow"><strong>${h(s.code)} · ${h(s.name)}</strong><span class="muted">${h(s.billing || '')}${s.start_date ? ' · başlangıç ' + fmtDate(s.start_date) : ''}${s.end_date ? ' · bitiş ' + fmtDate(s.end_date) : ''}${s.notes ? ' · ' + h(s.notes) : ''}</span></span>
+<form class="inline-status" method="post" action="/hizmet/${s.id}">${f}<select name="status" data-auto aria-label="Durum">${opts(CS_ST, s.status)}</select><button class="ghost">Kaydet</button></form></div>
+<details><summary>Düzenle</summary><form class="stack" method="post" action="/hizmet/${s.id}">${f}<div class="row"><label>Durum<select name="status">${opts(CS_ST, s.status)}</select></label><label>Başlangıç<input type="date" name="start_date" value="${s.start_date ? new Date(s.start_date).toISOString().slice(0, 10) : ''}"></label><label>Bitiş<input type="date" name="end_date" value="${s.end_date ? new Date(s.end_date).toISOString().slice(0, 10) : ''}"></label></div>
+<label>Not<input name="notes" value="${h(s.notes)}" placeholder="Paket ayrıntısı, özel fiyat, kapsam"></label><div class="row"><button>Kaydet</button></div></form>
+${ctx.user.role === 'admin' ? `<form method="post" action="/hizmet/${s.id}/sil" data-confirm="Bu hizmet kaydı silinsin mi?">${f}<button class="danger">Kaydı sil</button></form>` : ''}</details></div>`).join('') : '<p class="muted">Bu müşteriye henüz hizmet eklenmedi.</p>'}
 <form class="row" method="post" action="/musteriler/${c.id}/hizmet">${f}<label style="flex:1;min-width:260px">Katalogdan modül<select name="service_id" required>${catalog.map(s => `<option value="${s.id}">${h(s.cat)} — ${h(s.code)} ${h(s.name)}</option>`).join('')}</select></label>
 <label>Durum<select name="status">${opts(CS_ST, 'teklif')}</select></label><label>Başlangıç<input type="date" name="start_date"></label><button class="gold">Ekle</button></form></section>
 
-<section class="card"><h2>Projeler</h2>
+<section class="card" id="projeler"><h2>Projeler</h2>
 ${prjs.length ? `<div class="tbl"><table><tr><th>Proje</th><th>Durum</th><th>İlerleme</th><th>Teslim</th></tr>${prjs.map(p => `<tr><td><a href="/projeler/${p.id}">${h(p.name)}</a></td><td>${badge(PR_ST[p.status])}</td><td>${p.done}/${p.total}</td><td>${fmtDate(p.due_date)}</td></tr>`).join('')}</table></div>` : '<p class="muted">Proje yok.</p>'}
 <form class="row" method="post" action="/musteriler/${c.id}/proje">${f}<label style="flex:1;min-width:240px">Proje adı<input name="name" required></label><label>Teslim<input type="date" name="due_date"></label><button class="gold">Proje aç</button></form></section>
 
-<section class="card"><h2>Onaylar</h2>
-${aps.length ? `<div class="tbl"><table><tr><th>Konu</th><th>Durum</th><th>Müşteri notu</th><th>Tarih</th></tr>${aps.map(x => `<tr><td>${h(x.title)}</td><td>${badge(AP_ST[x.status], x.status === 'onaylandi' ? 'ok' : x.status === 'reddedildi' ? 'bad' : 'warn')}</td><td>${h(x.comment || '—')}</td><td>${fmtDate(x.decided_at || x.created_at)}</td></tr>`).join('')}</table></div>` : '<p class="muted">Henüz onay istenmedi.</p>'}
+<section class="card" id="onaylar"><h2>Onaylar</h2>
+${aps.length ? `<div class="tbl"><table><tr><th>Konu</th><th>Durum</th><th>Müşteri notu</th><th>Tarih</th></tr>${aps.map(x => `<tr><td><a href="/onaylar/${x.id}">${h(x.title)}</a></td><td>${badge(AP_ST[x.status], x.status === 'onaylandi' ? 'ok' : x.status === 'reddedildi' ? 'bad' : 'warn')}</td><td>${h(x.comment || '—')}</td><td>${fmtDate(x.decided_at || x.created_at)}</td></tr>`).join('')}</table></div>` : '<p class="muted">Henüz onay istenmedi.</p>'}
 <form class="stack" method="post" action="/musteriler/${c.id}/onay">${f}<div class="row"><label style="flex:1;min-width:240px">Konu<input name="title" required placeholder="Kasım gönderi takvimi"></label>
 <label>Proje<select name="project_id"><option value="">—</option>${prjs.map(p => `<option value="${p.id}">${h(p.name)}</option>`).join('')}</select></label></div>
 <label>Açıklama ya da bağlantı<textarea name="body" rows="2"></textarea></label><div><button class="gold">Onaya gönder</button></div></form></section>
@@ -420,14 +468,6 @@ route('POST', '/musteriler/:id/hizmet', async (ctx, res, p) => {
     [ctx.user.agency_id, c.id, s.id, CS_ST[ctx.body.status] ? ctx.body.status : 'teklif', nn(ctx.body.start_date)]);
   await audit(ctx, 'client_service.add', { client: c.id, service: s.code }); redirect(res, `/musteriler/${c.id}`);
 });
-route('POST', '/hizmet/:id', async (ctx, res, p) => {
-  need(ctx, ...STAFF);
-  const cs = await one('SELECT * FROM client_services WHERE id=$1 AND agency_id=$2', [int(p.id), ctx.user.agency_id]);
-  if (!cs) throw new HttpError(404, 'Kayıt bulunamadı.');
-  const st = CS_ST[ctx.body.status] ? ctx.body.status : cs.status;
-  await q(`UPDATE client_services SET status=$1, start_date=COALESCE(start_date, CASE WHEN $1='aktif' THEN CURRENT_DATE END) WHERE id=$2`, [st, cs.id]);
-  await audit(ctx, 'client_service.status', { id: cs.id, status: st }); redirect(res, `/musteriler/${cs.client_id}`);
-});
 route('POST', '/musteriler/:id/proje', async (ctx, res, p) => {
   need(ctx, ...STAFF); const c = await clientFor(ctx, int(p.id));
   if (!nn(ctx.body.name)) throw new HttpError(400, 'Proje adı gerekli.');
@@ -444,77 +484,7 @@ route('POST', '/musteriler/:id/onay', async (ctx, res, p) => {
   await audit(ctx, 'approval.request', { id: r.id, client: c.id }); redirect(res, `/musteriler/${c.id}`);
 });
 
-// ----- projeler ve görevler -----
-route('GET', '/projeler', async (ctx, res) => {
-  need(ctx, ...STAFF);
-  const rows = await all(`SELECT p.*, c.name client, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id)::int total, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id AND t.status='bitti')::int done
-    FROM projects p JOIN clients c ON c.id=p.client_id WHERE p.agency_id=$1 ORDER BY (p.status='tamamlandi'), p.due_date NULLS LAST`, [ctx.user.agency_id]);
-  send(res, 200, layout(ctx, 'Projeler', `<h1>Projeler</h1><p class="muted">Yeni proje müşteri sayfasından açılır.</p>
-<div class="tbl"><table><tr><th>Proje</th><th>Müşteri</th><th>Durum</th><th>İlerleme</th><th>Teslim</th></tr>
-${rows.map(p => `<tr><td><a href="/projeler/${p.id}">${h(p.name)}</a></td><td>${h(p.client)}</td><td>${badge(PR_ST[p.status])}</td><td>${p.done}/${p.total}</td><td>${fmtDate(p.due_date)}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">Proje yok.</td></tr>'}</table></div>`, '/projeler'));
-});
-async function projectFor(ctx, id) {
-  const p = await one('SELECT p.*, c.name client FROM projects p JOIN clients c ON c.id=p.client_id WHERE p.id=$1 AND p.agency_id=$2', [id, ctx.user.agency_id]);
-  if (!p) throw new HttpError(404, 'Proje bulunamadı.'); return p;
-}
-route('GET', '/projeler/:id', async (ctx, res, prm) => {
-  need(ctx, ...STAFF); const p = await projectFor(ctx, int(prm.id));
-  const tasks = await all('SELECT t.*, u.name assignee FROM tasks t LEFT JOIN users u ON u.id=t.assignee_id WHERE t.project_id=$1 ORDER BY (t.status=\'bitti\'), t.due_date NULLS LAST, t.id', [p.id]);
-  const people = await all(`SELECT id, name, role FROM users WHERE agency_id=$1 AND active AND role IN ('admin','staff','freelancer') ORDER BY name`, [ctx.user.agency_id]);
-  const f = csrfField(ctx);
-  send(res, 200, layout(ctx, p.name, `<div><a href="/musteriler/${p.client_id}">← ${h(p.client)}</a></div>
-<div class="row" style="justify-content:space-between"><h1>${h(p.name)}</h1>
-<form class="row" method="post" action="/projeler/${p.id}">${f}<select name="status" aria-label="Proje durumu">${opts(PR_ST, p.status)}</select><input type="date" name="due_date" value="${p.due_date ? new Date(p.due_date).toISOString().slice(0, 10) : ''}" aria-label="Teslim tarihi"><button class="ghost">Kaydet</button></form></div>
-<section class="card"><h2>Görevler</h2>
-${tasks.length ? `<div class="tbl"><table><tr><th>Görev</th><th>Sorumlu</th><th>Teslim</th><th>Durum</th></tr>${tasks.map(t => `<tr><td>${h(t.title)}</td><td>${h(t.assignee || '—')}</td><td>${fmtDate(t.due_date)}</td>
-<td><form class="row" method="post" action="/gorev/${t.id}">${f}<select name="status" aria-label="Görev durumu">${opts(TK_ST, t.status)}</select><button class="ghost">Kaydet</button></form></td></tr>`).join('')}</table></div>` : '<p class="muted">Henüz görev yok.</p>'}
-<form class="row" method="post" action="/projeler/${p.id}/gorev">${f}<label style="flex:1;min-width:240px">Görev<input name="title" required></label>
-<label>Sorumlu<select name="assignee_id"><option value="">—</option>${people.map(u => `<option value="${u.id}">${h(u.name)} (${ROLE[u.role]})</option>`).join('')}</select></label>
-<label>Teslim<input type="date" name="due_date"></label><button class="gold">Ekle</button></form></section>`, '/projeler'));
-});
-route('POST', '/projeler/:id', async (ctx, res, prm) => {
-  need(ctx, ...STAFF); const p = await projectFor(ctx, int(prm.id));
-  await q('UPDATE projects SET status=$1, due_date=$2 WHERE id=$3', [PR_ST[ctx.body.status] ? ctx.body.status : p.status, nn(ctx.body.due_date), p.id]);
-  await audit(ctx, 'project.update', { id: p.id }); redirect(res, `/projeler/${p.id}`);
-});
-route('POST', '/projeler/:id/gorev', async (ctx, res, prm) => {
-  need(ctx, ...STAFF); const p = await projectFor(ctx, int(prm.id));
-  if (!nn(ctx.body.title)) throw new HttpError(400, 'Görev adı gerekli.');
-  let aid = int(ctx.body.assignee_id);
-  if (aid && !(await one(`SELECT 1 FROM users WHERE id=$1 AND agency_id=$2 AND role<>'client'`, [aid, ctx.user.agency_id]))) aid = null;
-  const r = await one('INSERT INTO tasks (agency_id, project_id, title, assignee_id, due_date) VALUES ($1,$2,$3,$4,$5) RETURNING id', [ctx.user.agency_id, p.id, nn(ctx.body.title), aid, nn(ctx.body.due_date)]);
-  await audit(ctx, 'task.create', { id: r.id, project: p.id }); redirect(res, `/projeler/${p.id}`);
-});
-route('POST', '/gorev/:id', async (ctx, res, prm) => {
-  need(ctx, 'admin', 'staff', 'freelancer');
-  const t = await one('SELECT * FROM tasks WHERE id=$1 AND agency_id=$2', [int(prm.id), ctx.user.agency_id]);
-  if (!t) throw new HttpError(404, 'Görev bulunamadı.');
-  if (ctx.user.role === 'freelancer' && t.assignee_id !== ctx.user.id) throw new HttpError(403, 'Bu görev size atanmamış.');
-  const st = TK_ST[ctx.body.status] ? ctx.body.status : t.status;
-  await q('UPDATE tasks SET status=$1 WHERE id=$2', [st, t.id]);
-  await audit(ctx, 'task.status', { id: t.id, status: st });
-  redirect(res, ctx.user.role === 'freelancer' || ctx.body.back === 'mine' ? '/gorevler' : `/projeler/${t.project_id}`);
-});
-route('GET', '/gorevler', async (ctx, res) => {
-  need(ctx, 'admin', 'staff', 'freelancer');
-  const fl = ctx.user.role === 'freelancer';
-  const rows = await all(`SELECT t.*, p.name project${fl ? '' : ', c.name client'} FROM tasks t JOIN projects p ON p.id=t.project_id ${fl ? '' : 'JOIN clients c ON c.id=p.client_id'}
-    WHERE t.agency_id=$1 AND t.assignee_id=$2 ORDER BY (t.status='bitti'), t.due_date NULLS LAST`, [ctx.user.agency_id, ctx.user.id]);
-  const f = csrfField(ctx);
-  send(res, 200, layout(ctx, 'Görevlerim', `<h1>Görevlerim</h1>
-<div class="tbl"><table><tr><th>Görev</th><th>Proje</th>${fl ? '' : '<th>Müşteri</th>'}<th>Teslim</th><th>Durum</th></tr>
-${rows.map(t => `<tr><td>${h(t.title)}</td><td>${fl ? h(t.project) : `<a href="/projeler/${t.project_id}">${h(t.project)}</a>`}</td>${fl ? '' : `<td>${h(t.client)}</td>`}<td>${fmtDate(t.due_date)}</td>
-<td><form class="row" method="post" action="/gorev/${t.id}">${f}<input type="hidden" name="back" value="mine"><select name="status" aria-label="Görev durumu">${opts(TK_ST, t.status)}</select><button class="ghost">Kaydet</button></form></td></tr>`).join('') || `<tr><td colspan="${fl ? 4 : 5}" class="muted">Size atanmış görev yok.</td></tr>`}</table></div>`, '/gorevler'));
-});
-
-// ----- onaylar (ajans) -----
-route('GET', '/onaylar', async (ctx, res) => {
-  need(ctx, ...STAFF);
-  const rows = await all(`SELECT ap.*, c.name client FROM approvals ap JOIN clients c ON c.id=ap.client_id WHERE ap.agency_id=$1 ORDER BY (ap.status<>'bekliyor'), ap.created_at DESC LIMIT 200`, [ctx.user.agency_id]);
-  send(res, 200, layout(ctx, 'Onaylar', `<h1>Onaylar</h1><p class="muted">Müşteriye onay isteği müşteri sayfasından gönderilir; müşteri portalından onaylar ya da düzeltme ister.</p>
-<div class="tbl"><table><tr><th>Konu</th><th>Müşteri</th><th>Durum</th><th>Müşteri notu</th><th>Tarih</th></tr>
-${rows.map(x => `<tr><td>${h(x.title)}</td><td><a href="/musteriler/${x.client_id}">${h(x.client)}</a></td><td>${badge(AP_ST[x.status], x.status === 'onaylandi' ? 'ok' : x.status === 'reddedildi' ? 'bad' : 'warn')}</td><td>${h(x.comment || '—')}</td><td>${fmtDate(x.decided_at || x.created_at)}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">Onay kaydı yok.</td></tr>'}</table></div>`, '/onaylar'));
-});
+// projeler, görevler ve onaylar: ext-work.js
 
 // ----- katalog -----
 route('GET', '/katalog', async (ctx, res) => {
@@ -635,9 +605,11 @@ import { registerSites, migrateSites } from './ext-sites.js';
 import { registerQuotes, migrateQuotes } from './ext-quotes.js';
 import { registerInvoices, migrateInvoices } from './ext-invoices.js';
 import { registerToday, portalActions } from './ext-today.js';
+import { registerWork, migrateWork } from './ext-work.js';
 registerSites({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, STAFF });
 registerQuotes({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, audit, HttpError, int, nn });
 registerInvoices({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, audit, HttpError, int, nn });
 const todayPage = registerToday({ all, one, h, layout, need, STAFF });
+registerWork({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send });
 
-migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
+migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });

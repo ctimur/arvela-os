@@ -41,12 +41,12 @@ export function buildActions(d, { admin, now = Date.now() }) {
     const today = t.due_date && new Date(t.due_date).toDateString() === new Date(now).toDateString();
     out.push({ score: late ? 75 : today ? 65 : 40, tone: late ? 'bad' : today ? 'warn' : '', tag: late ? 'Görev · gecikti' : today ? 'Görev · bugün' : 'Görev',
       meta: `${t.client} · ${t.project}`, title: t.title, body: '',
-      actions: [['Projeye git', `/projeler/${t.project_id}`, 'pri']] });
+      actions: [['Görevi aç', `/gorev/${t.id}`, 'pri'], ['Projeye git', `/projeler/${t.project_id}`, 'sec']] });
   }
   for (const a of d.approvals || []) {
     const n = daysSince(a.created_at, now); const link = wa(a.phone, `Merhaba, "${a.title}" onayınızı bekliyor. Portalınızdan bakabilirsiniz.`);
     out.push({ score: n >= 2 ? 60 : 35, tone: 'warn', tag: 'Onay', meta: `${a.client} · ${ago(n)} müşteride`, title: a.title, body: '',
-      actions: [...(link && n >= 1 ? [["WhatsApp'tan hatırlat", link, 'pri', true]] : []), ['Müşteriyi aç', `/musteriler/${a.client_id}`, link && n >= 1 ? 'sec' : 'pri']] });
+      actions: [...(link && n >= 1 ? [["WhatsApp'tan hatırlat", link, 'pri', true]] : []), ['Onayı aç', `/onaylar/${a.id}`, link && n >= 1 ? 'sec' : 'pri']] });
   }
   if (admin && d.monthlyDue) out.push({ score: 55, tone: 'warn', tag: 'Fatura', meta: `${d.monthlyDue} müşteri · ${d.period}`,
     title: 'Bu ayın aylık faturaları henüz açılmadı', body: 'Aktif aylık hizmetlerden taslakları tek tuşla oluştur, kontrol edip gönder.',

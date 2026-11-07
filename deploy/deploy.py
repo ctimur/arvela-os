@@ -19,7 +19,7 @@ if not TOKEN:
     raise SystemExit('HOSTINGER_API_TOKEN boş: GitHub → Settings → Secrets and variables → Actions')
 VM = os.environ.get('VPS_ID', '1249062')
 # Projeler arvela-src-NN olarak sıralı numaralanır; sıra deploy/boundaries.json ile birlikte sabittir.
-ORDER = [('server.js', 9), ('package.json', 1), ('seed-catalog.json', 3), ('ext-sites.js', 2), ('import-sites.json', 1), ('ext-quotes.js', 3), ('ext-invoices.js', 4), ('ext-today.js', 3)]
+ORDER = [(n, None) for n in ['server.js', 'package.json', 'seed-catalog.json', 'ext-sites.js', 'import-sites.json', 'ext-quotes.js', 'ext-invoices.js', 'ext-today.js', 'ext-work.js']]
 
 
 def call(method, path, body=None):
@@ -47,10 +47,12 @@ def main():
     rechunk.main()
     print('API kontrolü:', type(call('GET', f'/virtual-machines/{VM}')).__name__)
     names = []
-    for name, count in ORDER:
+    parts = {}
+    for name, _ in ORDER:
         files = sorted((ROOT / 'chunks').glob(f'{name}.[0-9][0-9].yml'))
-        if len(files) != count:
-            raise SystemExit(f'{name}: {len(files)} parça var, beklenen {count}. Yeni parça için ORDER ve sunucu projelerini birlikte güncelleyin.')
+        if not files:
+            raise SystemExit(f'{name}: parça yok; önce deploy/rechunk.py çalıştırın')
+        parts[name] = len(files)
         names += files
     changed = 0
     for i, f in enumerate(names):
@@ -65,6 +67,11 @@ def main():
     print(f'{changed} parça güncellendi')
 
     compose = (ROOT / 'deploy' / 'docker-compose.yml').read_text()
+    # Parçaları adlarıyla tek tek birleştir: parça sayısı azalırsa diskte kalan eski parça karışmasın.
+    cats = '\n'.join(f"        cat {' '.join(f'/src/{n}.{i:02d}' for i in range(c))} > /app/{n}" for n, c in parts.items())
+    compose, n = re.subn(r'^        for f in [^\n]*; do cat /src/\$\$f\.\* > /app/\$\$f; done$', lambda m: cats, compose, flags=re.M)
+    if n != 1:
+        raise SystemExit('docker-compose.yml içinde birleştirme satırı bulunamadı')
     for name, _ in ORDER:
         sha = hashlib.sha256((ROOT / 'app' / name).read_bytes()).hexdigest()
         compose, n = re.subn(rf'[0-9a-f]{{64}}(  /app/{re.escape(name)})', rf'{sha}\1', compose)
