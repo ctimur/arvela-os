@@ -16,5 +16,9 @@
   "{\"code\":\"EML-05\",\"category\":\"EML\",\"sub\":\"Yazılım\",\"name\":\"Ek danışman kullanıcısı\",\"billing\":\"Aylık\",\"unit\":\"kullanıcı\",\"try\":450,\"eur\":15,\"status\":\"Yakında\"},"
  ],
  "package.json": [],
- "import-sites.json": []
+ "import-sites.json": [],
+ "ext-quotes.js": [
+  "      [ctx.user.agency_id, c.id, nn(b.title), CUR[b.currency] ? b.currency : 'TRY', ctx.user.id]);",
+  "    await q(`UPDATE quotes SET status='taslak', sent_at=NULL WHERE id=$1`, [x.id]);"
+ ]
 }

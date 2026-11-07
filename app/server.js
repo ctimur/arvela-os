@@ -4,7 +4,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import pg from 'pg';
 
-const VERSION = '0.2.0';
+const VERSION = '0.3.0';
 const PORT = Number(process.env.PORT || 3000);
 const SETUP_TOKEN = process.env.SETUP_TOKEN || '';
 const COOKIE_SECURE = process.env.COOKIE_SECURE !== '0';
@@ -141,9 +141,9 @@ details summary{cursor:pointer;font-weight:600}
 function layout(ctx, title, body, active = '') {
   const u = ctx.user;
   const links = !u ? [] :
-    u.role === 'client' ? [['/portal', 'Portalım'], ['/portal/siteler', 'Sitelerim']] :
+    u.role === 'client' ? [['/portal', 'Portalım'], ['/portal/siteler', 'Sitelerim'], ['/portal/teklifler', 'Tekliflerim']] :
     u.role === 'freelancer' ? [['/gorevler', 'Görevlerim']] :
-    [['/panel', 'Panel'], ['/musteriler', 'Müşteriler'], ['/siteler', 'Siteler'], ['/projeler', 'Projeler'], ['/gorevler', 'Görevlerim'], ['/onaylar', 'Onaylar'], ['/katalog', 'Katalog'], ...(u.role === 'admin' ? [['/ekip', 'Ekip'], ['/kayitlar', 'Kayıtlar']] : [])];
+    [['/panel', 'Panel'], ['/musteriler', 'Müşteriler'], ['/siteler', 'Siteler'], ['/projeler', 'Projeler'], ['/gorevler', 'Görevlerim'], ['/onaylar', 'Onaylar'], ['/katalog', 'Katalog'], ...(u.role === 'admin' ? [['/teklifler', 'Teklifler'], ['/ekip', 'Ekip'], ['/kayitlar', 'Kayıtlar']] : [])];
   const nav = links.map(([href, t]) => `<a href="${href}"${active === href ? ' class="on" aria-current="page"' : ''}>${t}</a>`).join('');
   const flash = ctx.flash ? `<div class="flash" role="status">${h(ctx.flash)}</div>` : '';
   return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -571,6 +571,8 @@ const server = http.createServer(async (req, res) => {
 });
 
 import { registerSites, migrateSites } from './ext-sites.js';
+import { registerQuotes, migrateQuotes } from './ext-quotes.js';
 registerSites({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, STAFF });
+registerQuotes({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, audit, HttpError, int, nn });
 
-migrate().then(() => migrateSites({ q, one })).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
+migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
