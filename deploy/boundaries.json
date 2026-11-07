@@ -20,5 +20,10 @@
  "ext-quotes.js": [
   "      [ctx.user.agency_id, c.id, nn(b.title), CUR[b.currency] ? b.currency : 'TRY', ctx.user.id]);",
   "    await q(`UPDATE quotes SET status='taslak', sent_at=NULL WHERE id=$1`, [x.id]);"
+ ],
+ "ext-invoices.js": [
+  "    const filter = ['taslak', 'gonderildi', 'odendi', 'iptal', 'gecikti'].includes(ctx.url.searchParams.get('durum')) ? ctx.url.searchParams.get('durum') : '';",
+  "<label>IBAN<input name=\"iban\" value=\"${h(s.iban)}\" placeholder=\"TR00 0000 0000 0000 0000 0000 00\" autocomplete=\"off\"></label><p class=\"muted\" style=\"margin:0\">Müşterinin portalında ve fatura sayfasında gösterilir.</p><div><button class=\"gold\">Kaydet</button></div></form>`, '/faturalar'));",
+  "    if (x.status !== 'gonderildi') throw new HttpError(400, 'Yalnız ödeme bekleyen fatura ödendi yapılabilir.');"
  ]
 }

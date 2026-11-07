@@ -11,7 +11,7 @@ import hashlib, json, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 APP, OUT = ROOT / 'app', ROOT / 'chunks'
-FILES = ['server.js', 'package.json', 'seed-catalog.json', 'ext-sites.js', 'import-sites.json', 'ext-quotes.js']
+FILES = ['server.js', 'package.json', 'seed-catalog.json', 'ext-sites.js', 'import-sites.json', 'ext-quotes.js', 'ext-invoices.js']
 LIMIT = 8192
 
 
@@ -33,6 +33,8 @@ def main():
         text = (APP / name).read_text()
         parts, start = [], 0
         for m in bounds.get(name, []):
+            if text.count('\n' + m + '\n') != 1:
+                raise SystemExit(f'{name}: sınır satırı dosyada tam bir kez geçmeli: {m[:60]!r}')
             i = text.index('\n' + m + '\n', start) + 1
             parts.append(text[start:i]); start = i
         parts.append(text[start:])
