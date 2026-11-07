@@ -1,6 +1,6 @@
 {
  "server.js": [
-  "  const x = Buffer.from(String(a)); const y = Buffer.from(String(b));",
+  "function safeEqual(a, b) {",
   ".auth .card{width:100%;max-width:420px;border-radius:24px;padding:32px}",
   ".icon-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;border:1px solid #DDD6C7;background:#fff;color:var(--ink)}.icon-btn svg{width:20px;height:20px}",
   "  const tabs = u ? `<nav class=\"tabs\" aria-label=\"Alt menü\">${TAB.map(([href, ic]) => `<a href=\"${href}\"${cur(href)}>${icon(ic)}${label[href]}</a>`).join('')}${rest.length ? `<details><summary>${icon('menu')}Menü</summary><div class=\"more\">${rest.map(([href, t]) => `<a href=\"${href}\"${cur(href)}>${t}</a>`).join('')}</div></details>` : ''}</nav>` : '';",

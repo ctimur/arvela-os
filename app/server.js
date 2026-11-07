@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import pg from 'pg';
 import { als, lang, M1, M2, exact, translateHtml, pickLang, locale, LANGS } from './i18n.js';
+import { registerCrm, migrateCrm, crmActions } from './ext-crm.js';
 
 const VERSION = '0.11.0';
 const PORT = Number(process.env.PORT || 3000);
@@ -644,7 +645,6 @@ import { registerWork, migrateWork } from './ext-work.js';
 import { registerSync, migrateSync } from './ext-sync.js';
 import { registerAutomation, migrateAutomation, EVENT_LABEL } from './ext-automation.js';
 import { registerForge, migrateForge } from './ext-forge.js';
-import { registerCrm, migrateCrm, crmActions } from './ext-crm.js';
 registerSites({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, STAFF });
 registerQuotes({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, audit, HttpError, int, nn });
 registerInvoices({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, audit, HttpError, int, nn });
