@@ -14,7 +14,9 @@ sys.path.insert(0, str(ROOT / 'deploy'))
 import rechunk  # noqa: E402
 
 API = 'https://developers.hostinger.com/api/vps/v1'
-TOKEN = os.environ['HOSTINGER_API_TOKEN']
+TOKEN = os.environ.get('HOSTINGER_API_TOKEN', '').strip()
+if not TOKEN:
+    raise SystemExit('HOSTINGER_API_TOKEN boş: GitHub → Settings → Secrets and variables → Actions')
 VM = os.environ.get('VPS_ID', '1249062')
 # Projeler arvela-src-NN olarak sıralı numaralanır; sıra deploy/boundaries.json ile birlikte sabittir.
 ORDER = [('server.js', 8), ('package.json', 1), ('seed-catalog.json', 3), ('ext-sites.js', 2), ('import-sites.json', 1)]
@@ -22,7 +24,8 @@ ORDER = [('server.js', 8), ('package.json', 1), ('seed-catalog.json', 3), ('ext-
 
 def call(method, path, body=None):
     req = urllib.request.Request(API + path, method=method, data=json.dumps(body).encode() if body is not None else None,
-                                 headers={'Authorization': f'Bearer {TOKEN}', 'Content-Type': 'application/json', 'Accept': 'application/json'})
+                                 headers={'Authorization': f'Bearer {TOKEN}', 'Content-Type': 'application/json', 'Accept': 'application/json',
+                                          'User-Agent': 'arvela-os-deploy/1.0'})
     for attempt in range(5):
         try:
             with urllib.request.urlopen(req, timeout=60) as r:
@@ -42,6 +45,7 @@ def remote_content(project):
 
 def main():
     rechunk.main()
+    print('API kontrolü:', type(call('GET', f'/virtual-machines/{VM}')).__name__)
     names = []
     for name, count in ORDER:
         files = sorted((ROOT / 'chunks').glob(f'{name}.[0-9][0-9].yml'))
@@ -73,7 +77,7 @@ def main():
     for _ in range(30):
         time.sleep(10)
         try:
-            with urllib.request.urlopen('https://os.arveladigital.com/healthz', timeout=10) as r:
+            with urllib.request.urlopen(urllib.request.Request('https://os.arveladigital.com/healthz', headers={'User-Agent': 'arvela-os-deploy/1.0'}), timeout=10) as r:
                 data = json.loads(r.read())
                 if data.get('ok'):
                     print('sağlıklı:', data); return
