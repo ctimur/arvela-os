@@ -67,11 +67,13 @@ def main():
     for i in installs:
         if not i.get('directory') and i.get('domain') not in wp:
             wp[i['domain']] = i
-    out, failed = [], []
+    out, failed, skipped = [], [], []
     for w in sites:
         d, user = w.get('domain'), w.get('username')
         if not d or not user:
             continue
+        if w.get('website_type') in ('builder', 'horizons'):
+            skipped.append(d); continue  # Builder/Horizons: SSL ve WordPress uç noktası yok
         try:
             status, expires = ssl_of(user, d)
             rec = {'domain': d, 'platform': PLATFORM.get(w.get('website_type')), 'enabled': w.get('is_enabled', True),
@@ -88,7 +90,7 @@ def main():
         except Exception as e:  # noqa: BLE001
             failed.append(d); print('atlandı:', d, e)
         time.sleep(0.4)
-    payload = {'sites': out, 'wp_latest': latest_wp(), 'note': f"{len(out)} site okundu" + (f"; okunamayan: {', '.join(failed)}" if failed else '')}
+    payload = {'sites': out, 'wp_latest': latest_wp(), 'note': f"{len(out)} site okundu" + (f"; Builder/Horizons (kapsam dışı): {len(skipped)}" if skipped else '') + (f"; okunamayan: {', '.join(failed)}" if failed else '')}
     key = hmac.new(os.environ['SETUP_TOKEN'].encode(), b'arvela-site-sync', hashlib.sha256).hexdigest()
     body = urllib.parse.urlencode({'payload': json.dumps(payload)}).encode()
     req = urllib.request.Request(APP + '/api/site-sync', data=body, method='POST',
