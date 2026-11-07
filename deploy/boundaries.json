@@ -1,6 +1,6 @@
 {
  "server.js": [
-  "  return a.length === b.length && crypto.timingSafeEqual(a, b);",
+  "  const b = crypto.scryptSync(pw, salt, 64);",
   ".err{background:#F6E1DE;border:1px solid #E2B1A9;padding:12px 16px;border-radius:14px;color:#7A2418}",
   "details.danger summary{color:#7A2418;font-size:14px}details.danger form{margin-top:10px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}",
   "    : u?.role === 'freelancer' ? [['/paketler', 'doc'], ['/gorevler', 'check']]",
@@ -8,7 +8,7 @@
   "<div class=\"tbl\"><table><tr><th>Firma</th><th>Sektör</th><th>Durum</th><th>Aktif hizmet</th><th>Açık proje</th><th>Yetkili</th></tr>",
   "${aps.length ? `<div class=\"tbl\"><table><tr><th>Konu</th><th>Durum</th><th>Müşteri notu</th><th>Tarih</th></tr>${aps.map(x => `<tr><td><a href=\"/onaylar/${x.id}\">${h(x.title)}</a></td><td>${badge(AP_ST[x.status], x.status === 'onaylandi' ? 'ok' : x.status === 'reddedildi' ? 'bad' : 'warn')}</td><td>${h(x.comment || '—')}</td><td>${fmtDate(x.decided_at || x.created_at)}</td></tr>`).join('')}</table></div>` : '<p class=\"muted\">Henüz onay istenmedi.</p>'}",
   "<label>Rol<select name=\"role\"><option value=\"staff\">Çalışan</option><option value=\"freelancer\">Freelancer</option><option value=\"admin\">Yönetici</option></select></label>",
-  "  await audit(ctx, 'approval.decide', { id: r.id, decision: d });"
+  "  if (!r) throw new HttpError(404, 'Onay bulunamadı ya da zaten karar verildi.');"
  ],
  "ext-sites.js": [
   "  route('POST', '/siteler', async (ctx, res) => {"
@@ -78,5 +78,8 @@
   "    const p = ctx.user.role === 'admin' ? readPay(b) : { pay_type: 'sabit', amount: null, hourly_rate: null, hour_cap: null };",
   "<div class=\"page-head\"><div><h1>${h(w.title)}</h1><div class=\"chips\">${badge(PK_ST[w.status], PK_TONE[w.status])}${staff ? `<span class=\"muted\">${h(w.freelancer)}</span>` : ''}<span class=\"muted\">${h(PAY[w.pay_type])}</span></div></div><div class=\"act-btns\">${moveForms}</div></div>",
   "<div class=\"row\"><label class=\"wide\">Freelancer<select name=\"freelancer_id\" required>${people.map(u => `<option value=\"${u.id}\"${u.id === kim ? ' selected' : ''}>${h(u.name)}${owedOf(u.id) > 0 ? ' · ' + h(t`borç ${tl(owedOf(u.id))}`) : ''}</option>`).join('')}</select></label>"
+ ],
+ "ext-retention.js": [
+  "    await put(a, 'lead_months', clampMonths(b.lead_months, DEFAULTS.lead_months)); await put(a, 'audit_months', clampMonths(b.audit_months, DEFAULTS.audit_months)); await put(a, 'auto', b.auto ? '1' : '0');"
  ]
 }

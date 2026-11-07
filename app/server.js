@@ -6,8 +6,9 @@ import pg from 'pg';
 import { als, lang, M1, M2, exact, translateHtml, pickLang, locale, LANGS } from './i18n.js';
 import { registerCrm, migrateCrm, crmActions } from './ext-crm.js';
 import { registerFreelance, migrateFreelance, packageActions } from './ext-freelance.js';
+import { registerRetention, migrateRetention } from './ext-retention.js';
 
-const VERSION = '0.12.1';
+const VERSION = '0.13.0';
 const PORT = Number(process.env.PORT || 3000);
 const SETUP_TOKEN = process.env.SETUP_TOKEN || '';
 const COOKIE_SECURE = process.env.COOKIE_SECURE !== '0';
@@ -567,7 +568,7 @@ route('POST', '/ekip/:id/durum', async (ctx, res, p) => {
 route('GET', '/kayitlar', async (ctx, res) => {
   need(ctx, 'admin');
   const rows = await all('SELECT a.*, u.name FROM audit a LEFT JOIN users u ON u.id=a.user_id WHERE a.agency_id=$1 ORDER BY a.created_at DESC LIMIT 200', [ctx.user.agency_id]);
-  send(res, 200, layout(ctx, 'Kayıtlar', `<h1>İşlem kayıtları</h1><div class="tbl"><table><tr><th>Zaman</th><th>Kişi</th><th>İşlem</th><th>Ayrıntı</th></tr>
+  send(res, 200, layout(ctx, 'Kayıtlar', `<div class="page-head"><h1>İşlem kayıtları</h1><a class="btn ghost" href="/veri-saklama">Veri saklama (KVKK)</a></div><div class="tbl"><table><tr><th>Zaman</th><th>Kişi</th><th>İşlem</th><th>Ayrıntı</th></tr>
 ${rows.map(r => `<tr><td>${new Date(r.created_at).toLocaleString(locale(), { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Istanbul' })}</td><td>${h(r.name || (r.detail?.via === 'api' ? 'API (n8n)' : 'Sistem'))}</td><td>${h(EVENT_LABEL[r.action] || r.action)}<br><code class="muted">${h(r.action)}</code></td><td><code>${h(JSON.stringify(r.detail))}</code></td></tr>`).join('') || '<tr><td colspan="4" class="muted">Kayıt yok.</td></tr>'}</table></div>`, '/kayitlar'));
 });
 
@@ -654,8 +655,9 @@ hooks = registerAutomation({ route, all, one, q, need, layout, h, badge, fmtDate
 const forge = registerForge({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, safeEqual, audit, SETUP_TOKEN, VERSION });
 const crm = registerCrm({ route, all, one, q, need, layout, h, badge, fmtMoney, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, opts });
 const freelance = registerFreelance({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, opts });
+registerRetention({ route, all, one, q, need, layout, h, csrfField, HttpError, redirect, send, audit, fmtDate });
 const todayPage = registerToday({ all, one, h, layout, need, STAFF, forgePending: forge.pendingCount, extraActions: async (a) => [...crmActions(await crm.openLeads(a)), ...packageActions(await freelance.awaitingReview(a))] });
 registerSync({ route, one, all, q, HttpError, safeEqual, SETUP_TOKEN, onSynced: (a, before) => hooks?.onSiteSync(a, before) });
 registerWork({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send });
 
-migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => migrateFreelance({ q })).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
+migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => migrateFreelance({ q })).then(() => migrateRetention({ q })).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
