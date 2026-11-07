@@ -8,7 +8,7 @@
   "${rows.map(c => `<tr><td><a href=\"/musteriler/${c.id}\"><strong>${h(c.name)}</strong></a></td><td>${h(c.sector || '—')}</td><td>${badge(CLIENT_ST[c.status], tone[c.status])}</td><td>${c.svc}</td><td>${c.prj}</td><td>${h(c.contact_name || '—')}</td></tr>`).join('') || '<tr><td colspan=\"6\" class=\"muted\">Bu filtreye uyan müşteri yok.</td></tr>'}",
   "${aps.length ? `<div class=\"tbl\"><table><tr><th>Konu</th><th>Durum</th><th>Müşteri notu</th><th>Tarih</th></tr>${aps.map(x => `<tr><td><a href=\"/onaylar/${x.id}\">${h(x.title)}</a></td><td>${badge(AP_ST[x.status], x.status === 'onaylandi' ? 'ok' : x.status === 'reddedildi' ? 'bad' : 'warn')}</td><td>${h(x.comment || '—')}</td><td>${fmtDate(x.decided_at || x.created_at)}</td></tr>`).join('')}</table></div>` : '<p class=\"muted\">Henüz onay istenmedi.</p>'}",
   "<label>Rol<select name=\"role\"><option value=\"staff\">Çalışan</option><option value=\"freelancer\">Freelancer</option><option value=\"admin\">Yönetici</option></select></label>",
-  "  const url = new URL(req.url, 'http://localhost');"
+  "  await audit(ctx, 'approval.decide', { id: r.id, decision: d });"
  ],
  "ext-sites.js": [
   "  route('POST', '/siteler', async (ctx, res) => {"
