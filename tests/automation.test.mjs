@@ -62,3 +62,21 @@ assert.equal(JSON.parse(got.at(-1).b).source, 'api');
 await assert.rejects(routes['POST /api/v1/tasks/:id/status'](ctx(key, { status: 'uçuyor' }), res, { id: '5' }), /Durum/);
 srv.close();
 console.log('automation: ok');
+
+// n8n kurulum ucu: yalnız türetilmiş anahtarla; eski otomatik anahtar iptal, yenisi döner
+{
+  const { registerAutomation } = await import('../app/ext-automation.js');
+  const crypto = await import('node:crypto');
+  const r2 = {}; const w2 = [];
+  registerAutomation({ route: (m, p, fn) => { r2[`${m} ${p}`] = fn; }, all: async () => [], one: async (sql) => sql.includes('FROM agencies') ? { id: 1 } : sql.includes('webhook_token') ? { value: 'tok' } : null,
+    q: async (sql, a) => { w2.push(sql); return {}; }, HttpError: class extends Error { constructor(s, m) { super(m); this.status = s; } }, need: () => {}, layout: () => '', h: String, badge: String, fmtDate: String,
+    csrfField: () => '', int: parseInt, nn: (v) => v, redirect: () => {}, send: () => {}, STAFF: [], TK_ST: {}, PR_ST: {}, audit: async () => {}, safeEqual: (a, b) => a === b, SETUP_TOKEN: 'st' });
+  const res = { writeHead() {}, end(b) { this.b = b; } };
+  await assert.rejects(r2['POST /api/n8n/provision']({ req: { headers: {} } }, res), /Yetkisiz/);
+  const k = crypto.createHmac('sha256', 'st').update('arvela-n8n-provision').digest('hex');
+  await r2['POST /api/n8n/provision']({ req: { headers: { authorization: 'Bearer ' + k } } }, res);
+  const out = JSON.parse(res.b);
+  assert.match(out.api_key, /^arv_[0-9a-f]{8}_/); assert.equal(out.webhook_token, 'tok'); assert.equal(out.hooks, 3);
+  assert.ok(w2[0].includes("revoked_at=now()") && w2.some(s => s.includes('UPDATE webhooks SET active')));
+  console.log('provision: ok');
+}

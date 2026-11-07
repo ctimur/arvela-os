@@ -1,5 +1,15 @@
 {
-"version": 1,
+"version": 2,
+"ids": {
+"Arvela · Olay yönlendirici": "5d628bb41d3154c2",
+"Arvela · Sabah özeti": "3f9b5075be7859c0",
+"Arvela · Onay hatırlatma": "8ba30d788ad15cb1",
+"Arvela · Gecikmiş faturalar": "b6af8195070f5da4",
+"Arvela · Yeni müşteri karşılama": "983c0a3a6e125638",
+"Arvela · Görev bildirimi": "4c35a1d111415770",
+"Arvela · Acil site uyarısı": "a61b9e9a93f550d4",
+"Arvela · Web formu → aday": "00ba2c3d2dd25d35"
+},
 "workflows": [
 {
 "id": "5d628bb41d3154c2",
@@ -491,8 +501,8 @@
 300
 ],
 "parameters": {
-"fromEmail": "Arvela OS <bildirim@arveladigital.com>",
-"toEmail": "alici@arveladigital.com",
+"fromEmail": "Arvela OS <hello@arveladigital.com>",
+"toEmail": "hello@arveladigital.com",
 "subject": "={{ $json.subject }}",
 "emailFormat": "html",
 "html": "={{ $json.html }}",
@@ -647,8 +657,8 @@
 300
 ],
 "parameters": {
-"fromEmail": "Arvela OS <bildirim@arveladigital.com>",
-"toEmail": "alici@arveladigital.com",
+"fromEmail": "Arvela OS <hello@arveladigital.com>",
+"toEmail": "hello@arveladigital.com",
 "subject": "=Arvela · {{ $json.count }} onay bekliyor",
 "emailFormat": "html",
 "html": "={{ $json.html }}",
@@ -803,8 +813,8 @@
 300
 ],
 "parameters": {
-"fromEmail": "Arvela OS <bildirim@arveladigital.com>",
-"toEmail": "alici@arveladigital.com",
+"fromEmail": "Arvela OS <hello@arveladigital.com>",
+"toEmail": "hello@arveladigital.com",
 "subject": "=Arvela · {{ $json.count }} gecikmiş fatura",
 "emailFormat": "html",
 "html": "={{ $json.html }}",
@@ -1131,7 +1141,7 @@
 300
 ],
 "parameters": {
-"fromEmail": "Arvela OS <bildirim@arveladigital.com>",
+"fromEmail": "Arvela OS <hello@arveladigital.com>",
 "toEmail": "={{ $json.to }}",
 "subject": "={{ $json.subject }}",
 "emailFormat": "html",
@@ -1248,8 +1258,8 @@
 300
 ],
 "parameters": {
-"fromEmail": "Arvela OS <bildirim@arveladigital.com>",
-"toEmail": "alici@arveladigital.com",
+"fromEmail": "Arvela OS <hello@arveladigital.com>",
+"toEmail": "hello@arveladigital.com",
 "subject": "={{ $json.subject }}",
 "emailFormat": "html",
 "html": "={{ $json.html }}",

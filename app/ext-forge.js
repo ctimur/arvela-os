@@ -12,7 +12,7 @@ const SHA = /^[0-9a-f]{40}$/;
 
 // Gelen PR kaydına göre yeni durum: onaydan sonra kod değiştiyse onay düşer.
 export function nextStatus(prev, pr) {
-  if (pr.merged) return prev && ['onaylandi', 'yayinda'].includes(prev.status) ? 'yayinda' : 'kapandi';
+  if (pr.merged) return 'yayinda'; // Forge dışında (Yönetici'nin doğrudan izniyle) birleştirilen de yayındadır
   if (pr.state === 'closed') return prev?.status === 'reddedildi' ? 'reddedildi' : 'kapandi';
   if (!prev) return 'bekliyor';
   if (prev.head_sha !== pr.head_sha && ['onaylandi', 'hata', 'reddedildi'].includes(prev.status)) return 'bekliyor';
@@ -69,7 +69,7 @@ export function registerForge(d) {
 
   route('GET', '/api/forge/queue', async (ctx, res) => {
     ghAuth(ctx);
-    const merge = await all(`SELECT pr, approved_sha sha, title FROM forge_changes WHERE status='onaylandi' AND approved_sha IS NOT NULL ORDER BY decided_at`);
+    const merge = await all(`SELECT pr, approved_sha sha, title FROM forge_changes WHERE status='onaylandi' AND approved_sha IS NOT NULL ORDER BY pr`);
     const rollback = await all(`SELECT id, sha, title FROM forge_releases WHERE status='geri_istendi' ORDER BY requested_at`);
     json(res, { merge, rollback });
   });

@@ -7,8 +7,8 @@ Kullanım: python3 tools/n8n_seed.py
 import json, uuid, pathlib
 
 API = 'https://os.arveladigital.com/api/v1'
-TO = 'alici@arveladigital.com'  # n8n'de kendi adresinle değiştir
-FROM = 'Arvela OS <bildirim@arveladigital.com>'
+TO = 'hello@arveladigital.com'
+FROM = 'Arvela OS <hello@arveladigital.com>'
 NS = uuid.UUID('6f1c1b2a-7b0e-4c41-9d2e-a7e1a0c0de01')
 uid = lambda s: str(uuid.uuid5(NS, s))
 wid = lambda s: uuid.uuid5(NS, 'wf-' + s).hex[:16]
@@ -211,5 +211,6 @@ for a, b in [('İletişim formu', 'Aday müşteri'), ('Aday müşteri', 'İlk g�
 flows.append(wf('lead-form', 'Arvela · Web formu → aday', nodes, c))
 
 out = pathlib.Path(__file__).resolve().parent.parent / 'app' / 'n8n-seed.json'
-out.write_text(json.dumps({'version': 1, 'workflows': flows}, ensure_ascii=False, indent=0) + '\n')
+IDS = {f['name']: f['id'] for f in flows}
+out.write_text(json.dumps({'version': 2, 'ids': IDS, 'workflows': flows}, ensure_ascii=False, indent=0) + '\n')
 print(len(flows), 'akış', out.stat().st_size, 'bayt')

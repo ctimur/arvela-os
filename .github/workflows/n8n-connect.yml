@@ -1,0 +1,28 @@
+name: n8n bağla
+
+# n8n'i Arvela OS'e anahtar teslim bağlar: kimlik bilgileri, hazır akışlar, yayın. Elle: Actions → n8n bağla → Run workflow.
+# SMTP şifresi için isteğe bağlı secret: N8N_SMTP_PASSWORD (hello@arveladigital.com).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: n8n
+  cancel-in-progress: false
+
+jobs:
+  connect:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bağla
+        env:
+          HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
+          SETUP_TOKEN: ${{ secrets.SETUP_TOKEN }}
+          N8N_SMTP_PASSWORD: ${{ secrets.N8N_SMTP_PASSWORD }}
+          VPS_ID: ${{ vars.VPS_ID || '1249062' }}
+        run: python3 deploy/n8n_connect.py
