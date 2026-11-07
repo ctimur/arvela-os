@@ -1,0 +1,64 @@
+# Arvela OS — KVM 1 üzerindeki üretim projesi (Hostinger Docker Manager: "arvela-os").
+# Gizli değerler (DB_PASSWORD, SETUP_TOKEN) Hostinger projesinin ortam değişkenlerindedir; buraya yazılmaz.
+# Kaynak dosyalar şimdilik "arvela_src" diskine arvela-src-NN projeleriyle parça parça yazılıyor (bkz. README).
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: arvela
+      POSTGRES_USER: arvela
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U arvela -d arvela"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  app:
+    image: node:22-alpine
+    restart: unless-stopped
+    working_dir: /app
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        for f in server.js package.json seed-catalog.json ext-sites.js import-sites.json; do cat /src/$$f.* > /app/$$f; done
+        echo "cffac480a6f17d153f6cbd1abdba94d613343cc4833ffe6006b9f7dc8c89fe98  /app/server.js" | sha256sum -c
+        echo "9415775f37a37a21144cb331ba8d99e182806239b031a81c74bd78e839f75c57  /app/package.json" | sha256sum -c
+        echo "05c3dd45e612f4d0b15b0d3c652a7234962f413fdc706cf678497fbebe721b3e  /app/seed-catalog.json" | sha256sum -c
+        echo "7d357e300e4ce4bc02010484179876ba3bb9ec1a891055b18f75afa3f2c0a917  /app/ext-sites.js" | sha256sum -c
+        echo "be702a421fb446e9775ac0e282f6112c8e6c4f129b85fcdb63f84263b35b79e3  /app/import-sites.json" | sha256sum -c
+        npm install --omit=dev --no-audit --no-fund
+        exec node server.js
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_URL: postgres://arvela:${DB_PASSWORD}@db:5432/arvela
+      SETUP_TOKEN: ${SETUP_TOKEN}
+    volumes:
+      - src:/src:ro
+      - node_modules:/app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 120s
+      retries: 3
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.arvela-os.rule=Host(`os.arveladigital.com`)
+      - traefik.http.routers.arvela-os.entrypoints=websecure
+      - traefik.http.routers.arvela-os.tls.certresolver=letsencrypt
+      - traefik.http.services.arvela-os.loadbalancer.server.port=3000
+volumes:
+  pgdata:
+  node_modules:
+  src:
+    name: arvela_src
+    external: true

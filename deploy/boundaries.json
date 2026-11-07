@@ -1,0 +1,20 @@
+{
+ "server.js": [
+  "const fmtDate = (d) => d ? new Date(d).toLocaleDateString('tr-TR') : '—';",
+  "    'X-Frame-Options': 'DENY', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'same-origin',",
+  "  send(res, 200, layout(ctx, 'Panel', `<h1>Günaydın, ${h(ctx.user.name.split(' ')[0])}</h1>",
+  "<form class=\"row\" method=\"post\" action=\"/musteriler/${c.id}/proje\">${f}<label style=\"flex:1;min-width:240px\">Proje adı<input name=\"name\" required></label><label>Teslim<input type=\"date\" name=\"due_date\"></label><button class=\"gold\">Proje aç</button></form></section>",
+  "<form class=\"row\" method=\"post\" action=\"/projeler/${p.id}\">${f}<select name=\"status\" aria-label=\"Proje durumu\">${opts(PR_ST, p.status)}</select><input type=\"date\" name=\"due_date\" value=\"${p.due_date ? new Date(p.due_date).toISOString().slice(0, 10) : ''}\" aria-label=\"Teslim tarihi\"><button class=\"ghost\">Kaydet</button></form></div>",
+  "<div class=\"grid\"><div class=\"card\"><h3>Yönetici</h3><p class=\"muted\">Her şeyi görür; fiyatları, ekibi ve kayıtları yönetir.</p></div><div class=\"card\"><h3>Çalışan</h3><p class=\"muted\">Müşteri, proje, görev ve onayları yönetir; fiyatları ve ekibi göremez.</p></div>",
+  "const server = http.createServer(async (req, res) => {"
+ ],
+ "ext-sites.js": [
+  "<div class=\"tbl\"><table>${head(false)}${rows.map(s => row(s, false)).join('') || '<tr><td colspan=\"6\" class=\"muted\">Site yok.</td></tr>'}</table></div>`, '/siteler'));"
+ ],
+ "seed-catalog.json": [
+  "{\"code\":\"SOS-15\",\"category\":\"SOS\",\"sub\":\"Büyüme\",\"name\":\"Google İşletme Profili yönetimi\",\"billing\":\"Aylık\",\"unit\":\"konum\",\"try\":3500,\"eur\":200,\"status\":\"Hemen\"},",
+  "{\"code\":\"EML-05\",\"category\":\"EML\",\"sub\":\"Yazılım\",\"name\":\"Ek danışman kullanıcısı\",\"billing\":\"Aylık\",\"unit\":\"kullanıcı\",\"try\":450,\"eur\":15,\"status\":\"Yakında\"},"
+ ],
+ "package.json": [],
+ "import-sites.json": []
+}

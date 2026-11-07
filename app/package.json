@@ -1,0 +1,11 @@
+{
+  "name": "arvela-os",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "server.js",
+  "engines": { "node": ">=22" },
+  "dependencies": {
+    "pg": "8.13.1"
+  }
+}
