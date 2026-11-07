@@ -49,6 +49,9 @@ export function buildActions(d, { admin, now = Date.now() }) {
     out.push({ score: n >= 2 ? 60 : 35, tone: 'warn', tag: 'Onay', meta: t`${a.client} · ${ago(n)} müşteride`, title: a.title, body: '',
       actions: [...(link && n >= 1 ? [["WhatsApp'tan hatırlat", link, 'pri', true]] : []), ['Onayı aç', `/onaylar/${a.id}`, link && n >= 1 ? 'sec' : 'pri']] });
   }
+  if (admin && d.forgePending) out.push({ score: 80, tone: 'warn', tag: 'Forge', meta: 'Arvela OS güncellemesi',
+    title: t`${d.forgePending} değişiklik onayınızı bekliyor`, body: 'İnceleyip onaylarsanız yayına girer; istediğiniz zaman tek tıkla geri alabilirsiniz.',
+    actions: [['Değişiklikleri incele', '/forge', 'pri']] });
   if (admin && d.monthlyDue) out.push({ score: 55, tone: 'warn', tag: 'Fatura', meta: t`${d.monthlyDue} müşteri · ${d.period}`,
     title: 'Bu ayın aylık faturaları henüz açılmadı', body: 'Aktif aylık hizmetlerden taslakları tek tuşla oluştur, kontrol edip gönder.',
     actions: [['Faturalara git', '/faturalar', 'pri']] });
@@ -75,7 +78,7 @@ function actionCard(x, h, size) {
   return `<article class="act ${size}${size === 'hero' ? '' : ''}"><div class="act-meta"><span class="badge ${x.tone}">${h(x.tag)}</span><span class="muted">${h(x.meta)}</span></div>
 <${size === 'hero' ? 'h2' : 'h3'}>${h(x.title)}</${size === 'hero' ? 'h2' : 'h3'}>${x.body ? `<p>${h(x.body)}</p>` : ''}<div class="act-btns">${btns}</div></article>`;
 }
-export function registerToday({ all, one, h, layout, need, STAFF }) {
+export function registerToday({ all, one, h, layout, need, STAFF, forgePending }) {
   return async function todayPage(ctx, res, send) {
     need(ctx, ...STAFF); const a = ctx.user.agency_id; const admin = ctx.user.role === 'admin';
     const period = new Date().toISOString().slice(0, 7);
@@ -94,7 +97,8 @@ export function registerToday({ all, one, h, layout, need, STAFF }) {
         AND NOT EXISTS (SELECT 1 FROM invoices i WHERE i.client_id=cs.client_id AND i.period=$2 AND i.status<>'iptal')`, [a, period]) : { n: 0 },
       one(`SELECT count(*)::int n FROM tasks WHERE agency_id=$1 AND assignee_id=$2 AND status='bitti'`, [a, ctx.user.id]),
     ]);
-    const d = { sites, tasks, approvals, clients, overdue, notified, draftQuotes, draftInvoices, monthlyDue: md?.n || 0, period };
+    const fp = admin && forgePending ? await forgePending().catch(() => 0) : 0;
+    const d = { sites, tasks, approvals, clients, overdue, notified, draftQuotes, draftInvoices, monthlyDue: md?.n || 0, period, forgePending: fp };
     const acts = buildActions(d, { admin }); const pulse = buildPulse(d);
     const first = ctx.user.name.split(' ')[0];
     const [hero, ...rest] = acts; const pair = rest.slice(0, 2); const later = rest.slice(2);

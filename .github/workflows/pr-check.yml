@@ -1,0 +1,28 @@
+name: PR kontrol
+
+# Forge: her Pull Request yayına girmeden önce burada sınanır. Testleri geçmeyen değişiklik Arvela OS'te onaylanamaz.
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Sözdizimi kontrolü
+        run: |
+          for f in app/*.js; do node --check "$f"; done
+          for f in app/*.json; do node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))"; done
+      - name: Testler
+        run: for t in tests/*.test.mjs; do node "$t" || exit 1; done
+      - name: Parçalar sınıra sığıyor mu
+        run: python3 deploy/rechunk.py
+      - name: Parçalar birleşince dosyayı birebir veriyor mu
+        run: python3 -c "import yaml" 2>/dev/null || pip install pyyaml; python3 deploy/verify_chunks.py

@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import pg from 'pg';
 import { als, lang, M1, M2, exact, translateHtml, pickLang, locale, LANGS } from './i18n.js';
 
-const VERSION = '0.9.0';
+const VERSION = '0.10.0';
 const PORT = Number(process.env.PORT || 3000);
 const SETUP_TOKEN = process.env.SETUP_TOKEN || '';
 const COOKIE_SECURE = process.env.COOKIE_SECURE !== '0';
@@ -178,6 +178,7 @@ details summary{cursor:pointer;font-weight:600}
 .who-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .chk{flex-direction:row;align-items:center;gap:8px;font-weight:500}.chk input{min-height:auto;width:18px;height:18px}
 .evgrp{border:1px solid var(--line2);border-radius:12px;padding:8px 12px;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px 16px}.evgrp legend{font-weight:600;font-size:13px;padding:0 6px}.evgrp code{color:var(--stone);font-size:11px}
+.files{margin:8px 0 0;padding-left:18px;font-size:13px;display:flex;flex-direction:column;gap:2px;max-height:260px;overflow:auto}
 .steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px}.steps li{line-height:1.6}
 .keybox{display:inline-block;margin:6px 0;padding:8px 10px;background:#fff;border:1px solid var(--champ);border-radius:10px;word-break:break-all;font-size:13px}
 .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px 16px;flex-wrap:wrap}
@@ -258,7 +259,7 @@ function layout(ctx, title, body, active = '') {
   const links = !u ? [] :
     u.role === 'client' ? [['/portal', 'Portalım'], ['/portal/siteler', 'Sitelerim'], ['/portal/teklifler', 'Tekliflerim'], ['/portal/faturalar', 'Faturalarım']] :
     u.role === 'freelancer' ? [['/gorevler', 'Görevlerim']] :
-    [['/panel', 'Bugün'], ['/musteriler', 'Müşteriler'], ['/gorevler', 'Görevlerim'], ['/onaylar', 'Onaylar'], ['/siteler', 'Siteler'], ['/projeler', 'Projeler'], ['/katalog', 'Katalog'], ['/otomasyonlar', 'Otomasyonlar'], ...(u.role === 'admin' ? [['/teklifler', 'Teklifler'], ['/faturalar', 'Faturalar'], ['/ekip', 'Ekip'], ['/kayitlar', 'Kayıtlar']] : [])];
+    [['/panel', 'Bugün'], ['/musteriler', 'Müşteriler'], ['/gorevler', 'Görevlerim'], ['/onaylar', 'Onaylar'], ['/siteler', 'Siteler'], ['/projeler', 'Projeler'], ['/katalog', 'Katalog'], ['/otomasyonlar', 'Otomasyonlar'], ...(u.role === 'admin' ? [['/teklifler', 'Teklifler'], ['/faturalar', 'Faturalar'], ['/ekip', 'Ekip'], ['/forge', 'Forge'], ['/kayitlar', 'Kayıtlar']] : [])];
   const staffish = u && (u.role === 'admin' || u.role === 'staff');
   const isOn = (href) => active === href;
   const cur = (href) => isOn(href) ? ' class="on" aria-current="page"' : '';
@@ -641,12 +642,14 @@ import { registerToday, portalActions } from './ext-today.js';
 import { registerWork, migrateWork } from './ext-work.js';
 import { registerSync, migrateSync } from './ext-sync.js';
 import { registerAutomation, migrateAutomation } from './ext-automation.js';
+import { registerForge, migrateForge } from './ext-forge.js';
 registerSites({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, STAFF });
 registerQuotes({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, audit, HttpError, int, nn });
 registerInvoices({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, audit, HttpError, int, nn });
 hooks = registerAutomation({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, STAFF, TK_ST, PR_ST, audit, safeEqual, APP_URL: process.env.APP_URL });
-const todayPage = registerToday({ all, one, h, layout, need, STAFF });
+const forge = registerForge({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, safeEqual, audit, SETUP_TOKEN, VERSION });
+const todayPage = registerToday({ all, one, h, layout, need, STAFF, forgePending: forge.pendingCount });
 registerSync({ route, one, all, q, HttpError, safeEqual, SETUP_TOKEN, onSynced: (a, before) => hooks?.onSiteSync(a, before) });
 registerWork({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send });
 
-migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
+migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });

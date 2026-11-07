@@ -1,0 +1,41 @@
+name: Forge uygula
+
+# Arvela OS'te Yönetici'nin onayladığı değişiklikleri birleştirip yayınlar ve geri alma isteklerini uygular.
+# 08:00–23:00 (İstanbul) arası yarım saatte bir bakar; Arvela OS'e GitHub anahtarı eklenirse onaydan hemen sonra tetiklenir.
+on:
+  schedule:
+    - cron: '0,30 5-19 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+  actions: read
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: python3 -c "import yaml" 2>/dev/null || pip install pyyaml
+      - name: Onaylananları uygula
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SETUP_TOKEN: ${{ secrets.SETUP_TOKEN }}
+          HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
+          VPS_ID: ${{ vars.VPS_ID || '1249062' }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          FORGE_GITHUB_TOKEN: ${{ secrets.FORGE_GITHUB_TOKEN }}
+        run: python3 deploy/forge.py apply

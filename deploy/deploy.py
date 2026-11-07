@@ -19,7 +19,7 @@ if not TOKEN:
     raise SystemExit('HOSTINGER_API_TOKEN boş: GitHub → Settings → Secrets and variables → Actions')
 VM = os.environ.get('VPS_ID', '1249062')
 # Projeler arvela-src-NN olarak sıralı numaralanır; sıra deploy/boundaries.json ile birlikte sabittir.
-ORDER = [(n, None) for n in ['server.js', 'package.json', 'seed-catalog.json', 'ext-sites.js', 'import-sites.json', 'ext-quotes.js', 'ext-invoices.js', 'ext-today.js', 'ext-work.js', 'i18n.js', 'i18n-en.json', 'ext-sync.js', 'ext-automation.js', 'n8n-seed.json']]
+ORDER = [(n, None) for n in ['server.js', 'package.json', 'seed-catalog.json', 'ext-sites.js', 'import-sites.json', 'ext-quotes.js', 'ext-invoices.js', 'ext-today.js', 'ext-work.js', 'i18n.js', 'i18n-en.json', 'ext-sync.js', 'ext-automation.js', 'n8n-seed.json', 'ext-forge.js']]
 
 
 def call(method, path, body=None):
@@ -78,6 +78,8 @@ def main():
         if n != 1:
             raise SystemExit(f'docker-compose.yml içinde {name} özeti bulunamadı')
     env = f"DB_PASSWORD={os.environ['DB_PASSWORD']}\nSETUP_TOKEN={os.environ['SETUP_TOKEN']}\n"
+    if os.environ.get('FORGE_GITHUB_TOKEN'):  # isteğe bağlı: Forge onayından hemen sonra yayın
+        env += f"FORGE_GITHUB_TOKEN={os.environ['FORGE_GITHUB_TOKEN']}\n"
     call('POST', f'/virtual-machines/{VM}/docker', {'project_name': 'arvela-os', 'content': compose, 'environment': env})
     print('arvela-os yeniden yayınlandı; sağlık kontrolü bekleniyor')
 

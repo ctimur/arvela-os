@@ -41,4 +41,5 @@ jobs:
           VPS_ID: ${{ vars.VPS_ID || '1249062' }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           SETUP_TOKEN: ${{ secrets.SETUP_TOKEN }}
+          FORGE_GITHUB_TOKEN: ${{ secrets.FORGE_GITHUB_TOKEN }}
         run: python3 deploy/deploy.py

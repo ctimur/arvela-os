@@ -2,13 +2,13 @@
  "server.js": [
   "  const x = Buffer.from(String(a)); const y = Buffer.from(String(b));",
   ".auth .card{width:100%;max-width:420px;border-radius:24px;padding:32px}",
-  "tr.is-late td:first-child{box-shadow:inset 3px 0 0 var(--bad)}",
-  "  const flash = ctx.flash ? `<div class=\"flash\" role=\"status\">${h(ctx.flash)}</div>` : '';",
-  "  send(res, 200, authPage('Kurulum', `<h1>İlk kurulum</h1><p class=\"muted\">Yönetici hesabını oluşturun. Kurulum anahtarı sunucu ayarlarındadır; bir kez kullanılır.</p>",
-  "    [ctx.user.agency_id, nn(b.name), nn(b.sector), nn(b.contact_name), nn(b.phone), nn(b.email), nn(b.notes), CLIENT_ST[b.status] ? b.status : 'lead']);",
-  "${cu.length ? `<div class=\"tbl\"><table><tr><th>Ad</th><th>E-posta</th><th>Son giriş</th></tr>${cu.map(x => `<tr><td>${h(x.name)}</td><td>${h(x.email)}</td><td>${fmtDate(x.last_login)}</td></tr>`).join('')}</table></div>` : '<p class=\"muted\">Müşteri henüz portala davet edilmedi.</p>'}",
-  "  if (!nn(b.name) || !nn(b.email) || !validPassword(b.password)) throw new HttpError(400, 'Ad, e-posta ve en az 10 karakterlik şifre gerekli.');",
-  "      const m = url.pathname.match(r.re); if (!m) continue;"
+  ".icon-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;border:1px solid #DDD6C7;background:#fff;color:var(--ink)}.icon-btn svg{width:20px;height:20px}",
+  "  const tabs = u ? `<nav class=\"tabs\" aria-label=\"Alt menü\">${TAB.map(([href, ic]) => `<a href=\"${href}\"${cur(href)}>${icon(ic)}${label[href]}</a>`).join('')}${rest.length ? `<details><summary>${icon('menu')}Menü</summary><div class=\"more\">${rest.map(([href, t]) => `<a href=\"${href}\"${cur(href)}>${t}</a>`).join('')}</div></details>` : ''}</nav>` : '';",
+  "  routes.push({ method, re, keys, fn });",
+  "${rows.map(c => `<tr><td><a href=\"/musteriler/${c.id}\"><strong>${h(c.name)}</strong></a></td><td>${h(c.sector || '—')}</td><td>${badge(CLIENT_ST[c.status], tone[c.status])}</td><td>${c.svc}</td><td>${c.prj}</td><td>${h(c.contact_name || '—')}</td></tr>`).join('') || '<tr><td colspan=\"6\" class=\"muted\">Bu filtreye uyan müşteri yok.</td></tr>'}",
+  "${aps.length ? `<div class=\"tbl\"><table><tr><th>Konu</th><th>Durum</th><th>Müşteri notu</th><th>Tarih</th></tr>${aps.map(x => `<tr><td><a href=\"/onaylar/${x.id}\">${h(x.title)}</a></td><td>${badge(AP_ST[x.status], x.status === 'onaylandi' ? 'ok' : x.status === 'reddedildi' ? 'bad' : 'warn')}</td><td>${h(x.comment || '—')}</td><td>${fmtDate(x.decided_at || x.created_at)}</td></tr>`).join('')}</table></div>` : '<p class=\"muted\">Henüz onay istenmedi.</p>'}",
+  "<label>Rol<select name=\"role\"><option value=\"staff\">Çalışan</option><option value=\"freelancer\">Freelancer</option><option value=\"admin\">Yönetici</option></select></label>",
+  "  const url = new URL(req.url, 'http://localhost');"
  ],
  "ext-sites.js": [
   "  route('POST', '/siteler', async (ctx, res) => {"
@@ -29,7 +29,7 @@
   "    const vat = Math.min(100, Math.max(0, Number(b.vat_pct) || 0));"
  ],
  "ext-today.js": [
-  "      all(`SELECT s.*, c.name client FROM sites s LEFT JOIN clients c ON c.id=s.client_id WHERE s.agency_id=$1`, [a]),"
+  "  return async function todayPage(ctx, res, send) {"
  ],
  "ext-work.js": [
   "<select name=\"durum\" aria-label=\"Durum\" data-auto><option value=\"\">Açık projeler</option><option value=\"hepsi\"${durum === 'hepsi' ? ' selected' : ''}>Tümü</option>${opts(PR_ST, durum)}</select><button class=\"ghost\">Filtrele</button></form>",
@@ -60,5 +60,9 @@
   "\"node\": \"Gecikmiş faturalar\",",
   "\"path\": \"arvela-task-assigned\",",
   "\"fieldLabel\": \"Telefon\","
+ ],
+ "ext-forge.js": [
+  "      await q(`UPDATE forge_changes SET status=$1, error=$2, merged_sha=COALESCE($3, merged_sha), deployed_at=CASE WHEN $1='yayinda' THEN now() ELSE deployed_at END, updated_at=now() WHERE pr=$4`,",
+  "    if (ctx.body.sha !== c.head_sha) throw new HttpError(409, 'Değişiklik siz bakarken güncellendi. Sayfayı yenileyip yeniden inceleyin.');"
  ]
 }
