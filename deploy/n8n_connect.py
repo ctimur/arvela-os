@@ -88,7 +88,8 @@ def build_compose(compose, version, publish):
     for k in ['ARVELA_API_KEY', 'ARVELA_HOOK_TOKEN', 'N8N_SMTP_USER', 'N8N_SMTP_HOST', 'N8N_SMTP_PORT', 'N8N_SMTP_PASSWORD']:
         if f'      {k}:' not in compose:
             compose = compose.replace('      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}\n', f'      N8N_ENCRYPTION_KEY: ${{N8N_ENCRYPTION_KEY}}\n      {k}: ${{{k}:-}}\n', 1)
-    keys = re.findall(r'^      ([A-Z0-9_]+):', compose, re.M)
+    svc = re.search(r'(?ms)^  n8n:\n(.*?)(?=^  [a-z0-9_-]+:\n|^volumes:\n|\Z)', compose)
+    keys = re.findall(r'^      ([A-Z0-9_]+):', svc.group(1) if svc else compose, re.M)
     dup = sorted({k for k in keys if keys.count(k) > 1})
     if dup:
         sys.exit('n8n compose içinde yinelenen ayar: ' + ', '.join(dup))
