@@ -93,6 +93,10 @@ def apply():
         n, want = item['pr'], item['sha']
         try:
             p = gh('GET', f'/pulls/{n}')
+            if p.get('merged_at') and p['head']['sha'] == want:
+                # onaylı PR başka bir onaylı değişiklikle birlikte zaten birleşti ve yayına girdi
+                app('POST', '/api/forge/result', {'pr': n, 'ok': True, 'sha': p.get('merge_commit_sha'), 'title': f"{p['title']} (#{n})"})
+                print(f'#{n} zaten birleşmiş, yayında'); continue
             if p['state'] != 'open':
                 raise RuntimeError('PR açık değil')
             if p['head']['sha'] != want:
