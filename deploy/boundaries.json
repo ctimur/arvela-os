@@ -43,16 +43,17 @@
   "\"Yok\": \"None\",",
   "\"Müşteri portaldan karar verir. Onayı telefonda ya da WhatsApp'ta aldıysanız buradan işleyin.\": \"The client decides in the portal. If you got the approval by phone or WhatsApp, record it here.\",",
   "\"Sayfa bulunamadı.\": \"Page not found.\",",
-  "\"İptal edildi\": \"Revoked\","
+  "\"İptal edildi\": \"Revoked\",",
+  "\"Adayı ekle\": \"Add lead\","
  ],
  "ext-sync.js": [],
  "ext-automation.js": [
-  "    if (kind === 'client') return one(`SELECT id, name, sector, contact_name, phone, email, status, '${BASE}/musteriler/' || id url FROM clients WHERE id=$1`, [id]);",
-  "    if (scope && !k.scopes.includes(scope)) throw new HttpError(403, `Bu anahtarın \"${scope}\" yetkisi yok.`);",
-  "      all(`SELECT t.id, t.title, u.name assignee, p.name project FROM tasks t JOIN projects p ON p.id=t.project_id LEFT JOIN users u ON u.id=t.assignee_id WHERE t.agency_id=$1 AND t.status<>'bitti' AND t.due_date = CURRENT_DATE ORDER BY t.id LIMIT 50`, [a]),",
-  "  route('GET', '/api/n8n-seed', async (ctx, res) => {",
-  "${eventChecks(['*'])}<div><button class=\"gold\">Bağlantıyı ekle</button></div></form></details>` : ''}</section>",
-  "    await deliver({ url: x.url, secret: x.secret, agency_id: x.agency_id }, x.id, JSON.stringify({ ...x.payload, delivery: x.id, redelivery: true }), RETRY.length - 1);"
+  "  async function entity(event, detail) {",
+  "        await emit(agencyId, 'site.alert', { domain: s.domain, client_id: s.client_id, client: s.client, ssl_status: s.ssl_status, wp_version: s.wp_version, issue: s.issue, url: s.client_id ? `${BASE}/musteriler/${s.client_id}/siteler` : `${BASE}/siteler` });",
+  "    FROM clients c LEFT JOIN users u ON u.id=c.owner_id WHERE c.agency_id=$1 AND (CASE $2 WHEN '' THEN c.status='lead' AND c.stage = ANY($3) ELSE c.stage=$2 END) ORDER BY c.call_at NULLS LAST, c.created_at DESC LIMIT $4`, [a, qp(ctx, 'stage'), OPEN_STAGES, lim(ctx)]) }));",
+  "  api('POST', '/tasks/:id/status', 'yaz', async (ctx, a, p) => {",
+  "${hooks.map(w => `<div class=\"svc\"><div class=\"svc-h\"><span class=\"grow\"><strong>${h(w.name)}</strong><span class=\"muted\">${w.events.includes('*') ? 'Tüm olaylar' : `${w.events.length} olay`} · son 7 gün ${w.week} bildirim${w.fails ? ` · <span class=\"late\">${w.fails} başarısız</span>` : ''}</span></span>${badge(w.active ? 'Etkin' : 'Kapalı', w.active ? 'ok' : '')}</div>",
+  "    await d.audit(ctx, 'automation.webhook_create', { id: r.id }); redirect(res, '/otomasyonlar');"
  ],
  "n8n-seed.json": [
   "720",
@@ -64,5 +65,10 @@
  "ext-forge.js": [
   "      await q(`UPDATE forge_changes SET status=$1, error=$2, merged_sha=COALESCE($3, merged_sha), deployed_at=CASE WHEN $1='yayinda' THEN now() ELSE deployed_at END, updated_at=now() WHERE pr=$4`,",
   "    if (ctx.body.sha !== c.head_sha) throw new HttpError(409, 'Değişiklik siz bakarken güncellendi. Sayfayı yenileyip yeniden inceleyin.');"
+ ],
+ "ext-crm.js": [
+  "${list.map(l => { const late = l.next_action_at && new Date(l.next_action_at) <= now; return `<article class=\"kcard${late ? ' is-late' : ''}\"><a class=\"kt\" href=\"/satis/${l.id}\">${h(l.name)}</a>",
+  "<div class=\"act-btns\">${l.phone ? `<a class=\"btn\" href=\"tel:${h(String(l.phone).replace(/[^+\\d]/g, ''))}\">Telefonla ara</a>` : ''}${wa ? `<a class=\"btn ghost\" href=\"${h(wa)}\" target=\"_blank\" rel=\"noopener\">WhatsApp</a>` : ''}${l.email ? `<a class=\"btn ghost\" href=\"mailto:${h(l.email)}\">E-posta</a>` : ''}</div></div>",
+  "  return { openLeads: (a) => all(`SELECT id, name, contact_name, phone, stage, lead_source, interest, call_at, next_action, next_action_at, created_at FROM clients WHERE agency_id=$1 AND status='lead' AND stage = ANY($2)`, [a, OPEN_STAGES]) };"
  ]
 }

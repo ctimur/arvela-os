@@ -3,8 +3,10 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import { siteHealth } from './ext-sites.js';
+import { leadScore, OPEN_STAGES } from './ext-crm.js';
 
 export const EVENTS = {
+  'Satış': ['lead.create', 'lead.update', 'lead.stage', 'lead.note', 'lead.won'],
   'Müşteri': ['client.create', 'client.update', 'client_service.add', 'client_service.update', 'client_service.delete'],
   'Proje': ['project.create', 'project.update', 'project.delete'],
   'Görev': ['task.create', 'task.update', 'task.status', 'task.note', 'task.delete'],
@@ -14,6 +16,7 @@ export const EVENTS = {
   'Site': ['site.create', 'site.alert', 'site.sync'],
 };
 export const EVENT_LABEL = {
+  'lead.create': 'Yeni aday', 'lead.update': 'Aday güncellendi', 'lead.stage': 'Aday aşaması değişti', 'lead.note': 'Adayla iletişim kaydı', 'lead.won': 'Aday kazanıldı',
   'client.create': 'Yeni müşteri', 'client.update': 'Müşteri güncellendi', 'client_service.add': 'Hizmet eklendi', 'client_service.update': 'Hizmet güncellendi', 'client_service.delete': 'Hizmet silindi',
   'project.create': 'Yeni proje', 'project.update': 'Proje güncellendi', 'project.delete': 'Proje silindi',
   'task.create': 'Yeni görev', 'task.update': 'Görev güncellendi', 'task.status': 'Görev durumu değişti', 'task.note': 'Göreve not eklendi', 'task.delete': 'Görev silindi',
@@ -69,6 +72,8 @@ export function registerAutomation(d) {
     const id = int(detail?.id);
     const [kind] = event.split('.');
     if (!id || event.endsWith('.delete') || event === 'approval.withdraw') return { ...detail };
+    if (kind === 'lead') return one(`SELECT c.id, c.name, c.contact_name, c.phone, c.email, c.sector, c.status, c.stage, c.lead_source, c.lead_score, c.interest, c.call_at, c.next_action, c.next_action_at, c.lost_reason, c.owner_id, u.name owner, u.email owner_email,
+      (SELECT body FROM client_notes n WHERE n.client_id=c.id ORDER BY n.created_at DESC LIMIT 1) last_note, '${BASE}/satis/' || c.id url FROM clients c LEFT JOIN users u ON u.id=c.owner_id WHERE c.id=$1`, [id]);
     if (kind === 'client') return one(`SELECT id, name, sector, contact_name, phone, email, status, '${BASE}/musteriler/' || id url FROM clients WHERE id=$1`, [id]);
     if (kind === 'client_service') return one(`SELECT cs.id, cs.status, cs.start_date, cs.end_date, cs.notes, s.code, s.name service, s.billing, cs.client_id, c.name client FROM client_services cs JOIN services s ON s.id=cs.service_id JOIN clients c ON c.id=cs.client_id WHERE cs.id=$1`, [id]);
     if (kind === 'project') return one(`SELECT p.id, p.name, p.status, p.due_date, p.description, p.client_id, c.name client, '${BASE}/projeler/' || p.id url FROM projects p JOIN clients c ON c.id=p.client_id WHERE p.id=$1`, [id]);
@@ -116,7 +121,8 @@ export function registerAutomation(d) {
     if (!ALL_EVENTS.includes(action)) return;
     const agencyId = ctx.user?.agency_id; if (!agencyId) return;
     const has = await one('SELECT 1 FROM webhooks WHERE agency_id=$1 AND active LIMIT 1', [agencyId]); if (!has) return;
-    const data = (await entity(action, detail).catch(() => null)) || { ...detail };
+    let data = (await entity(action, detail).catch(() => null)) || { ...detail };
+    if (action === 'client.create' && data.status === 'lead') { action = 'lead.create'; data = (await entity(action, detail).catch(() => null)) || data; }
     if (detail && typeof detail === 'object') for (const k of ['decision', 'status', 'amount', 'period', 'count', 'from', 'quote', 'title', 'name']) if (k in detail && !(k in data)) data[k] = detail[k];
     await emit(agencyId, action, data, { source: ctx.apiKey ? 'api' : 'arvela-os', actor: ctx.apiKey ? { api_key: ctx.apiKey.name } : ctx.user ? { id: ctx.user.id, name: ctx.user.name, role: ctx.user.role } : null });
   }
@@ -185,6 +191,8 @@ export function registerAutomation(d) {
     const want = qp(ctx, 'health');
     return { data: rows.map(s => ({ ...s, health: siteHealth(s).label })).filter(s => !want || s.health.toLowerCase() === want.toLowerCase()) };
   });
+  api('GET', '/leads', 'is', async (ctx, a) => ({ data: await all(`SELECT c.id, c.name, c.contact_name, c.phone, c.email, c.stage, c.lead_source, c.lead_score, c.interest, c.call_at, c.next_action, c.next_action_at, c.created_at, u.name owner
+    FROM clients c LEFT JOIN users u ON u.id=c.owner_id WHERE c.agency_id=$1 AND (CASE $2 WHEN '' THEN c.status='lead' AND c.stage = ANY($3) ELSE c.stage=$2 END) ORDER BY c.call_at NULLS LAST, c.created_at DESC LIMIT $4`, [a, qp(ctx, 'stage'), OPEN_STAGES, lim(ctx)]) }));
   api('GET', '/team', 'is', async (ctx, a) => ({ data: await all(`SELECT id, name, email, role FROM users WHERE agency_id=$1 AND active AND role<>'client' ORDER BY name`, [a]) }));
   api('GET', '/summary', 'is', async (ctx, a) => {
     const [counts, late, today, waiting, acil] = await Promise.all([
@@ -211,9 +219,13 @@ export function registerAutomation(d) {
   const auditApi = (ctx, action, detail) => d.audit(ctx, action, { ...detail, via: 'api' });
   api('POST', '/clients', 'yaz', async (ctx, a) => {
     const b = body(ctx); if (!nn(b.name)) throw new HttpError(400, 'Firma adı gerekli.');
-    const r = await one(`INSERT INTO clients (agency_id, name, sector, contact_name, phone, email, notes, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
-      [a, nn(b.name), nn(b.sector), nn(b.contact_name), nn(b.phone), nn(b.email), nn(b.notes), ['lead', 'active', 'paused', 'churned'].includes(b.status) ? b.status : 'lead']);
-    await auditApi(ctx, 'client.create', { id: r.id, name: b.name }); return { id: r.id, url: `${BASE}/musteriler/${r.id}` };
+    const status = ['lead', 'active', 'paused', 'churned'].includes(b.status) ? b.status : 'lead';
+    const src = ['web', 'whatsapp', 'referans', 'sosyal', 'outbound', 'etkinlik', 'diger'].includes(b.lead_source) ? b.lead_source : (status === 'lead' ? 'web' : null);
+    const r = await one(`INSERT INTO clients (agency_id, name, sector, contact_name, phone, email, notes, status, stage, lead_source, interest, lead_score) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`,
+      [a, nn(b.name), nn(b.sector), nn(b.contact_name), nn(b.phone), nn(b.email), nn(b.notes), status, status === 'lead' ? 'yeni' : null, src, nn(b.interest), status === 'lead' ? leadScore({ lead_source: src, phone: b.phone, email: b.email, sector: b.sector }) : null]);
+    if (status === 'lead' && nn(b.notes)) await q('INSERT INTO client_notes (client_id, user_id, kind, body) VALUES ($1,NULL,$2,$3)', [r.id, 'not', `[${ctx.apiKey.name}] ${nn(b.notes)}`.slice(0, 4000)]);
+    await auditApi(ctx, status === 'lead' ? 'lead.create' : 'client.create', { id: r.id, name: b.name });
+    return { id: r.id, url: `${BASE}/${status === 'lead' ? 'satis' : 'musteriler'}/${r.id}` };
   });
   api('POST', '/projects', 'yaz', async (ctx, a) => {
     const b = body(ctx); const c = await one('SELECT id FROM clients WHERE id=$1 AND agency_id=$2', [int(b.client_id), a]);
@@ -305,7 +317,7 @@ ${k.revoked_at ? badge('İptal edildi') : `<form method="post" action="/otomasyo
 ${Object.entries(SCOPES).map(([k, v]) => `<label class="chk"><input type="checkbox" name="scope_${k}" ${k !== 'finans' ? 'checked' : ''}> ${h(v)}</label>`).join('')}<div><button class="gold">Anahtar oluştur</button></div></form></details></section>` : ''}
 <section class="card"><h2>API başvuru</h2><p class="muted">Adres: <code>${BASE}/api/v1</code> · Başlık: <code>Authorization: Bearer arv_…</code> · Gövde: JSON</p>
 <div class="tbl"><table><tr><th>Uç</th><th>Ne yapar</th><th>Yetki</th></tr>
-${[['GET /summary', 'Günün özeti: geciken ve bugünkü görevler, bekleyen onaylar, acil siteler (finans yetkisiyle gecikmiş faturalar)', 'is'], ['GET /clients · /clients/{id}', 'Müşteriler; ayrıntıda hizmetler, projeler, siteler, onaylar', 'is'], ['GET /projects · /projects/{id}', 'Projeler; ayrıntıda görevler', 'is'], ['GET /tasks?status=open|overdue|today', 'Görevler (assignee_id, project_id ile süzülür)', 'is'], ['GET /tasks/{id}', 'Görev ve notları', 'is'], ['GET /approvals?status=bekliyor', 'Onaylar', 'is'], ['GET /sites?health=acil', 'Siteler ve sağlık durumu', 'is'], ['GET /team', 'Ekip', 'is'], ['GET /quotes · /invoices?status=overdue', 'Teklifler ve faturalar', 'finans'], ['POST /clients', 'Müşteri (aday) ekle: name, phone, email, sector, contact_name, notes', 'yaz'], ['POST /projects', 'Proje aç: client_id, name, description, due_date', 'yaz'], ['POST /tasks', 'Görev ekle: project_id, title, description, assignee_id, due_date, priority', 'yaz'], ['POST /tasks/{id}/status', 'Görev durumu: yapilacak, yapiliyor, incelemede, bitti', 'yaz'], ['POST /tasks/{id}/notes', 'Göreve not: body', 'yaz'], ['POST /approvals', 'Onaya gönder: client_id, project_id, title, body', 'yaz']]
+${[['GET /summary', 'Günün özeti: geciken ve bugünkü görevler, bekleyen onaylar, acil siteler (finans yetkisiyle gecikmiş faturalar)', 'is'], ['GET /clients · /clients/{id}', 'Müşteriler; ayrıntıda hizmetler, projeler, siteler, onaylar', 'is'], ['GET /projects · /projects/{id}', 'Projeler; ayrıntıda görevler', 'is'], ['GET /tasks?status=open|overdue|today', 'Görevler (assignee_id, project_id ile süzülür)', 'is'], ['GET /tasks/{id}', 'Görev ve notları', 'is'], ['GET /approvals?status=bekliyor', 'Onaylar', 'is'], ['GET /sites?health=acil', 'Siteler ve sağlık durumu', 'is'], ['GET /leads?stage=yeni|ulasildi|gorusme|teklif', 'Satış hattındaki adaylar (aşama olmadan: tüm açık adaylar)', 'is'], ['GET /team', 'Ekip', 'is'], ['GET /quotes · /invoices?status=overdue', 'Teklifler ve faturalar', 'finans'], ['POST /clients', 'Aday ya da müşteri ekle: name, phone, email, sector, contact_name, interest, lead_source, notes, status (varsayılan: lead → Satış hattı)', 'yaz'], ['POST /projects', 'Proje aç: client_id, name, description, due_date', 'yaz'], ['POST /tasks', 'Görev ekle: project_id, title, description, assignee_id, due_date, priority', 'yaz'], ['POST /tasks/{id}/status', 'Görev durumu: yapilacak, yapiliyor, incelemede, bitti', 'yaz'], ['POST /tasks/{id}/notes', 'Göreve not: body', 'yaz'], ['POST /approvals', 'Onaya gönder: client_id, project_id, title, body', 'yaz']]
       .map(([e, t, s]) => `<tr><td><code>${e}</code></td><td>${t}</td><td>${h(SCOPES[s])}</td></tr>`).join('')}</table></div>
 <p class="muted">Webhook gövdesi: <code>{ event, label, at, source, actor, delivery, data }</code>. <code>data</code> ilgili kaydın ayrıntısıdır (müşteri, proje, görev, sorumlu, bağlantı). İmza: <code>X-Arvela-Signature: sha256=HMAC(imza anahtarı, gövde)</code>.</p></section>`, '/otomasyonlar'));
   });

@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import pg from 'pg';
 import { als, lang, M1, M2, exact, translateHtml, pickLang, locale, LANGS } from './i18n.js';
 
-const VERSION = '0.10.0';
+const VERSION = '0.11.0';
 const PORT = Number(process.env.PORT || 3000);
 const SETUP_TOKEN = process.env.SETUP_TOKEN || '';
 const COOKIE_SECURE = process.env.COOKIE_SECURE !== '0';
@@ -259,7 +259,7 @@ function layout(ctx, title, body, active = '') {
   const links = !u ? [] :
     u.role === 'client' ? [['/portal', 'Portalım'], ['/portal/siteler', 'Sitelerim'], ['/portal/teklifler', 'Tekliflerim'], ['/portal/faturalar', 'Faturalarım']] :
     u.role === 'freelancer' ? [['/gorevler', 'Görevlerim']] :
-    [['/panel', 'Bugün'], ['/musteriler', 'Müşteriler'], ['/gorevler', 'Görevlerim'], ['/onaylar', 'Onaylar'], ['/siteler', 'Siteler'], ['/projeler', 'Projeler'], ['/katalog', 'Katalog'], ['/otomasyonlar', 'Otomasyonlar'], ...(u.role === 'admin' ? [['/teklifler', 'Teklifler'], ['/faturalar', 'Faturalar'], ['/ekip', 'Ekip'], ['/forge', 'Forge'], ['/kayitlar', 'Kayıtlar']] : [])];
+    [['/panel', 'Bugün'], ['/satis', 'Satış hattı'], ['/musteriler', 'Müşteriler'], ['/gorevler', 'Görevlerim'], ['/onaylar', 'Onaylar'], ['/siteler', 'Siteler'], ['/projeler', 'Projeler'], ['/katalog', 'Katalog'], ['/otomasyonlar', 'Otomasyonlar'], ...(u.role === 'admin' ? [['/teklifler', 'Teklifler'], ['/faturalar', 'Faturalar'], ['/ekip', 'Ekip'], ['/forge', 'Forge'], ['/kayitlar', 'Kayıtlar']] : [])];
   const staffish = u && (u.role === 'admin' || u.role === 'staff');
   const isOn = (href) => active === href;
   const cur = (href) => isOn(href) ? ' class="on" aria-current="page"' : '';
@@ -432,10 +432,11 @@ ${rows.map(c => `<tr><td><a href="/musteriler/${c.id}"><strong>${h(c.name)}</str
 route('POST', '/musteriler', async (ctx, res) => {
   need(ctx, ...STAFF); const b = ctx.body;
   if (!nn(b.name)) throw new HttpError(400, 'Firma adı gerekli.');
-  const r = await one(`INSERT INTO clients (agency_id, name, sector, contact_name, phone, email, notes, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
-    [ctx.user.agency_id, nn(b.name), nn(b.sector), nn(b.contact_name), nn(b.phone), nn(b.email), nn(b.notes), CLIENT_ST[b.status] ? b.status : 'lead']);
-  await audit(ctx, 'client.create', { id: r.id, name: b.name });
-  redirect(res, `/musteriler/${r.id}`);
+  const st = CLIENT_ST[b.status] ? b.status : 'lead';
+  const r = await one(`INSERT INTO clients (agency_id, name, sector, contact_name, phone, email, notes, status, stage) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
+    [ctx.user.agency_id, nn(b.name), nn(b.sector), nn(b.contact_name), nn(b.phone), nn(b.email), nn(b.notes), st, st === 'lead' ? 'yeni' : null]);
+  await audit(ctx, st === 'lead' ? 'lead.create' : 'client.create', { id: r.id, name: b.name });
+  redirect(res, st === 'lead' ? `/satis/${r.id}` : `/musteriler/${r.id}`);
 });
 async function clientFor(ctx, id) {
   const c = await one('SELECT * FROM clients WHERE id=$1 AND agency_id=$2', [id, ctx.user.agency_id]);
@@ -451,7 +452,7 @@ route('GET', '/musteriler/:id', async (ctx, res, p) => {
   const f = csrfField(ctx);
   send(res, 200, layout(ctx, c.name, `<nav class="crumb"><a href="/musteriler">Müşteriler</a></nav>
 <div class="page-head"><div><h1>${h(c.name)}</h1><div class="chips">${badge(CLIENT_ST[c.status])}${c.contact_name ? `<span class="muted">${h(c.contact_name)}</span>` : ''}${c.phone ? `<a href="tel:${h(c.phone.replace(/[^+\d]/g, ''))}">${h(c.phone)}</a>` : ''}${c.email ? `<a href="mailto:${h(c.email)}">${h(c.email)}</a>` : ''}</div></div>
-<nav class="jump" aria-label="Sayfa içi"><a href="#hizmetler">Hizmetler</a><a href="#projeler">Projeler</a><a href="#onaylar">Onaylar</a><a href="/musteriler/${c.id}/siteler">Siteler</a></nav></div>
+<nav class="jump" aria-label="Sayfa içi"><a href="#hizmetler">Hizmetler</a><a href="#projeler">Projeler</a><a href="#onaylar">Onaylar</a><a href="/musteriler/${c.id}/siteler">Siteler</a><a href="/satis/${c.id}">Satış geçmişi</a></nav></div>
 <details class="card"><summary>Firma bilgileri</summary><form class="stack" method="post" action="/musteriler/${c.id}">${f}
 <div class="row"><label>Firma adı<input name="name" value="${h(c.name)}" required></label><label>Sektör<input name="sector" value="${h(c.sector)}"></label><label>Durum<select name="status">${opts(CLIENT_ST, c.status)}</select></label></div>
 <div class="row"><label>Yetkili<input name="contact_name" value="${h(c.contact_name)}"></label><label>Telefon<input name="phone" value="${h(c.phone)}"></label><label>E-posta<input type="email" name="email" value="${h(c.email)}"></label></div>
@@ -643,13 +644,15 @@ import { registerWork, migrateWork } from './ext-work.js';
 import { registerSync, migrateSync } from './ext-sync.js';
 import { registerAutomation, migrateAutomation, EVENT_LABEL } from './ext-automation.js';
 import { registerForge, migrateForge } from './ext-forge.js';
+import { registerCrm, migrateCrm, crmActions } from './ext-crm.js';
 registerSites({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, STAFF });
 registerQuotes({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, audit, HttpError, int, nn });
 registerInvoices({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, audit, HttpError, int, nn });
 hooks = registerAutomation({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, STAFF, TK_ST, PR_ST, audit, safeEqual, APP_URL: process.env.APP_URL });
 const forge = registerForge({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, safeEqual, audit, SETUP_TOKEN, VERSION });
-const todayPage = registerToday({ all, one, h, layout, need, STAFF, forgePending: forge.pendingCount });
+const crm = registerCrm({ route, all, one, q, need, layout, h, badge, fmtMoney, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, opts });
+const todayPage = registerToday({ all, one, h, layout, need, STAFF, forgePending: forge.pendingCount, extraActions: async (a) => crmActions(await crm.openLeads(a)) });
 registerSync({ route, one, all, q, HttpError, safeEqual, SETUP_TOKEN, onSynced: (a, before) => hooks?.onSiteSync(a, before) });
 registerWork({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send });
 
-migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
+migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
