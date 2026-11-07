@@ -78,7 +78,7 @@ function actionCard(x, h, size) {
   return `<article class="act ${size}${size === 'hero' ? '' : ''}"><div class="act-meta"><span class="badge ${x.tone}">${h(x.tag)}</span><span class="muted">${h(x.meta)}</span></div>
 <${size === 'hero' ? 'h2' : 'h3'}>${h(x.title)}</${size === 'hero' ? 'h2' : 'h3'}>${x.body ? `<p>${h(x.body)}</p>` : ''}<div class="act-btns">${btns}</div></article>`;
 }
-export function registerToday({ all, one, h, layout, need, STAFF, forgePending }) {
+export function registerToday({ all, one, h, layout, need, STAFF, forgePending, extraActions }) {
   return async function todayPage(ctx, res, send) {
     need(ctx, ...STAFF); const a = ctx.user.agency_id; const admin = ctx.user.role === 'admin';
     const period = new Date().toISOString().slice(0, 7);
@@ -99,7 +99,8 @@ export function registerToday({ all, one, h, layout, need, STAFF, forgePending }
     ]);
     const fp = admin && forgePending ? await forgePending().catch(() => 0) : 0;
     const d = { sites, tasks, approvals, clients, overdue, notified, draftQuotes, draftInvoices, monthlyDue: md?.n || 0, period, forgePending: fp };
-    const acts = buildActions(d, { admin }); const pulse = buildPulse(d);
+    const extra = extraActions ? await extraActions(a).catch(() => []) : [];
+    const acts = [...buildActions(d, { admin }), ...extra].sort((x, y) => y.score - x.score); const pulse = buildPulse(d);
     const first = ctx.user.name.split(' ')[0];
     const [hero, ...rest] = acts; const pair = rest.slice(0, 2); const later = rest.slice(2);
     const head = !acts.length ? 'Bugün her şey yolunda.' : lang() === 'en' ? `${acts.length} things to do today.` : `Bugün ${acts.length} iş var.`;
