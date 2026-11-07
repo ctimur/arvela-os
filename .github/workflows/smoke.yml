@@ -19,7 +19,7 @@ jobs:
           set -u; fail=0
           check() { code=$(curl -s -o /dev/null -w '%{http_code}' "${@:3}" "$2"); if [ "$code" = "$1" ]; then echo "OK   $code  $2"; else echo "HATA $code (beklenen $1)  $2"; fail=1; fi; }
           check 200 https://os.arveladigital.com/healthz
-          check 302 https://os.arveladigital.com/panel
+          check 303 https://os.arveladigital.com/panel
           check 401 https://os.arveladigital.com/api/v1/me
           check 401 https://os.arveladigital.com/api/v1/me -H 'Authorization: Bearer arv_00000000_xxxxxxxxxxxxxxxxxxxxxxxx'
           check 403 https://os.arveladigital.com/api/site-sync -X POST
