@@ -38,7 +38,7 @@ document.querySelectorAll('form[data-confirm]').forEach(function(f){f.addEventLi
 })();`;
 
 export function registerWork(d) {
-  const { route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send } = d;
+  const { route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send, projectExtra } = d;
   const WORKERS = ['admin', 'staff', 'freelancer'];
   const tkTone = { yapilacak: '', yapiliyor: 'warn', incelemede: 'warn', bitti: 'ok' };
   const prTone = { planlandi: '', surecte: 'warn', onayda: 'warn', tamamlandi: 'ok' };
@@ -100,6 +100,7 @@ ${rows.map(p => `<tr><td><a href="/projeler/${p.id}"><strong>${h(p.name)}</stron
       one(`SELECT count(*)::int n FROM tasks WHERE project_id=$1`, [p.id]),
     ]);
     const f = csrfField(ctx); const done = tasks.filter(t => t.status === 'bitti').length;
+    const extra = projectExtra ? await projectExtra(ctx, p).catch(() => '') : '';
     const col = (st) => { const list = tasks.filter(t => t.status === st); return `<section class="kcol" aria-label="${TK_ST[st]}"><h3>${TK_ST[st]} <span class="muted">${list.length}</span></h3>
 ${list.map(t => `<article class="kcard${isLate(t) ? ' is-late' : ''}"><a class="kt" href="/gorev/${t.id}">${t.priority === 'yuksek' ? '<span class="badge bad">Öncelikli</span> ' : ''}${h(t.title)}</a>
 <div class="kmeta"><span>${h(t.assignee || 'Atanmadı')}</span><span>${dueTxt(t)}</span>${t.notes ? `<span>${t.notes} not</span>` : ''}</div>${statusForm(ctx, t, '')}</article>`).join('') || '<p class="muted kempty">Boş</p>'}</section>`; };
@@ -108,6 +109,7 @@ ${list.map(t => `<article class="kcard${isLate(t) ? ' is-late' : ''}"><a class="
 <a class="btn gold" href="#yeni-gorev">+ Görev</a></div>
 ${p.description ? `<p class="desc">${h(p.description)}</p>` : ''}
 <div class="prog big" role="img" aria-label="${done}/${tasks.length} görev tamam"><span style="width:${tasks.length ? Math.round(100 * done / tasks.length) : 0}%"></span></div>
+${extra}
 <div class="kanban">${Object.keys(TK_ST).map(col).join('')}</div>
 <section class="card" id="yeni-gorev"><h2>Yeni görev</h2><form class="stack" method="post" action="/projeler/${p.id}/gorev">${f}
 <div class="row"><label class="wide">Görev<input name="title" required></label><label>Sorumlu<select name="assignee_id">${peopleOpts(team, null)}</select></label><label>Teslim<input type="date" name="due_date"></label><label>Öncelik<select name="priority">${opts(PRIO, 'normal')}</select></label></div>

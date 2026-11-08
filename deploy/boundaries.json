@@ -1,15 +1,16 @@
 {
  "server.js": [
-  "function checkPassword(pw, stored) {",
-  ".badge.ok{background:#E3EFE4;color:#24502B}.badge.warn{background:#F7E9CF;color:#6B4A0F}.badge.bad{background:#F6E1DE;color:#7A2418}",
-  ".evgrp{border:1px solid var(--line2);border-radius:12px;padding:8px 12px;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px 16px}.evgrp legend{font-weight:600;font-size:13px;padding:0 6px}.evgrp code{color:var(--stone);font-size:11px}",
-  ".tabs a,.tabs summary{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:500;color:#6B6558;text-decoration:none;border-radius:14px;list-style:none;min-width:56px}",
-  "  const items = [['/satis#yeni-aday', 'Yeni aday', 'A'], ['/paketler#yeni-paket', 'Yeni iş paketi', ''], ...(u.role === 'admin' ? [['/teklifler#yeni', 'Yeni teklif', 'T']] : []),",
-  "<label>Şifre (en az 10 karakter)<input type=\"password\" name=\"password\" required minlength=\"10\" autocomplete=\"new-password\"></label><button class=\"gold\">Hesabı oluştur</button></form>`));",
-  "async function clientFor(ctx, id) {",
-  "${ctx.user.role === 'admin' ? `<form class=\"row\" method=\"post\" action=\"/ekip\">${f}<input type=\"hidden\" name=\"role\" value=\"client\"><input type=\"hidden\" name=\"client_id\" value=\"${c.id}\">",
-  "<div class=\"card\"><h3>Freelancer</h3><p class=\"muted\">Yalnızca kendisine atanan görevleri görür ve günceller.</p></div><div class=\"card\"><h3>Müşteri</h3><p class=\"muted\">Yalnızca kendi hizmetlerini, projelerini ve onaylarını görür.</p></div></div>",
-  "  need(ctx, 'client');"
+  "  const hash = crypto.scryptSync(pw, salt, 64).toString('hex');",
+  ".badge{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.4px;padding:4px 10px;border-radius:999px;background:#EEE9DF;color:#4A4538;text-transform:uppercase}",
+  ".lang{display:inline-flex;border:1px solid #DDD6C7;border-radius:10px;overflow:hidden}.lang button{min-height:34px;padding:4px 10px;font-size:12px;border-radius:0;background:transparent;color:var(--stone);font-weight:600}.lang button.on{background:var(--ink);color:#fff}.lang button:hover{background:var(--sand);color:var(--ink)}",
+  ".mtop{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px 4px;position:sticky;top:0;background:var(--paper);z-index:15}",
+  "<div class=\"shell${u ? '' : ' bare'}\">${u ? `<header class=\"mtop\"><a class=\"brand\" href=\"/\">Arvela<span>OS</span></a><div class=\"who\">${langSwitch(ctx)}${staffish ? `<a class=\"icon-btn\" href=\"/ara\" data-cmdk aria-label=\"Ara\">${icon('search').replace('class=\"ti\"', 'class=\"ti\" style=\"width:auto;height:auto\"')}</a>` : ''}${out}</div></header>` : ''}",
+  "  redirect(res, ctx.user.role === 'client' ? '/portal' : ctx.user.role === 'freelancer' ? '/paketler' : '/panel');",
+  "route('POST', '/musteriler', async (ctx, res) => {",
+  "<form class=\"stack\" method=\"post\" action=\"/musteriler/${c.id}/onay\">${f}<div class=\"row\"><label style=\"flex:1;min-width:240px\">Konu<input name=\"title\" required placeholder=\"Kasım gönderi takvimi\"></label>",
+  "${svcs.filter(s => s.category_id === c.id).map(s => `<tr><td>${h(s.code)}</td><td><a href=\"/katalog/${s.id}\">${h(s.name)}</a>${s.playbook ? ' ' + badge('Kitap', 'ok') : ''}</td><td>${h(s.sub)}</td><td>${h(s.billing)}</td>${showPrice ? `<td>${fmtMoney(s.price_try)}</td><td>${fmtMoney(s.price_eur)}</td>` : ''}<td>${h(s.availability)}</td></tr>`).join('')}</table></div></details>`).join('')}`, '/katalog'));",
+  "<section><h2 style=\"margin-bottom:12px\">Hizmetleriniz</h2><div class=\"grid\">${svcs.map(s => `<div class=\"card\"><span class=\"muted\">${h(s.cat)}</span><h3>${h(s.name)}</h3><div>${badge(CS_ST[s.status], s.status === 'aktif' ? 'ok' : 'warn')}</div></div>`).join('') || '<p class=\"muted\">Hizmet kaydı yok.</p>'}</div></section>",
+  "registerWork({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send, projectExtra: (ctx, pr) => playbooks.projectCard(ctx, pr) });"
  ],
  "ext-sites.js": [
   "  route('POST', '/siteler', async (ctx, res) => {"
@@ -47,7 +48,8 @@
   "\"Sayfa bulunamadı.\": \"Page not found.\",",
   "\"İptal edildi\": \"Revoked\",",
   "\"Adayı ekle\": \"Add lead\",",
-  "\"İş paketine süre kaydedildi\": \"Time logged on work package\","
+  "\"İş paketine süre kaydedildi\": \"Time logged on work package\",",
+  "\"Otomasyon\": \"Automation\","
  ],
  "ext-sync.js": [],
  "ext-automation.js": [
@@ -85,5 +87,31 @@
   "    await put(a, 'lead_months', clampMonths(b.lead_months, DEFAULTS.lead_months)); await put(a, 'audit_months', clampMonths(b.audit_months, DEFAULTS.audit_months)); await put(a, 'auto', b.auto ? '1' : '0');"
  ],
  "themes.js": [],
- "ext-settings.js": []
+ "ext-settings.js": [],
+ "ext-playbooks.js": [
+  "<section class=\"card\"><h2>Aşamalar</h2><div class=\"tbl\"><table><tr><th>#</th><th>Aşama</th><th>Kim</th><th>Otomasyon</th><th>Gün</th><th>Karar</th><th>Çıktı ve kabul</th></tr>",
+  "    send(res, 200, layout(ctx, s.name, `<nav class=\"crumb\"><a href=\"/katalog\">Katalog</a> › ${h(s.cat)}</nav><div class=\"page-head\"><div><p class=\"eyebrow\">${h(s.code)} · ${h(s.sub || '')}</p><h1>${h(s.name)}</h1>",
+  "    if (pr.playbook) { const st = stats(pr.playbook); const s = pr.service_id ? await one('SELECT code, name FROM services WHERE id=$1', [pr.service_id]) : null;"
+ ],
+ "playbooks.json": [
+  "    \"Site haritası çıktısı JSON (sayfa, amaç, eylem, bölümler) olarak projeye kaydedilir; WEB-02 bu dosyayla başlar.\"",
+  "    \"Müşteri yorumlarını revizyon listesine çevirir, kapsam dışı olanları ayırır.\"",
+  "    \"kabul\": \"Test başvurusu Arvela OS satış hattında görünüyor\"",
+  "  \"ozet\": \"8 sayfaya kadar kurumsal web sitesi: tasarım sistemine göre geliştirme, içerik girişi, form, ölçüm, KVKK ve yayın. Site Arvela OS'te \\\"Siteler\\\" kaydıyla izlenir.\",",
+  "    \"Müşterinin revizyon e-postalarını/yorumlarını madde madde göreve çevirir.\"",
+  "     \"amac\": \"Alternatif: Asya dilleri için karşılaştırma\"",
+  "    \"ad\": \"İletişim izni metni (İYS)\",",
+  "    \"kontrol\": \"Aday Arvela OS'te\"",
+  "    \"kontrol\": \"Eksik alan yok\"",
+  "    \"ad\": \"Otomatik kontrol\",",
+  "    \"onlem\": \"Sağlayıcı süreci müşteriye bağlı; takvim karar kaydına göre kayar\"",
+  "  \"ozet\": \"Pazaryeri entegrasyonu (Trendyol, Hepsiburada, Amazon TR): ürün, stok, fiyat ve sipariş eşitlemesi.\",",
+  "    \"onlem\": \"Kurallar mali müşavir onayı olmadan canlıya alınmaz\"",
+  "  \"ozet\": \"Web uygulaması / müşteri portalı: ihtiyaç analizi, tasarım, geliştirme, test ve yayın. Sprint'lerle yürütülür.\",",
+  "   \"Hata kuyruğu ve uyarılar\",",
+  "    \"onlem\": \"Sürüm değişince önbellek yenilenir\"",
+  "    \"Aylık raporu müşteri diliyle yazar; aksiyon gerektiren bir şey yoksa \\\"her şey yolunda\\\" der.\"",
+  "    \"ad\": \"İyileştirmeler\",",
+  "    \"Claude e-posta/WhatsApp talebini okuyup görev, kabul ölçütü ve süre tahmini taslağı çıkarır.\""
+ ]
 }

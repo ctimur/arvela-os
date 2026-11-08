@@ -1,0 +1,3430 @@
+{
+ "WEB-01": {
+  "ozet": "Sitenin neden, kim için ve hangi sayfalarla yapılacağını netleştiren keşif çalışması. Sonuçta onaylı site haritası, içerik planı ve ölçülebilir hedefler çıkar.",
+  "kapsam": [
+   "Ön soru formu ve 60 dk keşif görüşmesi",
+   "Rakip ve sektör incelemesi (en fazla 5 site)",
+   "Hedef kitle ve kullanıcı yolculuğu özeti",
+   "Site haritası ve sayfa başına içerik planı",
+   "Ölçüm planı: hedefler, dönüşüm olayları"
+  ],
+  "kapsam_disi": [
+   "Tasarım ve geliştirme (WEB-02, WEB-05)",
+   "Metin yazımı (SOS kategorisi)",
+   "Marka kimliği çalışması"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "Keşif raporu",
+    "kabul": "İş hedefi, hedef kitle, rakip bulguları ve 3 öncelik net yazılmış"
+   },
+   {
+    "ad": "Site haritası",
+    "kabul": "Her sayfanın amacı ve birincil eylemi tanımlı; müşteri onaylı"
+   },
+   {
+    "ad": "İçerik planı",
+    "kabul": "Sayfa başına başlık, bölümler, gereken içerik ve sorumlusu"
+   },
+   {
+    "ad": "Ölçüm planı",
+    "kabul": "En az 3 dönüşüm olayı ve hedef değeri"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "Ön soru formu yanıtları",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Mevcut site, sosyal medya ve rakip adresleri",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Satış süreci ve sık sorulan sorular",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Varsa marka kılavuzu ve logo",
+    "kimden": "musteri",
+    "zorunlu": false,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Ön soru formunu gönder ve yanıtları topla",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 2,
+    "karar": "bilgi",
+    "akis": "Bilgi isteği",
+    "cikti": "Doldurulmuş form",
+    "kontrol": "Zorunlu alanlar dolu"
+   },
+   {
+    "ad": "Rakip ve sektör incelemesi",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 2,
+    "karar": null,
+    "akis": null,
+    "cikti": "Rakip tablosu: güçlü/zayıf yönler, sayfa yapıları",
+    "kontrol": "En az 3 rakip, kaynak bağlantıları"
+   },
+   {
+    "ad": "Keşif görüşmesi (60 dk)",
+    "rol": "ekip",
+    "otomasyon": "insan",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Görüşme notu; Claude özetler",
+    "kontrol": "Hedef, kitle, öncelikler not edildi"
+   },
+   {
+    "ad": "Site haritası ve içerik planı taslağı",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 2,
+    "karar": null,
+    "akis": null,
+    "cikti": "Site haritası + içerik planı",
+    "kontrol": "Her sayfanın amacı ve eylemi var"
+   },
+   {
+    "ad": "İç gözden geçirme",
+    "rol": "ekip",
+    "otomasyon": "insan",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Düzeltilmiş taslak",
+    "kontrol": "Kabul ölçütleri sağlandı"
+   },
+   {
+    "ad": "Müşteri onayı: site haritası",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 3,
+    "karar": "onay",
+    "akis": "Karar hatırlatma",
+    "cikti": "Onaylı site haritası",
+    "kontrol": "Karar kaydı var"
+   },
+   {
+    "ad": "Ölçüm planı ve devir",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Ölçüm planı, WEB-02/05 için brif",
+    "kontrol": "Dönüşüm olayları tanımlı"
+   }
+  ],
+  "sla": {
+   "sure_gun": 10,
+   "revizyon": "Site haritasında 2 tur",
+   "yanit": "İş günü içinde 4 saat"
+  },
+  "kpi": [
+   "Onaya kadar geçen gün",
+   "Revizyon tur sayısı",
+   "Sonraki tasarım aşamasında değişen sayfa sayısı (düşük olmalı)"
+  ],
+  "riskler": [
+   {
+    "risk": "Müşteri formu geç dolduruyor",
+    "onlem": "Karar hatırlatma akışı 24/48 saatte hatırlatır; görüşmede birlikte doldurulur"
+   },
+   {
+    "risk": "Kapsam büyüyor",
+    "onlem": "Site haritası onaydan sonra kilitlenir; yeni sayfa ek iş olarak tekliflenir"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Claude ön soru formu yanıtlarından hedef kitle ve kullanıcı yolculuğu taslağı çıkarır.",
+    "Rakip sitelerin sayfa yapısını karşılaştırma tablosuna döker; ekip doğrular.",
+    "Görüşme notundan site haritası ve içerik planını üretir; her sayfaya tek birincil eylem atar."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "Rakip incelemesi için sayfa içerikleri n8n HTTP düğümüyle alınır, Claude'a özetletilir (robots.txt'e uyulur).",
+    "Site haritası çıktısı JSON (sayfa, amaç, eylem, bölümler) olarak projeye kaydedilir; WEB-02 bu dosyayla başlar."
+   ],
+   "ek_motorlar": [
+    {
+     "motor": "openai",
+     "amac": "İsteğe bağlı: görüşme ses kaydının yazıya dökülmesi (Whisper)"
+    }
+   ],
+   "otomasyon_orani": 75
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister",
+   "Site haritasını sayfa sayfa görür, sayfa bazında yorum bırakır"
+  ],
+  "v": 1
+ },
+ "WEB-02": {
+  "ozet": "Onaylı site haritasına göre 5 ana ekranın masaüstü ve mobil kullanıcı arayüzü tasarımı. İki tasarım yönü sunulur, müşteri birini seçer.",
+  "kapsam": [
+   "Moodboard ve 2 tasarım yönü",
+   "Seçilen yönde 5 ekran, masaüstü + mobil",
+   "Bileşen ve renk/tipografi listesi",
+   "Tıklanabilir prototip"
+  ],
+  "kapsam_disi": [
+   "Logo ve kurumsal kimlik",
+   "5 ekranı aşan sayfalar (WEB-03)",
+   "Kodlama"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "2 tasarım yönü",
+    "kabul": "Ana sayfa üzerinde iki farklı yön; marka kılavuzuyla uyumlu"
+   },
+   {
+    "ad": "5 ekran tasarımı",
+    "kabul": "Masaüstü 1440 ve mobil 390 genişlikte; erişilebilirlik kontrastı 4.5:1"
+   },
+   {
+    "ad": "Prototip bağlantısı",
+    "kabul": "Ana akış tıklanarak gezilebiliyor"
+   },
+   {
+    "ad": "Tasarım sistemi notu",
+    "kabul": "Renk, yazı, buton, form bileşenleri tanımlı"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "Onaylı site haritası (WEB-01)",
+    "kimden": "arvela",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Logo ve marka renkleri",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Beğenilen 3 site örneği",
+    "kimden": "musteri",
+    "zorunlu": false,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Ürün/hizmet görselleri",
+    "kimden": "musteri",
+    "zorunlu": false,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Brif ve moodboard",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Moodboard: renk, yazı, görsel dili",
+    "kontrol": "Marka kılavuzuna uygun"
+   },
+   {
+    "ad": "İki tasarım yönü (ana sayfa)",
+    "rol": "ekip",
+    "otomasyon": "insan",
+    "gun": 3,
+    "karar": null,
+    "akis": null,
+    "cikti": "İki ana sayfa tasarımı",
+    "kontrol": "İki yön gerçekten farklı"
+   },
+   {
+    "ad": "Müşteri seçimi: tasarım yönü",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": "secim",
+    "akis": "Karar hatırlatma",
+    "cikti": "Seçilen yön",
+    "kontrol": "Karar kaydı var"
+   },
+   {
+    "ad": "5 ekran masaüstü + mobil",
+    "rol": "ekip",
+    "otomasyon": "insan",
+    "gun": 5,
+    "karar": null,
+    "akis": null,
+    "cikti": "Ekran tasarımları",
+    "kontrol": "Tüm ekranlarda mobil hâl var"
+   },
+   {
+    "ad": "Erişilebilirlik ve tutarlılık ön kontrolü",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": "Kabul ön kontrolü",
+    "cikti": "Kontrol raporu",
+    "kontrol": "Kontrast, dokunma alanı, metin boyutu"
+   },
+   {
+    "ad": "Müşteri onayı: ekranlar",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 3,
+    "karar": "onay",
+    "akis": "Karar hatırlatma",
+    "cikti": "Onaylı tasarımlar",
+    "kontrol": "2 revizyon turu içinde"
+   },
+   {
+    "ad": "Prototip ve geliştirme devri",
+    "rol": "ekip",
+    "otomasyon": "insan",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Prototip + devir notu",
+    "kontrol": "Bileşen listesi tamam"
+   }
+  ],
+  "sla": {
+   "sure_gun": 15,
+   "revizyon": "2 tur",
+   "yanit": "İş günü içinde 4 saat"
+  },
+  "kpi": [
+   "Seçimden onaya revizyon sayısı",
+   "Erişilebilirlik kontrolünden geçen ekran oranı (%100)",
+   "Geliştirmede tasarım kaynaklı geri dönüş sayısı"
+  ],
+  "riskler": [
+   {
+    "risk": "Müşteri iki yönü de beğenmiyor",
+    "onlem": "Seçim sayfasında \"üçüncü yön iste\" yerine yorumla ortak yön birleştirilir; ek tur tekliflenir"
+   },
+   {
+    "risk": "İçerik eksik, tasarım boş kalıyor",
+    "onlem": "Gerçek içerik yoksa Claude örnek metin üretir, \"taslak\" etiketiyle"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Claude site haritası ve marka bilgisinden moodboard brifini ve ekran başına bölüm listesini yazar.",
+    "Tasarım dosyalarından alınan ekran görüntülerini kabul ölçütlerine göre denetler (kontrast, hiyerarşi, mobil).",
+    "Müşteri yorumlarını revizyon listesine çevirir, kapsam dışı olanları ayırır."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "Tasarım: Claude Design / Figma; ekran görüntüleri n8n ile projeye eklenir.",
+    "Seçim kararı iki seçenekli karar kaydıdır; müşteri e-posta bağlantısıyla seçebilir."
+   ],
+   "ek_motorlar": [
+    {
+     "motor": "gemini",
+     "amac": "İsteğe bağlı: moodboard için görsel üretimi"
+    },
+    {
+     "motor": "openai",
+     "amac": "İsteğe bağlı: görsel üretimi (gpt-image)"
+    }
+   ],
+   "otomasyon_orani": 55
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister",
+   "İki tasarım yönünden birini seçer",
+   "Ekran bazında yorum bırakır"
+  ],
+  "v": 1
+ },
+ "WEB-03": {
+  "ozet": "WEB-02 kapsamındaki 5 ekrana ek olarak her bir yeni ekranın aynı tasarım sistemiyle masaüstü ve mobil tasarımı.",
+  "kapsam": [
+   "1 ek ekran, masaüstü + mobil",
+   "Mevcut tasarım sistemiyle uyum",
+   "1 revizyon turu"
+  ],
+  "kapsam_disi": [
+   "Yeni tasarım yönü",
+   "Yeni bileşen kütüphanesi"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "Ek ekran tasarımı",
+    "kabul": "Tasarım sistemiyle tutarlı; mobil hâl var"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "Ekranın amacı ve içeriği",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Onaylı tasarım sistemi (WEB-02)",
+    "kimden": "arvela",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Ekran brifi",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Bölüm listesi",
+    "kontrol": "Amaç ve eylem tanımlı"
+   },
+   {
+    "ad": "Tasarım",
+    "rol": "ekip",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": null,
+    "akis": null,
+    "cikti": "Ekran",
+    "kontrol": "Mobil hâl var"
+   },
+   {
+    "ad": "Ön kontrol",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": "Kabul ön kontrolü",
+    "cikti": "Rapor",
+    "kontrol": "Kontrast ve tutarlılık"
+   },
+   {
+    "ad": "Müşteri onayı",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": "onay",
+    "akis": "Karar hatırlatma",
+    "cikti": "Onay",
+    "kontrol": "1 tur içinde"
+   }
+  ],
+  "sla": {
+   "sure_gun": 5,
+   "revizyon": "1 tur",
+   "yanit": "İş günü içinde 4 saat"
+  },
+  "kpi": [
+   "Teslim süresi",
+   "Revizyon sayısı"
+  ],
+  "riskler": [
+   {
+    "risk": "Ekran yeni bileşen gerektiriyor",
+    "onlem": "Bileşen ek iş olarak ayrıca tahmin edilir"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Claude ekran amacından bölüm listesini çıkarır ve tasarım sistemine uygunluğu denetler."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe."
+   ],
+   "ek_motorlar": [],
+   "otomasyon_orani": 60
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister"
+  ],
+  "v": 1
+ },
+ "WEB-04": {
+  "ozet": "Tek bir kampanya, ürün ya da hizmet için dönüşüme odaklı tek sayfalık site; form, WhatsApp ve ölçüm kurulumu dahil.",
+  "kapsam": [
+   "Tek sayfa: başlık, fayda, sosyal kanıt, SSS, eylem",
+   "Form ve WhatsApp butonu; form Arvela OS satış hattına düşer",
+   "GA4 + dönüşüm olayları, çerez onayı",
+   "Hız: mobil Lighthouse 90+",
+   "Alan adı ve SSL bağlantısı"
+  ],
+  "kapsam_disi": [
+   "Reklam yönetimi (DIJ)",
+   "Çoklu sayfa",
+   "Profesyonel fotoğraf çekimi"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "Yayında landing page",
+    "kabul": "Mobil Lighthouse performans ≥90, erişilebilirlik ≥95"
+   },
+   {
+    "ad": "Çalışan form",
+    "kabul": "Test başvurusu Arvela OS satış hattında görünüyor"
+   },
+   {
+    "ad": "Ölçüm",
+    "kabul": "GA4'te form ve WhatsApp tıklaması olay olarak görünüyor"
+   },
+   {
+    "ad": "KVKK",
+    "kabul": "Aydınlatma bağlantısı ve çerez onayı çalışıyor"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "Kampanya/ürün bilgisi ve teklif",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Logo ve görseller",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Yorum veya referanslar",
+    "kimden": "musteri",
+    "zorunlu": false,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Alan adı erişimi veya DNS yetkisi",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Brif ve teklif metninin netleşmesi",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": "bilgi",
+    "akis": "Bilgi isteği",
+    "cikti": "Brif",
+    "kontrol": "Tek ana teklif ve eylem"
+   },
+   {
+    "ad": "Sayfa metni taslağı",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Başlık, fayda, SSS metinleri",
+    "kontrol": "Marka sesiyle uyumlu, abartısız"
+   },
+   {
+    "ad": "Müşteri onayı: metin",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": "onay",
+    "akis": "Karar hatırlatma",
+    "cikti": "Onaylı metin",
+    "kontrol": "Karar kaydı"
+   },
+   {
+    "ad": "Tasarım ve geliştirme",
+    "rol": "ekip",
+    "otomasyon": "insan",
+    "gun": 3,
+    "karar": null,
+    "akis": null,
+    "cikti": "Hazır sayfa (önizleme adresi)",
+    "kontrol": "Mobil ve masaüstü"
+   },
+   {
+    "ad": "Form → Arvela OS, GA4, çerez onayı",
+    "rol": "ekip",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": null,
+    "akis": "Web formu → aday",
+    "cikti": "Ölçüm ve form kurulumu",
+    "kontrol": "Test kaydı satış hattında"
+   },
+   {
+    "ad": "Otomatik kalite kontrolü",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": "Kabul ön kontrolü",
+    "cikti": "Lighthouse + bağlantı + form testi raporu",
+    "kontrol": "Ölçütler sağlandı"
+   },
+   {
+    "ad": "Müşteri onayı: yayın",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 1,
+    "karar": "onay",
+    "akis": "Karar hatırlatma",
+    "cikti": "Yayın onayı",
+    "kontrol": "Karar kaydı"
+   },
+   {
+    "ad": "Yayın ve 7 gün izleme",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 7,
+    "karar": null,
+    "akis": "Acil site uyarısı",
+    "cikti": "İlk hafta raporu",
+    "kontrol": "Hata yok, dönüşüm olayları geliyor"
+   }
+  ],
+  "sla": {
+   "sure_gun": 10,
+   "revizyon": "Metinde 2, tasarımda 1 tur",
+   "yanit": "İş günü içinde 4 saat; yayın sonrası kesinti 2 saat"
+  },
+  "kpi": [
+   "Dönüşüm oranı (form + WhatsApp / ziyaret)",
+   "Mobil Lighthouse performansı",
+   "İlk aday gelene kadar geçen süre"
+  ],
+  "riskler": [
+   {
+    "risk": "DNS erişimi gecikiyor",
+    "onlem": "Önizleme adresinde onay alınır; DNS için adım adım rehber karar sayfasında"
+   },
+   {
+    "risk": "Reklam trafiği kalitesiz",
+    "onlem": "İlk hafta raporunda kaynak kırılımı; DIJ ekibine aktarım"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Claude brifinden başlık seçenekleri ve fayda listesi çıkarır; müşteri seçenekler arasından seçer.",
+    "Yayın öncesi kontrolü n8n otomatik yapar: Lighthouse, kırık bağlantı, form testi, çerez onayı.",
+    "Yayından sonra 7 gün her sabah ziyaret ve dönüşüm özetini yazar; anormallikte uyarı açar."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "Lighthouse: PageSpeed Insights API (n8n HTTP).",
+    "Form testi: n8n test başvurusu gönderir, Arvela OS'te aday oluştuğunu /api/v1/leads ile doğrular, sonra test kaydını kapatır.",
+    "GA4 olayları: Measurement Protocol ile test olayı."
+   ],
+   "ek_motorlar": [
+    {
+     "motor": "gemini",
+     "amac": "İsteğe bağlı: görsel varyasyonları"
+    }
+   ],
+   "otomasyon_orani": 75
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister",
+   "Başlık seçenekleri arasından seçer",
+   "İlk hafta ziyaret ve aday sayısını görür"
+  ],
+  "v": 1
+ },
+ "WEB-05": {
+  "ozet": "8 sayfaya kadar kurumsal web sitesi: tasarım sistemine göre geliştirme, içerik girişi, form, ölçüm, KVKK ve yayın. Site Arvela OS'te \"Siteler\" kaydıyla izlenir.",
+  "kapsam": [
+   "8 sayfaya kadar geliştirme (WordPress ya da statik/Node)",
+   "Yönetim paneli ve 30 dk kullanım eğitimi",
+   "İletişim formu → Arvela OS satış hattı, WhatsApp butonu",
+   "Temel SEO: başlıklar, meta, site haritası, Search Console",
+   "GA4, çerez onayı, aydınlatma metni bağlantısı",
+   "Hostinger'da yayın, SSL, yedek"
+  ],
+  "kapsam_disi": [
+   "Tasarım (WEB-02) ve metin yazımı",
+   "8 sayfayı aşan sayfa",
+   "Çok dil (WEB-06)",
+   "Blog içeriği üretimi"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "Yayında site",
+    "kabul": "Tüm sayfalar mobil ve masaüstünde tasarıma uygun; Lighthouse performans ≥85"
+   },
+   {
+    "ad": "Yönetim erişimi ve eğitim",
+    "kabul": "Müşteri bir sayfayı kendisi güncelleyebildi"
+   },
+   {
+    "ad": "Form ve ölçüm",
+    "kabul": "Test başvurusu satış hattında, GA4 olayları geliyor"
+   },
+   {
+    "ad": "Teslim dosyası",
+    "kabul": "Erişimler, eklentiler, yedek planı Arvela OS'te kayıtlı"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "Onaylı tasarımlar (WEB-02)",
+    "kimden": "arvela",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Sayfa metinleri ve görseller",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Alan adı / DNS erişimi",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Yasal bilgiler: unvan, adres, MERSİS (KVKK metni için)",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Proje açılışı ve erişimlerin toplanması",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 2,
+    "karar": "bilgi",
+    "akis": "Bilgi isteği",
+    "cikti": "Erişim kontrol listesi",
+    "kontrol": "DNS, içerik, yasal bilgi tamam"
+   },
+   {
+    "ad": "Kurulum: sunucu, tema/iskelet, staging",
+    "rol": "ekip",
+    "otomasyon": "ai_taslak",
+    "gun": 2,
+    "karar": null,
+    "akis": null,
+    "cikti": "Staging adresi",
+    "kontrol": "SSL ve yedek açık"
+   },
+   {
+    "ad": "Sayfa geliştirme",
+    "rol": "ekip",
+    "otomasyon": "insan",
+    "gun": 6,
+    "karar": null,
+    "akis": null,
+    "cikti": "Sayfalar",
+    "kontrol": "Tasarıma uygun, mobil"
+   },
+   {
+    "ad": "İçerik girişi ve SEO alanları",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 2,
+    "karar": null,
+    "akis": null,
+    "cikti": "İçerik + meta açıklamalar",
+    "kontrol": "Her sayfada başlık ve meta"
+   },
+   {
+    "ad": "Form, WhatsApp, GA4, çerez onayı",
+    "rol": "ekip",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": null,
+    "akis": "Web formu → aday",
+    "cikti": "Ölçüm kurulumu",
+    "kontrol": "Test olayları geliyor"
+   },
+   {
+    "ad": "Otomatik kalite kontrolü",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": "Kabul ön kontrolü",
+    "cikti": "Rapor: hız, kırık bağlantı, erişilebilirlik, form",
+    "kontrol": "Ölçütler sağlandı"
+   },
+   {
+    "ad": "Müşteri incelemesi ve revizyon",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 4,
+    "karar": "onay",
+    "akis": "Karar hatırlatma",
+    "cikti": "Revizyon listesi / onay",
+    "kontrol": "2 tur içinde"
+   },
+   {
+    "ad": "Yayın, Search Console, Siteler kaydı",
+    "rol": "ekip",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Canlı site",
+    "kontrol": "Arvela OS Siteler'de kayıtlı, eşitleme çalışıyor"
+   },
+   {
+    "ad": "Eğitim ve 14 gün izleme",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 14,
+    "karar": null,
+    "akis": "Acil site uyarısı",
+    "cikti": "İzleme raporu",
+    "kontrol": "Kesinti ve hata yok"
+   }
+  ],
+  "sla": {
+   "sure_gun": 25,
+   "revizyon": "2 tur",
+   "yanit": "İş günü içinde 4 saat; yayın sonrası kesinti 2 saat"
+  },
+  "kpi": [
+   "Zamanında teslim",
+   "Lighthouse performans ve erişilebilirlik",
+   "İlk 30 günde form başvurusu",
+   "Yayın sonrası hata sayısı"
+  ],
+  "riskler": [
+   {
+    "risk": "İçerik gecikmesi",
+    "onlem": "İçerik eksikse Claude taslak üretir, müşteri onaylar; gecikme 5 iş gününü aşarsa takvim kaydırılır ve kayda geçer"
+   },
+   {
+    "risk": "Eklenti/güvenlik açığı",
+    "onlem": "Site her sabah eşitlenir; açık çıkarsa Bugün'e acil uyarı"
+   },
+   {
+    "risk": "Kapsam kayması",
+    "onlem": "Yeni sayfa istekleri ek iş teklifi olarak karar sayfasına düşer"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Claude içerik eksiklerini görev bazında listeler, müşteriden yalnız eksik olanı ister.",
+    "Her sayfa için meta başlık/açıklama ve görsel alt metinlerini üretir; ekip onaylar.",
+    "Yayın öncesi kalite kontrolünü otomatik yapar ve sonucu proje kaydına yazar.",
+    "Müşterinin revizyon e-postalarını/yorumlarını madde madde göreve çevirir."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "Site Hostinger'a hosting_deploy (Git) ya da WordPress kurulumuyla yayınlanır; site Arvela OS Siteler'e eklenir ve günlük eşitlemeye girer.",
+    "Kalite kontrolü: PageSpeed API, bağlantı tarayıcı (n8n), axe-core erişilebilirlik taraması.",
+    "Search Console doğrulaması DNS TXT ile; DNS değişikliği yalnız ekip onayıyla."
+   ],
+   "ek_motorlar": [
+    {
+     "motor": "openai",
+     "amac": "İsteğe bağlı: görsel alt metni üretimi için görüntü tanıma"
+    }
+   ],
+   "otomasyon_orani": 65
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister",
+   "Staging adresinden siteyi görüp sayfa bazında revizyon ister",
+   "Yayın onayını verir"
+  ],
+  "v": 1
+ },
+ "WEB-06": {
+  "ozet": "Sitenin ikinci ve sonraki dillerde yayınlanması: dil yapısı, çeviri, hreflang ve dil seçici.",
+  "kapsam": [
+   "Dil yapısı (alt dizin: /en/)",
+   "Claude ile çeviri + anadil kontrolü",
+   "hreflang ve dil seçici",
+   "Dil başına site haritası"
+  ],
+  "kapsam_disi": [
+   "Yeni içerik üretimi",
+   "Yasal metinlerin hukuki çevirisi"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "İkinci dil yayında",
+    "kabul": "Tüm sayfalar çevrili, hreflang doğru"
+   },
+   {
+    "ad": "Terim sözlüğü",
+    "kabul": "Marka ve hizmet adları sabit"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "Hedef dil(ler) ve pazar",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Marka terimleri ve çevrilmeyecek adlar",
+    "kimden": "musteri",
+    "zorunlu": false,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Terim sözlüğü",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Sözlük",
+    "kontrol": "Marka adları sabit"
+   },
+   {
+    "ad": "Makine çevirisi",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Çeviri taslağı",
+    "kontrol": "Tüm sayfalar"
+   },
+   {
+    "ad": "Anadil kontrolü",
+    "rol": "freelancer",
+    "otomasyon": "insan",
+    "gun": 3,
+    "karar": null,
+    "akis": null,
+    "cikti": "Düzeltilmiş çeviri",
+    "kontrol": "Anadil konuşurundan onay"
+   },
+   {
+    "ad": "Teknik kurulum: hreflang, seçici",
+    "rol": "ekip",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Dil yapısı",
+    "kontrol": "Search Console hatasız"
+   },
+   {
+    "ad": "Müşteri onayı",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": "onay",
+    "akis": "Karar hatırlatma",
+    "cikti": "Onay",
+    "kontrol": "Karar kaydı"
+   }
+  ],
+  "sla": {
+   "sure_gun": 8,
+   "revizyon": "1 tur",
+   "yanit": "İş günü içinde 4 saat"
+  },
+  "kpi": [
+   "Dil başına organik trafik",
+   "Çeviri düzeltme oranı"
+  ],
+  "riskler": [
+   {
+    "risk": "Çeviri ton hatası",
+    "onlem": "Anadil kontrolü zorunlu adım; terim sözlüğü"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Claude sayfaları terim sözlüğüne bağlı kalarak çevirir; değişen sayfalar otomatik yeniden çeviri kuyruğuna girer."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "Çeviri farkı: sayfa içeriği değişince n8n eski/yeni karşılaştırıp yalnız değişen bölümü çevirir."
+   ],
+   "ek_motorlar": [
+    {
+     "motor": "openai",
+     "amac": "İkinci görüş: kritik sayfalarda çapraz çeviri kontrolü"
+    },
+    {
+     "motor": "gemini",
+     "amac": "Alternatif: Asya dilleri için karşılaştırma"
+    }
+   ],
+   "otomasyon_orani": 75
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister",
+   "Çeviriyi sayfa bazında onaylar"
+  ],
+  "v": 1
+ },
+ "WEB-07": {
+  "ozet": "Blog ve içerik modülü: kategori, etiket, yazar, SEO alanları ve yayın akışı. Arvela OS içerik takvimiyle bağlanabilir.",
+  "kapsam": [
+   "Blog liste ve detay şablonları",
+   "Kategori/etiket, ilgili yazılar",
+   "SEO: şema (Article), meta, site haritası",
+   "Yayın akışı: taslak → onay → yayın"
+  ],
+  "kapsam_disi": [
+   "Yazı üretimi (SOS-xx içerik paketleri)"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "Blog modülü",
+    "kabul": "Örnek 2 yazı yayında, şema doğrulayıcıdan geçiyor"
+   },
+   {
+    "ad": "Yayın akışı",
+    "kabul": "Müşteri taslağı onaylayınca yazı yayına alınabiliyor"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "Kategori listesi",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "İlk 2 yazı metni",
+    "kimden": "musteri",
+    "zorunlu": false,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Bilgi mimarisi: kategori/etiket",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Kategori yapısı",
+    "kontrol": "Çakışma yok"
+   },
+   {
+    "ad": "Şablon geliştirme",
+    "rol": "ekip",
+    "otomasyon": "insan",
+    "gun": 3,
+    "karar": null,
+    "akis": null,
+    "cikti": "Blog şablonları",
+    "kontrol": "Mobil, şema"
+   },
+   {
+    "ad": "Yayın akışı ve n8n bağlantısı",
+    "rol": "ekip",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Akış",
+    "kontrol": "Onaylı taslak yayınlanabiliyor"
+   },
+   {
+    "ad": "Ön kontrol",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": "Kabul ön kontrolü",
+    "cikti": "Rapor",
+    "kontrol": "Şema ve hız"
+   },
+   {
+    "ad": "Müşteri onayı",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": "onay",
+    "akis": "Karar hatırlatma",
+    "cikti": "Onay",
+    "kontrol": "Karar kaydı"
+   }
+  ],
+  "sla": {
+   "sure_gun": 8,
+   "revizyon": "1 tur",
+   "yanit": "İş günü içinde 4 saat"
+  },
+  "kpi": [
+   "Yayınlanan yazı/ay",
+   "Blog organik trafiği"
+  ],
+  "riskler": [
+   {
+    "risk": "Yazı üretilmiyor, blog boş kalıyor",
+    "onlem": "İçerik paketi önerisi; Claude aylık konu listesi çıkarır"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Claude aylık konu önerilerini anahtar kelime ve müşteri sorularından çıkarır; müşteri seçer.",
+    "Onaylanan taslak n8n ile CMS'e taslak olarak gönderilir."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "WordPress REST API ya da statik sitede Markdown + Git; yayın ekip onayıyla."
+   ],
+   "ek_motorlar": [],
+   "otomasyon_orani": 70
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister",
+   "Aylık konu listesinden seçim yapar",
+   "Yazı taslaklarını onaylar"
+  ],
+  "v": 1
+ },
+ "WEB-08": {
+  "ozet": "Randevu / rezervasyon modülü: hizmet, süre, personel ve takvim; onay ve hatırlatma bildirimleri.",
+  "kapsam": [
+   "Hizmet ve süre tanımları",
+   "Takvim (Google Takvim eşitleme)",
+   "Onay ve hatırlatma e-postası/WhatsApp şablonu",
+   "Rezervasyon → Arvela OS aday/müşteri kaydı"
+  ],
+  "kapsam_disi": [
+   "Ödeme alma (WEB-12)",
+   "Çağrı merkezi"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "Çalışan rezervasyon",
+    "kabul": "Test rezervasyonu takvime ve Arvela OS'e düştü"
+   },
+   {
+    "ad": "Bildirimler",
+    "kabul": "Onay ve 24 saat önce hatırlatma gidiyor"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "Hizmet listesi, süreler, çalışma saatleri",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Takvim erişimi (Google)",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "İletişim izni metni (İYS)",
+    "kimden": "arvela",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Kurgu ve kurallar",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": "bilgi",
+    "akis": "Bilgi isteği",
+    "cikti": "Rezervasyon kuralları",
+    "kontrol": "İptal/erteleme kuralı var"
+   },
+   {
+    "ad": "Kurulum ve takvim eşitleme",
+    "rol": "ekip",
+    "otomasyon": "insan",
+    "gun": 3,
+    "karar": null,
+    "akis": null,
+    "cikti": "Modül",
+    "kontrol": "Çift rezervasyon yok"
+   },
+   {
+    "ad": "Bildirim akışları",
+    "rol": "ekip",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "n8n akışları",
+    "kontrol": "Test bildirimi geldi"
+   },
+   {
+    "ad": "Uçtan uca test",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": "Kabul ön kontrolü",
+    "cikti": "Test raporu",
+    "kontrol": "Kayıt + takvim + bildirim"
+   },
+   {
+    "ad": "Müşteri onayı",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": "onay",
+    "akis": "Karar hatırlatma",
+    "cikti": "Onay",
+    "kontrol": "Karar kaydı"
+   }
+  ],
+  "sla": {
+   "sure_gun": 8,
+   "revizyon": "1 tur",
+   "yanit": "İş günü içinde 4 saat"
+  },
+  "kpi": [
+   "Aylık rezervasyon",
+   "Gelmeme oranı",
+   "Hatırlatma sonrası iptal oranı"
+  ],
+  "riskler": [
+   {
+    "risk": "Takvim çakışması",
+    "onlem": "Eşitleme her 5 dakikada; çakışmada kayıt reddedilir"
+   },
+   {
+    "risk": "İzinsiz ileti",
+    "onlem": "Hatırlatmalar hizmet bildirimi; pazarlama iletisi ayrı onay"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Gelmeme oranı yüksekse Claude hatırlatma zamanlaması ve metni için öneri yazar."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "n8n: rezervasyon webhook → Arvela OS /api/v1/clients (aday) + Google Calendar düğümü + e-posta/WhatsApp."
+   ],
+   "ek_motorlar": [],
+   "otomasyon_orani": 80
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister",
+   "Rezervasyon raporunu görür"
+  ],
+  "v": 1
+ },
+ "WEB-09": {
+  "ozet": "Sitede 7/24 cevap veren yapay zekâ asistanı: sık sorulan sorular, hizmet bilgisi, aday toplama ve ekibe devir.",
+  "kapsam": [
+   "Bilgi tabanı (SSS, hizmetler, fiyat aralıkları)",
+   "Asistan kişiliği ve sınırları",
+   "Aday bilgisi toplama → Arvela OS",
+   "İnsana devir (WhatsApp/e-posta)",
+   "Aylık konuşma analizi"
+  ],
+  "kapsam_disi": [
+   "Ödeme alma",
+   "Sağlık/hukuk gibi alanlarda kişisel tavsiye"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "Yayında asistan",
+    "kabul": "Test soru setinin %90'ı doğru yanıtlandı"
+   },
+   {
+    "ad": "Devir akışı",
+    "kabul": "Yanıtlayamadığı soruda ekibe bildirim gitti"
+   },
+   {
+    "ad": "KVKK",
+    "kabul": "Sohbet başında aydınlatma bağlantısı"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "SSS ve hizmet bilgileri",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Yanıtlamaması gereken konular",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Devir için iletişim kanalı",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Bilgi tabanı derleme",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 2,
+    "karar": "bilgi",
+    "akis": "Bilgi isteği",
+    "cikti": "Bilgi tabanı",
+    "kontrol": "Müşteri onaylı"
+   },
+   {
+    "ad": "Asistan talimatı ve sınırlar",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Sistem talimatı",
+    "kontrol": "Sınırlar net"
+   },
+   {
+    "ad": "Müşteri onayı: bilgi tabanı",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": "onay",
+    "akis": "Karar hatırlatma",
+    "cikti": "Onay",
+    "kontrol": "Karar kaydı"
+   },
+   {
+    "ad": "Widget kurulumu ve devir akışı",
+    "rol": "ekip",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": null,
+    "akis": null,
+    "cikti": "Çalışan widget",
+    "kontrol": "Aday Arvela OS'te"
+   },
+   {
+    "ad": "Test soru seti ile değerlendirme",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": "Kabul ön kontrolü",
+    "cikti": "Değerlendirme raporu",
+    "kontrol": "%90 doğru"
+   },
+   {
+    "ad": "Yayın ve haftalık analiz",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 7,
+    "karar": null,
+    "akis": null,
+    "cikti": "Haftalık rapor",
+    "kontrol": "Yanıtsız sorular listelendi"
+   }
+  ],
+  "sla": {
+   "sure_gun": 10,
+   "revizyon": "1 tur",
+   "yanit": "İş günü içinde 4 saat"
+  },
+  "kpi": [
+   "Doğru yanıt oranı",
+   "Asistandan gelen aday",
+   "Devir oranı"
+  ],
+  "riskler": [
+   {
+    "risk": "Yanlış bilgi (uydurma)",
+    "onlem": "Yalnız bilgi tabanından yanıt; emin değilse devir; haftalık örnek denetimi"
+   },
+   {
+    "risk": "Kişisel veri",
+    "onlem": "Sohbet kayıtları 90 gün; KVKK saklama ayarına bağlı"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Claude asistanı yalnız onaylı bilgi tabanıyla yanıtlar; bilinmeyen soru otomatik \"bilgi tabanına eklenecek\" listesine düşer.",
+    "Haftalık rapor: en çok sorulanlar, yanıtsızlar, gelen adaylar; müşteri yeni bilgiyi onaylar."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "Claude API (n8n webhook) + sitede hafif widget; konuşma kayıtları Arvela OS'te müşteri altında.",
+    "Değerlendirme: 30 soruluk test seti her bilgi tabanı değişikliğinde otomatik çalışır."
+   ],
+   "ek_motorlar": [
+    {
+     "motor": "openai",
+     "amac": "İsteğe bağlı: sesli asistan (ses ↔ metin)"
+    },
+    {
+     "motor": "gemini",
+     "amac": "İsteğe bağlı: görsel soru (ürün fotoğrafı)"
+    }
+   ],
+   "otomasyon_orani": 90
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister",
+   "Yanıtsız soruların cevabını yazar, bilgi tabanına eklenmesini onaylar"
+  ],
+  "v": 1
+ },
+ "WEB-10": {
+  "ozet": "50 ürüne kadar e-ticaret mağazası: WooCommerce ya da hazır altyapıda kurulum, kategori, ürün sayfaları, sepet ve ödeme akışı.",
+  "kapsam": [
+   "Mağaza kurulumu ve tema",
+   "Kategori yapısı, filtreler",
+   "50 ürüne kadar ürün girişi",
+   "Sepet, ödeme sayfası, sipariş e-postaları",
+   "Mesafeli satış, iade, KVKK sayfaları",
+   "GA4 e-ticaret olayları"
+  ],
+  "kapsam_disi": [
+   "Ödeme altyapısı başvurusu (WEB-12)",
+   "Kargo entegrasyonu (WEB-13)",
+   "Ürün fotoğraf çekimi"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "Yayında mağaza",
+    "kabul": "Test siparişi baştan sona tamamlandı"
+   },
+   {
+    "ad": "Ürünler",
+    "kabul": "50 ürün eksiksiz: başlık, açıklama, fiyat, stok, görsel"
+   },
+   {
+    "ad": "Yasal sayfalar",
+    "kabul": "Mesafeli satış ve iade sayfaları yayında"
+   },
+   {
+    "ad": "Ölçüm",
+    "kabul": "GA4 satın alma olayı geliyor"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "Ürün listesi (Excel/CSV) ve görseller",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Kargo ve iade koşulları",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Şirket ve vergi bilgileri",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Ödeme altyapısı tercihi",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Mağaza kurgusu: kategori, varyant, kargo kuralları",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 2,
+    "karar": "bilgi",
+    "akis": "Bilgi isteği",
+    "cikti": "Mağaza planı",
+    "kontrol": "Kategori ve varyant yapısı onaylı"
+   },
+   {
+    "ad": "Müşteri onayı: mağaza planı",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": "onay",
+    "akis": "Karar hatırlatma",
+    "cikti": "Onay",
+    "kontrol": "Karar kaydı"
+   },
+   {
+    "ad": "Kurulum ve tema",
+    "rol": "ekip",
+    "otomasyon": "insan",
+    "gun": 4,
+    "karar": null,
+    "akis": null,
+    "cikti": "Staging mağaza",
+    "kontrol": "Mobil uyumlu"
+   },
+   {
+    "ad": "Ürün verisini temizleme ve zenginleştirme",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 2,
+    "karar": null,
+    "akis": null,
+    "cikti": "Temiz ürün dosyası (başlık, açıklama, SEO)",
+    "kontrol": "Eksik alan yok"
+   },
+   {
+    "ad": "Ürün içe aktarma",
+    "rol": "ekip",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Ürünler yüklü",
+    "kontrol": "50 ürün"
+   },
+   {
+    "ad": "Yasal sayfalar ve e-postalar",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Sayfa ve e-posta şablonları",
+    "kontrol": "Hukukçu onaylı şablon"
+   },
+   {
+    "ad": "Uçtan uca test siparişi",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": "Kabul ön kontrolü",
+    "cikti": "Test raporu",
+    "kontrol": "Sipariş, e-posta, stok düşümü"
+   },
+   {
+    "ad": "Müşteri onayı: yayın",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": "onay",
+    "akis": "Karar hatırlatma",
+    "cikti": "Yayın onayı",
+    "kontrol": "Karar kaydı"
+   },
+   {
+    "ad": "Yayın ve 14 gün izleme",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 14,
+    "karar": null,
+    "akis": null,
+    "cikti": "Satış ve hata raporu",
+    "kontrol": "Ödeme hatası yok"
+   }
+  ],
+  "sla": {
+   "sure_gun": 30,
+   "revizyon": "2 tur",
+   "yanit": "İş günü içinde 4 saat"
+  },
+  "kpi": [
+   "Dönüşüm oranı",
+   "Sepet terk oranı",
+   "Ödeme hatası",
+   "Ürün sayfası hızı"
+  ],
+  "riskler": [
+   {
+    "risk": "Ürün verisi dağınık",
+    "onlem": "Claude temizleme adımı; eksikler tek listede müşteriden istenir"
+   },
+   {
+    "risk": "Yasal eksik",
+    "onlem": "Mesafeli satış/iade sayfası olmadan yayın onayı verilemez"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Claude ürün dosyasını temizler: başlık standardı, açıklama, SEO alanları, eksik alan raporu.",
+    "Sipariş, stok ve iade sorunlarını günlük özetle bildirir (mağaza MCP/REST bağlantısıyla)."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "WooCommerce REST API (Arvela'nın mağaza bağlantıları gibi); ürün içe aktarma CSV + API.",
+    "Test siparişi n8n ile sandbox ödeme yöntemiyle verilir, sonra iptal edilir."
+   ],
+   "ek_motorlar": [
+    {
+     "motor": "gemini",
+     "amac": "Ürün görsellerinde arka plan temizleme/varyasyon"
+    },
+    {
+     "motor": "openai",
+     "amac": "Ürün fotoğrafından açıklama taslağı (görüntü tanıma)"
+    }
+   ],
+   "otomasyon_orani": 70
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister",
+   "Mağaza planını ve ürün dosyasını onaylar",
+   "Günlük satış özetini görür"
+  ],
+  "v": 1
+ },
+ "WEB-11": {
+  "ozet": "Ürün yükleme ve katalog düzenleme: ürün verisinin temizlenmesi, zenginleştirilmesi ve mağazaya yüklenmesi.",
+  "kapsam": [
+   "Ürün dosyası temizleme (başlık, varyant, birim)",
+   "Açıklama ve SEO alanları",
+   "Görsel adlandırma ve alt metin",
+   "Toplu yükleme ve kontrol"
+  ],
+  "kapsam_disi": [
+   "Fotoğraf çekimi",
+   "Fiyat belirleme"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "Yüklenen ürünler",
+    "kabul": "Tüm alanlar dolu; hata raporu sıfır"
+   },
+   {
+    "ad": "Değişiklik raporu",
+    "kabul": "Ürün başına yapılan değişiklikler listelendi"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "Ürün listesi ve görseller",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Mağaza yönetici erişimi",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Veri analizi ve eksik raporu",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": "bilgi",
+    "akis": "Bilgi isteği",
+    "cikti": "Eksik listesi",
+    "kontrol": "Müşteriye tek listede"
+   },
+   {
+    "ad": "Zenginleştirme",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 2,
+    "karar": null,
+    "akis": null,
+    "cikti": "Zenginleştirilmiş dosya",
+    "kontrol": "Marka sesi"
+   },
+   {
+    "ad": "Müşteri onayı: örnek 10 ürün",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": "onay",
+    "akis": "Karar hatırlatma",
+    "cikti": "Onay",
+    "kontrol": "Karar kaydı"
+   },
+   {
+    "ad": "Toplu yükleme",
+    "rol": "ekip",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Yüklü ürünler",
+    "kontrol": "Hata yok"
+   },
+   {
+    "ad": "Otomatik kontrol",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": "Kabul ön kontrolü",
+    "cikti": "Kontrol raporu",
+    "kontrol": "Eksik alan sıfır"
+   }
+  ],
+  "sla": {
+   "sure_gun": 7,
+   "revizyon": "1 tur",
+   "yanit": "İş günü içinde 4 saat"
+  },
+  "kpi": [
+   "Ürün başına süre",
+   "Hata oranı",
+   "Ürün sayfası dönüşümü"
+  ],
+  "riskler": [
+   {
+    "risk": "Yanlış fiyat/stok",
+    "onlem": "Fiyat ve stok değiştirilmez; yalnız müşteri dosyasından gelir, fark raporlanır"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Önce 10 ürünlük örnek onaylatılır; onaylanan stil tüm ürünlere uygulanır."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "Mağaza API ile toplu güncelleme; her değişiklik öncesi yedek alınır."
+   ],
+   "ek_motorlar": [
+    {
+     "motor": "gemini",
+     "amac": "Görsel düzenleme"
+    },
+    {
+     "motor": "openai",
+     "amac": "Görselden ürün özelliği çıkarma"
+    }
+   ],
+   "otomasyon_orani": 85
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister",
+   "Örnek ürünleri onaylar"
+  ],
+  "v": 1
+ },
+ "WEB-12": {
+  "ozet": "Ödeme altyapısı entegrasyonu (iyzico, PayTR veya banka sanal POS): başvuru desteği, kurulum, test ve canlıya alma.",
+  "kapsam": [
+   "Sağlayıcı seçimi önerisi",
+   "Başvuru belgelerinin hazırlanması",
+   "Kurulum, 3D Secure, taksit",
+   "Sandbox ve canlı test"
+  ],
+  "kapsam_disi": [
+   "Sağlayıcı komisyon pazarlığı",
+   "Muhasebe entegrasyonu (WEB-15)"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "Canlı ödeme",
+    "kabul": "Gerçek kartla 1 TL'lik test ve iadesi başarılı"
+   },
+   {
+    "ad": "Taksit/3D",
+    "kabul": "Ayarlar sağlayıcı paneliyle uyumlu"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "Şirket belgeleri (sağlayıcının istediği)",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Sağlayıcı paneli erişimi (müşteri verir, Arvela kart verisi görmez)",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Sağlayıcı karşılaştırması",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Karşılaştırma",
+    "kontrol": "Güncel komisyonlar kaynaklı"
+   },
+   {
+    "ad": "Müşteri seçimi",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": "secim",
+    "akis": "Karar hatırlatma",
+    "cikti": "Seçilen sağlayıcı",
+    "kontrol": "Karar kaydı"
+   },
+   {
+    "ad": "Başvuru belgeleri kontrol listesi",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": "bilgi",
+    "akis": "Bilgi isteği",
+    "cikti": "Liste",
+    "kontrol": "Eksiksiz"
+   },
+   {
+    "ad": "Kurulum ve sandbox testi",
+    "rol": "ekip",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": null,
+    "akis": null,
+    "cikti": "Test sonucu",
+    "kontrol": "Başarılı/başarısız senaryolar"
+   },
+   {
+    "ad": "Canlı test ve iade",
+    "rol": "ekip",
+    "otomasyon": "insan",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Canlı test kaydı",
+    "kontrol": "İade de test edildi"
+   }
+  ],
+  "sla": {
+   "sure_gun": 10,
+   "revizyon": "1 tur",
+   "yanit": "İş günü içinde 4 saat"
+  },
+  "kpi": [
+   "Ödeme başarı oranı",
+   "3D hata oranı"
+  ],
+  "riskler": [
+   {
+    "risk": "Başvuru gecikmesi",
+    "onlem": "Sağlayıcı süreci müşteriye bağlı; takvim karar kaydına göre kayar"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Claude başvuru belge listesini sağlayıcıya göre çıkarır ve eksikleri takip eder."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "Kart verisi Arvela'dan geçmez; yalnız sağlayıcı ödeme sayfası/iframe. API anahtarları müşterinin mağaza ayarında."
+   ],
+   "ek_motorlar": [],
+   "otomasyon_orani": 50
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister",
+   "Sağlayıcı seçimini yapar"
+  ],
+  "v": 1
+ },
+ "WEB-13": {
+  "ozet": "Kargo entegrasyonu: anlaşmalı kargo firmasıyla gönderi oluşturma, takip numarası ve müşteri bildirimleri.",
+  "kapsam": [
+   "Kargo firması API entegrasyonu",
+   "Otomatik gönderi oluşturma ve etiket",
+   "Takip bildirimi e-posta/SMS",
+   "Desi/ücret kuralları"
+  ],
+  "kapsam_disi": [
+   "Kargo anlaşması pazarlığı"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "Otomatik gönderi",
+    "kabul": "Test siparişinde etiket ve takip numarası oluştu"
+   },
+   {
+    "ad": "Bildirim",
+    "kabul": "Müşteriye takip bağlantısı gitti"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "Kargo firması anlaşma bilgileri ve API erişimi",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Kurallar: desi, ücret, kapıda ödeme",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": "bilgi",
+    "akis": "Bilgi isteği",
+    "cikti": "Kural tablosu",
+    "kontrol": "Onaylı"
+   },
+   {
+    "ad": "Entegrasyon",
+    "rol": "ekip",
+    "otomasyon": "insan",
+    "gun": 3,
+    "karar": null,
+    "akis": null,
+    "cikti": "Çalışan entegrasyon",
+    "kontrol": "Etiket basılıyor"
+   },
+   {
+    "ad": "Uçtan uca test",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": "Kabul ön kontrolü",
+    "cikti": "Test raporu",
+    "kontrol": "Takip bildirimi geldi"
+   },
+   {
+    "ad": "Müşteri onayı",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 1,
+    "karar": "onay",
+    "akis": "Karar hatırlatma",
+    "cikti": "Onay",
+    "kontrol": "Karar kaydı"
+   }
+  ],
+  "sla": {
+   "sure_gun": 7,
+   "revizyon": "1 tur",
+   "yanit": "İş günü içinde 4 saat"
+  },
+  "kpi": [
+   "Sipariş → kargo süresi",
+   "Teslimat sorunu oranı"
+  ],
+  "riskler": [
+   {
+    "risk": "API kesintisi",
+    "onlem": "Hata kuyruğu; 1 saat içinde yeniden dener, sonra uyarı"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Gecikmiş kargoları günlük tarar, müşteriye bilgi taslağı hazırlar."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "Kargo API (Yurtiçi, Aras, MNG vb.) n8n ile; sipariş durumu mağaza API'sinden."
+   ],
+   "ek_motorlar": [],
+   "otomasyon_orani": 85
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister"
+  ],
+  "v": 1
+ },
+ "WEB-14": {
+  "ozet": "Pazaryeri entegrasyonu (Trendyol, Hepsiburada, Amazon TR): ürün, stok, fiyat ve sipariş eşitlemesi.",
+  "kapsam": [
+   "Ürün eşleştirme ve kategori/özellik haritalama",
+   "Stok ve fiyat eşitlemesi",
+   "Sipariş aktarımı",
+   "Hata ve ret raporları"
+  ],
+  "kapsam_disi": [
+   "Pazaryeri mağaza başvurusu",
+   "Pazaryeri reklam yönetimi"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "Eşitleme",
+    "kabul": "Stok değişikliği 15 dk içinde pazaryerinde"
+   },
+   {
+    "ad": "Sipariş aktarımı",
+    "kabul": "Test siparişi mağaza paneline düştü"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "Pazaryeri satıcı paneli API bilgileri",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Fiyatlama kuralı (komisyon farkı)",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Kategori/özellik haritalama",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 2,
+    "karar": null,
+    "akis": null,
+    "cikti": "Haritalama tablosu",
+    "kontrol": "Zorunlu özellikler dolu"
+   },
+   {
+    "ad": "Fiyat kuralı onayı",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": "butce",
+    "akis": "Karar hatırlatma",
+    "cikti": "Fiyat kuralı",
+    "kontrol": "Karar kaydı"
+   },
+   {
+    "ad": "Entegrasyon kurulumu",
+    "rol": "ekip",
+    "otomasyon": "insan",
+    "gun": 3,
+    "karar": null,
+    "akis": null,
+    "cikti": "Eşitleme",
+    "kontrol": "Hatasız"
+   },
+   {
+    "ad": "İlk eşitleme ve ret düzeltmeleri",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 2,
+    "karar": null,
+    "akis": null,
+    "cikti": "Düzeltme listesi",
+    "kontrol": "Ret sıfır"
+   }
+  ],
+  "sla": {
+   "sure_gun": 10,
+   "revizyon": "1 tur",
+   "yanit": "İş günü içinde 4 saat"
+  },
+  "kpi": [
+   "Ret oranı",
+   "Stok tutarsızlığı",
+   "Pazaryeri satış payı"
+  ],
+  "riskler": [
+   {
+    "risk": "Fazla satış (stok farkı)",
+    "onlem": "Eşitleme 15 dk; kritik stokta pazaryeri adedi düşürülür"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Reddedilen ürünlerin nedenini okuyup düzeltme önerir."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "Pazaryeri API'leri + mağaza API; n8n zamanlanmış eşitleme."
+   ],
+   "ek_motorlar": [],
+   "otomasyon_orani": 80
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister"
+  ],
+  "v": 1
+ },
+ "WEB-15": {
+  "ozet": "E-fatura / e-arşiv entegrasyonu: siparişlerden otomatik fatura kesimi ve muhasebe aktarımı.",
+  "kapsam": [
+   "Entegratör bağlantısı (Paraşüt, Logo, Uyumsoft vb.)",
+   "Sipariş → fatura kuralları (KDV, iade)",
+   "Otomatik gönderim"
+  ],
+  "kapsam_disi": [
+   "Mali müşavirlik"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "Otomatik fatura",
+    "kabul": "Test siparişinden e-arşiv fatura oluştu ve müşteriye gitti"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "Entegratör hesabı ve API",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Mali müşavir onaylı KDV kuralları",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Kural tablosu",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": "bilgi",
+    "akis": "Bilgi isteği",
+    "cikti": "Kurallar",
+    "kontrol": "Mali müşavir onaylı"
+   },
+   {
+    "ad": "Kurulum",
+    "rol": "ekip",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": null,
+    "akis": null,
+    "cikti": "Entegrasyon",
+    "kontrol": "Test faturası"
+   },
+   {
+    "ad": "Mali müşavir onayı",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": "onay",
+    "akis": "Karar hatırlatma",
+    "cikti": "Onay",
+    "kontrol": "Karar kaydı"
+   }
+  ],
+  "sla": {
+   "sure_gun": 7,
+   "revizyon": "1 tur",
+   "yanit": "İş günü içinde 4 saat"
+  },
+  "kpi": [
+   "Faturası eksik sipariş sayısı (0)"
+  ],
+  "riskler": [
+   {
+    "risk": "Yanlış KDV",
+    "onlem": "Kurallar mali müşavir onayı olmadan canlıya alınmaz"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Günlük: faturası kesilmemiş siparişleri bulur, uyarı açar."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "Entegratör API + mağaza sipariş olayı (n8n)."
+   ],
+   "ek_motorlar": [],
+   "otomasyon_orani": 85
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister"
+  ],
+  "v": 1
+ },
+ "WEB-16": {
+  "ozet": "Sepet terk ve geri kazanım kurgusu: e-posta/WhatsApp hatırlatma serisi, teşvik kuralları ve ölçüm.",
+  "kapsam": [
+   "Sepet terk tespiti",
+   "3 adımlı hatırlatma serisi",
+   "İndirim/teşvik kuralı",
+   "Gelir ölçümü"
+  ],
+  "kapsam_disi": [
+   "Genel e-posta pazarlaması"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "Seri yayında",
+    "kabul": "Test sepetinde 1 saat sonra ilk hatırlatma geldi"
+   },
+   {
+    "ad": "Rapor",
+    "kabul": "Geri kazanılan sepet ve gelir görünür"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "Teşvik politikası (indirim oranı)",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Pazarlama izni olan kişiler (İYS)",
+    "kimden": "arvela",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Seri kurgusu ve metinler",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Seri",
+    "kontrol": "Marka sesi"
+   },
+   {
+    "ad": "Müşteri onayı: metin ve teşvik",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": "butce",
+    "akis": "Karar hatırlatma",
+    "cikti": "Onay",
+    "kontrol": "Karar kaydı"
+   },
+   {
+    "ad": "Kurulum",
+    "rol": "ekip",
+    "otomasyon": "ai_taslak",
+    "gun": 2,
+    "karar": null,
+    "akis": null,
+    "cikti": "Otomasyon",
+    "kontrol": "Yalnız izinli kişilere"
+   },
+   {
+    "ad": "Test",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": "Kabul ön kontrolü",
+    "cikti": "Test raporu",
+    "kontrol": "Zamanlama doğru"
+   }
+  ],
+  "sla": {
+   "sure_gun": 7,
+   "revizyon": "1 tur",
+   "yanit": "İş günü içinde 4 saat"
+  },
+  "kpi": [
+   "Geri kazanım oranı",
+   "Seri başına gelir"
+  ],
+  "riskler": [
+   {
+    "risk": "İzinsiz ileti",
+    "onlem": "Yalnız pazarlama onayı olanlara; İYS kontrolü"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Aylık A/B: Claude iki metin varyasyonu önerir, kazanan otomatik seçilir."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "Mağaza sepet olayları + n8n zamanlayıcı + e-posta/WhatsApp."
+   ],
+   "ek_motorlar": [],
+   "otomasyon_orani": 90
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister",
+   "Teşvik oranını onaylar"
+  ],
+  "v": 1
+ },
+ "WEB-17": {
+  "ozet": "Web uygulaması / müşteri portalı: ihtiyaç analizi, tasarım, geliştirme, test ve yayın. Sprint'lerle yürütülür.",
+  "kapsam": [
+   "İhtiyaç analizi ve kullanıcı hikâyeleri",
+   "Veri modeli ve mimari",
+   "2 haftalık sprint'ler, her sprint sonunda demo",
+   "Otomatik testler",
+   "Yayın ve bakım planı"
+  ],
+  "kapsam_disi": [
+   "Mobil uygulama mağaza yayını",
+   "Sınırsız değişiklik"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "Kullanıcı hikâyeleri",
+    "kabul": "Her hikâyenin kabul ölçütü var; müşteri onaylı"
+   },
+   {
+    "ad": "Çalışan uygulama",
+    "kabul": "Kabul ölçütleri otomatik testle doğrulanıyor"
+   },
+   {
+    "ad": "Teknik belge",
+    "kabul": "Kurulum, yedek, erişim"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "İş süreçleri ve örnek veriler",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Kullanıcı rolleri",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Entegre olunacak sistemler",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "İhtiyaç analizi ve hikâyeler",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 5,
+    "karar": "bilgi",
+    "akis": "Bilgi isteği",
+    "cikti": "Hikâye listesi",
+    "kontrol": "Kabul ölçütleri var"
+   },
+   {
+    "ad": "Müşteri onayı: kapsam ve öncelik",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 3,
+    "karar": "butce",
+    "akis": "Karar hatırlatma",
+    "cikti": "Onaylı backlog",
+    "kontrol": "Karar kaydı"
+   },
+   {
+    "ad": "Mimari ve veri modeli",
+    "rol": "ekip",
+    "otomasyon": "ai_taslak",
+    "gun": 3,
+    "karar": null,
+    "akis": null,
+    "cikti": "Mimari notu",
+    "kontrol": "Güvenlik gözden geçirildi"
+   },
+   {
+    "ad": "Sprint 1",
+    "rol": "ekip",
+    "otomasyon": "ai_taslak",
+    "gun": 10,
+    "karar": null,
+    "akis": null,
+    "cikti": "Demo",
+    "kontrol": "Testler geçiyor"
+   },
+   {
+    "ad": "Sprint demosu ve onay",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": "onay",
+    "akis": "Karar hatırlatma",
+    "cikti": "Sprint onayı",
+    "kontrol": "Karar kaydı"
+   },
+   {
+    "ad": "Sonraki sprint'ler",
+    "rol": "ekip",
+    "otomasyon": "ai_taslak",
+    "gun": 20,
+    "karar": null,
+    "akis": null,
+    "cikti": "Özellikler",
+    "kontrol": "Testler"
+   },
+   {
+    "ad": "Güvenlik ve yük testi",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 3,
+    "karar": null,
+    "akis": null,
+    "cikti": "Test raporu",
+    "kontrol": "Kritik bulgu yok"
+   },
+   {
+    "ad": "Yayın ve devir",
+    "rol": "ekip",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": "onay",
+    "akis": null,
+    "cikti": "Canlı uygulama",
+    "kontrol": "Belgeler tam"
+   }
+  ],
+  "sla": {
+   "sure_gun": 50,
+   "revizyon": "2 tur / sprint",
+   "yanit": "İş günü içinde 4 saat"
+  },
+  "kpi": [
+   "Sprint hedefine ulaşma oranı",
+   "Hata kaçağı",
+   "Kullanıcı memnuniyeti"
+  ],
+  "riskler": [
+   {
+    "risk": "Kapsam kayması",
+    "onlem": "Backlog dışı istek otomatik ek iş teklifine döner"
+   },
+   {
+    "risk": "Güvenlik",
+    "onlem": "Kod incelemesi + bağımlılık taraması her PR'da"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Claude hikâyeleri ve kabul ölçütlerini yazar, kodlamada Claude Code ekiple çift çalışır, her PR otomatik test ve inceleme alır (Arvela OS'in Forge yöntemi).",
+    "Sprint sonunda Claude demo notu ve sürüm notunu müşteri diliyle yazar."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "Git + PR + otomatik test (GitHub Actions) + Forge benzeri onay; müşteri sprint onayını karar sayfasından verir."
+   ],
+   "ek_motorlar": [
+    {
+     "motor": "openai",
+     "amac": "İkinci görüş kod incelemesi (isteğe bağlı)"
+    }
+   ],
+   "otomasyon_orani": 55
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister",
+   "Sprint demolarını izler ve onaylar",
+   "Backlog önceliğini belirler"
+  ],
+  "v": 1
+ },
+ "WEB-18": {
+  "ozet": "API / üçüncü taraf entegrasyonu: iki sistem arasında veri akışının tasarımı, kurulumu ve izlenmesi.",
+  "kapsam": [
+   "Veri eşleme",
+   "n8n ya da kod ile entegrasyon",
+   "Hata kuyruğu ve uyarılar",
+   "İzleme panosu"
+  ],
+  "kapsam_disi": [
+   "Karşı sistemin geliştirilmesi"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "Çalışan entegrasyon",
+    "kabul": "Test verisi iki yönde doğru akıyor"
+   },
+   {
+    "ad": "İzleme",
+    "kabul": "Hata olunca uyarı geliyor"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "API belgeleri ve erişim",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Örnek veri",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Eşleme tablosu",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 2,
+    "karar": null,
+    "akis": null,
+    "cikti": "Eşleme",
+    "kontrol": "Zorunlu alanlar"
+   },
+   {
+    "ad": "Kurulum",
+    "rol": "ekip",
+    "otomasyon": "insan",
+    "gun": 3,
+    "karar": null,
+    "akis": null,
+    "cikti": "Akış",
+    "kontrol": "Hata kuyruğu"
+   },
+   {
+    "ad": "Test",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": "Kabul ön kontrolü",
+    "cikti": "Rapor",
+    "kontrol": "Çift yön"
+   },
+   {
+    "ad": "Müşteri onayı",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 1,
+    "karar": "onay",
+    "akis": "Karar hatırlatma",
+    "cikti": "Onay",
+    "kontrol": "Karar kaydı"
+   }
+  ],
+  "sla": {
+   "sure_gun": 8,
+   "revizyon": "1 tur",
+   "yanit": "İş günü içinde 4 saat"
+  },
+  "kpi": [
+   "Başarılı aktarım oranı",
+   "Ortalama gecikme"
+  ],
+  "riskler": [
+   {
+    "risk": "API değişikliği",
+    "onlem": "Haftalık sağlık testi; şema değişince uyarı"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Hata loglarını Claude sınıflandırır ve çözüm önerisi yazar."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "n8n (tercihen) ya da Node servis; sırlar n8n kimlik bilgilerinde."
+   ],
+   "ek_motorlar": [],
+   "otomasyon_orani": 80
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister"
+  ],
+  "v": 1
+ },
+ "WEB-19": {
+  "ozet": "PWA: sitenin telefona uygulama gibi kurulabilmesi, çevrimdışı sayfa ve isteğe bağlı bildirimler.",
+  "kapsam": [
+   "Manifest ve ikonlar",
+   "Service worker, çevrimdışı sayfa",
+   "İsteğe bağlı web push"
+  ],
+  "kapsam_disi": [
+   "Mağaza (App Store/Play) yayını"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "Kurulabilir site",
+    "kabul": "Lighthouse PWA kontrolleri geçiyor"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "Uygulama ikonu (Arvela tasarlayabilir)",
+    "kimden": "musteri",
+    "zorunlu": false,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Kurulum",
+    "rol": "ekip",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": null,
+    "akis": null,
+    "cikti": "PWA",
+    "kontrol": "Kurulabiliyor"
+   },
+   {
+    "ad": "Test",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": "Kabul ön kontrolü",
+    "cikti": "Rapor",
+    "kontrol": "Lighthouse"
+   },
+   {
+    "ad": "Müşteri onayı",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 1,
+    "karar": "onay",
+    "akis": "Karar hatırlatma",
+    "cikti": "Onay",
+    "kontrol": "Karar kaydı"
+   }
+  ],
+  "sla": {
+   "sure_gun": 5,
+   "revizyon": "1 tur",
+   "yanit": "İş günü içinde 4 saat"
+  },
+  "kpi": [
+   "Kurulum sayısı",
+   "Geri dönen ziyaretçi"
+  ],
+  "riskler": [
+   {
+    "risk": "Eski önbellek",
+    "onlem": "Sürüm değişince önbellek yenilenir"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Claude bildirim metinlerini önerir."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "Workbox / elle service worker."
+   ],
+   "ek_motorlar": [],
+   "otomasyon_orani": 60
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister"
+  ],
+  "v": 1
+ },
+ "WEB-20": {
+  "ozet": "Aylık bakım ve güvenlik: güncellemeler, yedek, güvenlik taraması, kesinti izleme ve aylık rapor. Arvela OS site eşitlemesiyle otomatik izlenir.",
+  "kapsam": [
+   "Çekirdek, eklenti, tema güncellemeleri (önce yedek)",
+   "Günlük güvenlik ve SSL kontrolü (Arvela OS eşitleme)",
+   "Haftalık yedek doğrulama",
+   "Kesinti izleme (5 dk)",
+   "Ayda 1 saate kadar küçük değişiklik",
+   "Aylık bakım raporu"
+  ],
+  "kapsam_disi": [
+   "Yeni özellik geliştirme (WEB-23)",
+   "İçerik üretimi"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "Aylık rapor",
+    "kabul": "Güncellemeler, açıklar, kesinti, yedek durumu tek sayfada; müşteri portalında"
+   },
+   {
+    "ad": "Güncel site",
+    "kabul": "Bilinen açığı olan eklenti yok"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "Yönetici erişimi (Hostinger hesabı Arvela'da ise gerekmez)",
+    "kimden": "musteri",
+    "zorunlu": false,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Her sabah: site durumu eşitlemesi",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": "Acil site uyarısı",
+    "cikti": "SSL, sürüm, açık durumu",
+    "kontrol": "Acil durumda Bugün'e uyarı"
+   },
+   {
+    "ad": "Haftalık: güncelleme penceresi (yedek → güncelle → kontrol)",
+    "rol": "ekip",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Güncelleme kaydı",
+    "kontrol": "Site açılıyor, hata yok"
+   },
+   {
+    "ad": "Haftalık: yedek doğrulama",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Yedek raporu",
+    "kontrol": "Son yedek 7 günden yeni"
+   },
+   {
+    "ad": "Ay sonu: bakım raporu",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": "Haftalık durum özeti",
+    "cikti": "Rapor",
+    "kontrol": "Portalda yayında"
+   },
+   {
+    "ad": "Büyük güncellemede müşteri onayı (ör. ana sürüm)",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": "onay",
+    "akis": "Karar hatırlatma",
+    "cikti": "Onay",
+    "kontrol": "Karar kaydı"
+   }
+  ],
+  "sla": {
+   "sure_gun": 30,
+   "revizyon": "1 tur",
+   "yanit": "İş günü içinde 4 saat"
+  },
+  "kpi": [
+   "Kesinti süresi (dk/ay)",
+   "Açığı olan eklenti sayısı (0)",
+   "Güncelleme gecikmesi"
+  ],
+  "riskler": [
+   {
+    "risk": "Güncelleme siteyi bozar",
+    "onlem": "Önce yedek, sonra güncelleme, ardından otomatik kontrol; bozulursa geri yükleme"
+   },
+   {
+    "risk": "Müşteri eklenti ekliyor",
+    "onlem": "Eşitlemede yeni eklenti görülünce not düşer"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Arvela OS her sabah Hostinger'dan sürüm, SSL ve açık bilgisini çeker; Claude öncelik sırası çıkarır.",
+    "Güncelleme sonrası Claude siteyi dışarıdan kontrol eder (ana sayfa, form, ödeme) ve raporu yazar.",
+    "Aylık raporu müşteri diliyle yazar; aksiyon gerektiren bir şey yoksa \"her şey yolunda\" der."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "Arvela OS site eşitlemesi (deploy/site_sync.py) + Hostinger API (maintain-wordpress becerileri).",
+    "Kesinti izleme: n8n 5 dk HTTP kontrolü; 2 hata üst üste → acil uyarı."
+   ],
+   "ek_motorlar": [],
+   "otomasyon_orani": 85
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister",
+   "Aylık bakım raporunu görür",
+   "Büyük güncellemeleri onaylar"
+  ],
+  "v": 1
+ },
+ "WEB-21": {
+  "ozet": "Hosting yönetimi + SSL + CDN: sunucu, alan adı, e-posta DNS kayıtları, SSL yenileme ve CDN ayarları.",
+  "kapsam": [
+   "Hosting planı ve kaynak izleme",
+   "Alan adı ve DNS yönetimi (e-posta kayıtları korunur)",
+   "SSL ve otomatik yenileme",
+   "CDN ve önbellek"
+  ],
+  "kapsam_disi": [
+   "Sunucu donanımı",
+   "E-posta kutusu yönetimi (ayrı)"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "Yenilemeler takipte",
+    "kabul": "Alan adı/SSL/hosting bitişleri Arvela OS'te; 30 gün önce uyarı"
+   },
+   {
+    "ad": "DNS belgesi",
+    "kabul": "Tüm kayıtlar ve amaçları yazılı"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "Alan adı ve hosting erişimi",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Envanter: alan adı, DNS, SSL, hosting",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": "bilgi",
+    "akis": "Bilgi isteği",
+    "cikti": "Envanter",
+    "kontrol": "Bitiş tarihleri kayıtlı"
+   },
+   {
+    "ad": "Aylık: kaynak ve yenileme kontrolü",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Kontrol raporu",
+    "kontrol": "Yaklaşan bitişler"
+   },
+   {
+    "ad": "Yenileme kararı (ücretli)",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 7,
+    "karar": "butce",
+    "akis": "Karar hatırlatma",
+    "cikti": "Onay",
+    "kontrol": "Karar kaydı"
+   }
+  ],
+  "sla": {
+   "sure_gun": 30,
+   "revizyon": "1 tur",
+   "yanit": "İş günü içinde 4 saat"
+  },
+  "kpi": [
+   "Kaçan yenileme (0)",
+   "SSL hatası (0)"
+  ],
+  "riskler": [
+   {
+    "risk": "Alan adı süresi dolar",
+    "onlem": "60/30/7 gün önce karar kaydı ve uyarı"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Claude DNS değişikliklerinden önce mevcut kayıtları belgeler (e-posta kesintisini önlemek için)."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "Hostinger API (domains, DNS, hosting); değişiklik yalnız ekip onayıyla."
+   ],
+   "ek_motorlar": [],
+   "otomasyon_orani": 85
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister",
+   "Yenileme kararlarını verir"
+  ],
+  "v": 1
+ },
+ "WEB-22": {
+  "ozet": "Hız optimizasyonu (Core Web Vitals): ölçüm, iyileştirme ve önce/sonra raporu.",
+  "kapsam": [
+   "Başlangıç ölçümü (mobil/masaüstü)",
+   "Görsel, önbellek, kod iyileştirmeleri",
+   "Önce/sonra raporu"
+  ],
+  "kapsam_disi": [
+   "Yeniden tasarım",
+   "Sunucu taşıma"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "İyileşme",
+    "kabul": "Mobil LCP < 2.5 sn ya da başlangıca göre en az %30 iyileşme"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "Yönetici erişimi",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Ölçüm ve darboğaz analizi",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Analiz",
+    "kontrol": "Öncelikli 5 madde"
+   },
+   {
+    "ad": "İyileştirmeler",
+    "rol": "ekip",
+    "otomasyon": "ai_taslak",
+    "gun": 3,
+    "karar": null,
+    "akis": null,
+    "cikti": "Değişiklikler",
+    "kontrol": "Yedek alındı"
+   },
+   {
+    "ad": "Tekrar ölçüm ve rapor",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": "Kabul ön kontrolü",
+    "cikti": "Önce/sonra",
+    "kontrol": "Hedef sağlandı"
+   },
+   {
+    "ad": "Müşteri onayı",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 1,
+    "karar": "onay",
+    "akis": "Karar hatırlatma",
+    "cikti": "Onay",
+    "kontrol": "Karar kaydı"
+   }
+  ],
+  "sla": {
+   "sure_gun": 7,
+   "revizyon": "1 tur",
+   "yanit": "İş günü içinde 4 saat"
+  },
+  "kpi": [
+   "LCP, INP, CLS"
+  ],
+  "riskler": [
+   {
+    "risk": "Görsel kalite düşer",
+    "onlem": "Sıkıştırma önce/sonra örnekleri onaya sunulur"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Claude PageSpeed çıktısını okuyup önceliklendirir."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "PageSpeed Insights API; önbellek/CDN Hostinger ayarları."
+   ],
+   "ek_motorlar": [],
+   "otomasyon_orani": 70
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister"
+  ],
+  "v": 1
+ },
+ "WEB-23": {
+  "ozet": "Aylık geliştirme saati paketi: küçük değişiklikler ve yeni bölümler için ayrılmış saat havuzu; harcama şeffaf.",
+  "kapsam": [
+   "Aylık saat havuzu",
+   "Talep → tahmin → onay → iş akışı",
+   "Harcanan süre kaydı ve rapor"
+  ],
+  "kapsam_disi": [
+   "Büyük projeler (ayrı teklif)"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "Şeffaf harcama",
+    "kabul": "Her talebin tahmini ve gerçek süresi portalda"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "Talepler (portal ya da e-posta)",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Talebi al ve netleştir",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 1,
+    "karar": "bilgi",
+    "akis": "Bilgi isteği",
+    "cikti": "Netleşmiş talep",
+    "kontrol": "Kabul ölçütü var"
+   },
+   {
+    "ad": "Süre tahmini ve onay",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 1,
+    "karar": "butce",
+    "akis": "Karar hatırlatma",
+    "cikti": "Onay",
+    "kontrol": "Karar kaydı"
+   },
+   {
+    "ad": "Uygulama",
+    "rol": "ekip",
+    "otomasyon": "insan",
+    "gun": 2,
+    "karar": null,
+    "akis": null,
+    "cikti": "Değişiklik",
+    "kontrol": "Kabul ölçütü"
+   },
+   {
+    "ad": "Kontrol ve kapanış",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": "Kabul ön kontrolü",
+    "cikti": "Kapanış notu",
+    "kontrol": "Süre kaydı"
+   }
+  ],
+  "sla": {
+   "sure_gun": 30,
+   "revizyon": "1 tur",
+   "yanit": "İş günü içinde 4 saat"
+  },
+  "kpi": [
+   "Tahmin isabeti",
+   "Talep kapanış süresi",
+   "Havuz kullanım oranı"
+  ],
+  "riskler": [
+   {
+    "risk": "Havuz aşımı",
+    "onlem": "Havuz %80'de uyarı; aşım ek onayla"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Claude e-posta/WhatsApp talebini okuyup görev, kabul ölçütü ve süre tahmini taslağı çıkarır."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "Süre kaydı Arvela OS iş paketlerindeki gibi; aylık rapor otomatik."
+   ],
+   "ek_motorlar": [],
+   "otomasyon_orani": 70
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister",
+   "Talep açar, tahmini onaylar, harcanan saati görür"
+  ],
+  "v": 1
+ },
+ "WEB-24": {
+  "ozet": "KVKK / GDPR site uyum paketi: aydınlatma metni, çerez politikası ve onay yönetimi, form metinleri, saklama ayarları.",
+  "kapsam": [
+   "Site veri envanteri (formlar, çerezler, araçlar)",
+   "Aydınlatma metni ve çerez politikası taslağı (hukukçu onayına)",
+   "Çerez onay yönetimi (reddet/kabul eşit)",
+   "Form metinleri ve pazarlama onayı (İYS)"
+  ],
+  "kapsam_disi": [
+   "Hukuki danışmanlık ve temsil",
+   "VERBİS kaydı"
+  ],
+  "teslimatlar": [
+   {
+    "ad": "Çerez onayı",
+    "kabul": "Onaydan önce analitik/reklam kodu yüklenmiyor"
+   },
+   {
+    "ad": "Metinler",
+    "kabul": "Hukukçu onaylı ve sitede yayında"
+   },
+   {
+    "ad": "Envanter",
+    "kabul": "Her araç ve amacı listede"
+   }
+  ],
+  "girdiler": [
+   {
+    "ad": "Şirket unvanı, adres, MERSİS",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Kullanılan araçlar listesi",
+    "kimden": "arvela",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   },
+   {
+    "ad": "Hukukçu onayı",
+    "kimden": "musteri",
+    "zorunlu": true,
+    "nasil": "Portaldan yükleme ya da e-posta doğrulamalı karar sayfası"
+   }
+  ],
+  "asamalar": [
+   {
+    "ad": "Site taraması: çerez ve araç envanteri",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Envanter",
+    "kontrol": "Tüm çerezler"
+   },
+   {
+    "ad": "Metin taslakları",
+    "rol": "ai",
+    "otomasyon": "ai_taslak",
+    "gun": 2,
+    "karar": "bilgi",
+    "akis": "Bilgi isteği",
+    "cikti": "Taslaklar",
+    "kontrol": "Envanterle uyumlu"
+   },
+   {
+    "ad": "Hukukçu ve müşteri onayı",
+    "rol": "musteri",
+    "otomasyon": "insan",
+    "gun": 5,
+    "karar": "onay",
+    "akis": "Karar hatırlatma",
+    "cikti": "Onaylı metinler",
+    "kontrol": "Karar kaydı"
+   },
+   {
+    "ad": "Onay yönetimi kurulumu",
+    "rol": "ekip",
+    "otomasyon": "insan",
+    "gun": 1,
+    "karar": null,
+    "akis": null,
+    "cikti": "Çerez onayı",
+    "kontrol": "Eşit seçenekler"
+   },
+   {
+    "ad": "Doğrulama taraması",
+    "rol": "ai",
+    "otomasyon": "tam",
+    "gun": 1,
+    "karar": null,
+    "akis": "Kabul ön kontrolü",
+    "cikti": "Rapor",
+    "kontrol": "Onaysız kod yüklenmiyor"
+   }
+  ],
+  "sla": {
+   "sure_gun": 10,
+   "revizyon": "1 tur",
+   "yanit": "İş günü içinde 4 saat"
+  },
+  "kpi": [
+   "Onaysız yüklenen çerez (0)",
+   "Onay oranı"
+  ],
+  "riskler": [
+   {
+    "risk": "Hukuki sorumluluk",
+    "onlem": "Arvela taslak hazırlar; yayın hukukçu onayı olmadan yapılmaz"
+   }
+  ],
+  "ai": {
+   "motor": "claude",
+   "yontem": [
+    "Proje açılışında Claude hizmet kitabını, müşteri kaydını ve geçmiş notları okuyup görev listesini, takvimi ve müşteriden istenecek bilgileri hazırlar; ekip yalnız onaylar.",
+    "Her aşama bir görevdir; görev \"incelemede\"ye geçince Claude kabul ölçütlerine göre ön kontrol yapar, eksikleri göreve not olarak yazar.",
+    "Müşteri kararı gereken her adımda Arvela OS karar kaydı açar; müşteri portaldan ya da e-posta doğrulamalı karar sayfasından onaylar, seçer veya revize ister. Karar, gerekçesiyle projeye işlenir.",
+    "Her pazartesi Claude proje durum özetini (biten, sıradaki, bekleyen karar, risk) yazar; müşteri portalında yayımlanır, isteyen müşteriye e-postayla gider.",
+    "Geciken görev, 48 saattir yanıtlanmayan karar ya da kapsam dışı istek tespit edilince Bugün sayfasına uyarı düşer; kapsam dışı istek için Claude ek iş teklifi taslağı hazırlar.",
+    "Claude site taramasından envanteri ve metin taslaklarını çıkarır (Arvela'nın kendi KVKK metinleri şablon)."
+   ],
+   "teknik": [
+    "Kaynak: Arvela OS /api/v1 (proje, görev, onay, müşteri) + bu hizmet kitabı. Claude çağrıları n8n üzerinden yapılır; anahtar Arvela OS dışında, n8n ortamında durur.",
+    "n8n akışları: \"Proje başlangıcı\" (görev + takvim), \"Haftalık durum özeti\", \"Karar hatırlatma\" (24/48 saat), \"Kabul ön kontrolü\" (görev incelemede olayı).",
+    "Kişisel veri: Claude'a yalnız işin gerektirdiği alanlar gider; müşteri kişisel verisi standart sözleşme (KVKK m.9, SS-2) imzalanana kadar gönderilmez, yerine firma düzeyi veri kullanılır.",
+    "Her yapay zekâ çıktısı işlem kaydına (kim, ne zaman, hangi akış) düşer; müşteriye giden her metin bir ekip üyesinin onayından geçer, bu hizmette aksi belirtilmedikçe.",
+    "Tarayıcı ile çerez taraması (n8n + headless), onay öncesi/sonrası karşılaştırma."
+   ],
+   "ek_motorlar": [],
+   "otomasyon_orani": 70
+  },
+  "musteri_paneli": [
+   "Proje durumunu ve haftalık özeti görür",
+   "Kendisinden istenen bilgi ve dosyaları yükler",
+   "Teslimatları onaylar ya da revize ister",
+   "Metinleri onaylar"
+  ],
+  "v": 1
+ }
+}
