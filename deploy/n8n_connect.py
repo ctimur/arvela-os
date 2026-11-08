@@ -7,7 +7,7 @@
 3. n8n açılışta: kimlik bilgilerini (Arvela OS API, Arvela webhook, SMTP) içe aktarır, hazır akışları
    (seed sürümü değiştiyse) içe aktarır ve olay yönlendirici dışındakileri yayınlar.
 
-Anahtarlar loglara yazılmaz. Ortam: HOSTINGER_API_TOKEN, SETUP_TOKEN, (isteğe bağlı) N8N_SMTP_PASSWORD.
+Anahtarlar loglara yazılmaz. Ortam: HOSTINGER_API_TOKEN, SETUP_TOKEN, (isteğe bağlı) N8N_SMTP_PASSWORD, ANTHROPIC_API_KEY.
 """
 import hashlib, hmac, json, os, re, sys, urllib.error, urllib.parse, urllib.request
 
@@ -45,6 +45,7 @@ START = r'''    command:
           const e = process.env, list = [
             { id: "arvelaApiCred01", name: "Arvela OS API", type: "httpHeaderAuth", data: { name: "Authorization", value: "Bearer " + e.ARVELA_API_KEY } },
             { id: "arvelaHookCred1", name: "Arvela webhook", type: "httpHeaderAuth", data: { name: "X-Arvela-Token", value: e.ARVELA_HOOK_TOKEN } } ];
+          if (e.ANTHROPIC_API_KEY) list.push({ id: "arvelaClaudeCr1", name: "Anthropic (Claude)", type: "httpHeaderAuth", data: { name: "x-api-key", value: e.ANTHROPIC_API_KEY } });
           require("fs").writeFileSync("/tmp/arvela-creds.json", JSON.stringify(list));
           if (e.N8N_SMTP_PASSWORD) require("fs").writeFileSync("/tmp/arvela-smtp.json", JSON.stringify([{ id: "arvelaSmtpCred1", name: "SMTP", type: "smtp",
             data: { user: e.N8N_SMTP_USER, password: e.N8N_SMTP_PASSWORD, host: e.N8N_SMTP_HOST, port: Number(e.N8N_SMTP_PORT), secure: true } }]));
@@ -85,7 +86,7 @@ def build_compose(compose, version, publish):
     if '      N8N_WEBHOOK_URL:' not in compose:
         compose = compose.replace('      WEBHOOK_URL: https://n8n.arveladigital.com/\n', '      N8N_WEBHOOK_URL: https://n8n.arveladigital.com/\n      WEBHOOK_URL: https://n8n.arveladigital.com/\n')
     compose = compose.replace('      N8N_RUNNERS_ENABLED: "true"\n', '')
-    for k in ['ARVELA_API_KEY', 'ARVELA_HOOK_TOKEN', 'N8N_SMTP_USER', 'N8N_SMTP_HOST', 'N8N_SMTP_PORT', 'N8N_SMTP_PASSWORD']:
+    for k in ['ARVELA_API_KEY', 'ARVELA_HOOK_TOKEN', 'N8N_SMTP_USER', 'N8N_SMTP_HOST', 'N8N_SMTP_PORT', 'N8N_SMTP_PASSWORD', 'ANTHROPIC_API_KEY']:
         if f'      {k}:' not in compose:
             compose = compose.replace('      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}\n', f'      N8N_ENCRYPTION_KEY: ${{N8N_ENCRYPTION_KEY}}\n      {k}: ${{{k}:-}}\n', 1)
     svc = re.search(r'(?ms)^  n8n:\n(.*?)(?=^  [a-z0-9_-]+:\n|^volumes:\n|\Z)', compose)
@@ -117,6 +118,8 @@ def main():
     vals = {'ARVELA_API_KEY': prov['api_key'], 'ARVELA_HOOK_TOKEN': prov['webhook_token'], **SMTP}
     if os.environ.get('N8N_SMTP_PASSWORD'):
         vals['N8N_SMTP_PASSWORD'] = os.environ['N8N_SMTP_PASSWORD']
+    if os.environ.get('ANTHROPIC_API_KEY'):  # Claude: n8n'deki "Anthropic (Claude)" kimlik bilgisi bundan oluşur
+        vals['ANTHROPIC_API_KEY'] = os.environ['ANTHROPIC_API_KEY']
     lines = [l for l in env.splitlines() if l and l.split('=', 1)[0] not in vals]
     env = '\n'.join(lines + [f'{k}={v}' for k, v in vals.items()]) + '\n'
     if len(compose) > 8192:

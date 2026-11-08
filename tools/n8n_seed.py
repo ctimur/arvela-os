@@ -224,7 +224,30 @@ mail_wf = wf('mail', 'Arvela · E-posta gönderici', nodes, c)
 mail_wf['settings'].update({'saveDataSuccessExecution': 'none', 'saveManualExecutions': False})
 flows.append(mail_wf)
 
+# 10 · Yapay zekâ (Claude): Arvela OS işi gönderir, Claude taslağı döner
+c = {}
+CLAUDE_CRED = {'httpHeaderAuth': {'id': 'arvelaClaudeCr1', 'name': 'Anthropic (Claude)'}}
+js_in = """const b = $input.first().json.body || {};
+if (b.event !== 'ai.request' || !b.job_id || !b.prompt) return [];
+const body = { model: b.model || 'claude-sonnet-5-5', max_tokens: Math.min(Number(b.max_tokens) || 4000, 8000), system: String(b.system || ''), messages: [{ role: 'user', content: String(b.prompt) }] };
+return [{ json: { job_id: b.job_id, body } }];"""
+js_out = """const r = $input.first().json; const job = $('İşi hazırla').first().json.job_id;
+if (r.error || !Array.isArray(r.content)) return [{ json: { job_id: job, ok: false, error: String((r.error && (r.error.message || r.error)) || 'Claude yanıtı okunamadı').slice(0, 500) } }];
+const text = r.content.filter(x => x.type === 'text').map(x => x.text).join('\\n').trim();
+return [{ json: { job_id: job, ok: !!text, text, error: text ? null : 'Boş yanıt', usage: r.usage || null, model: r.model } }];"""
+claude = node('Claude', 'n8n-nodes-base.httpRequest', 4.2, [480, 300], {'method': 'POST', 'url': 'https://api.anthropic.com/v1/messages', 'authentication': 'genericCredentialType', 'genericAuthType': 'httpHeaderAuth',
+    'sendHeaders': True, 'headerParameters': {'parameters': [{'name': 'anthropic-version', 'value': '2023-06-01'}]},
+    'sendBody': True, 'specifyBody': 'json', 'jsonBody': '={{ JSON.stringify($json.body) }}', 'options': {'timeout': 180000}}, CLAUDE_CRED, {'onError': 'continueRegularOutput', 'retryOnFail': True, 'maxTries': 2, 'waitBetweenTries': 5000})
+nodes = [note('Nasıl çalışır', '## Arvela · Yapay zekâ (Claude)\nArvela OS bir yapay zekâ aşaması için iş gönderir (istem burada hazır gelir; SS-2 onayı yoksa kişisel veriler Arvela OS\'te maskelenmiştir).\nClaude API çağrılır, taslak Arvela OS\'e (/api/v1/ai/result) döner ve görevin notlarına yazılır.\nAnahtar: "Anthropic (Claude)" kimlik bilgisi (GitHub secret ANTHROPIC_API_KEY, "n8n bağla" ile gelir). Başarılı çalışmalar saklanmaz.', [-40, -160], 480, 230),
+         webhook('Yapay zekâ isteği', [0, 300], 'arvela-ai'), code('İşi hazırla', [240, 300], js_in), claude, code('Sonucu oku', [720, 300], js_out),
+         http('Arvela OS\'e gönder', [960, 300], '/ai/result', 'POST', '={{ JSON.stringify($json) }}')]
+for a_, b_ in [('Yapay zekâ isteği', 'İşi hazırla'), ('İşi hazırla', 'Claude'), ('Claude', 'Sonucu oku'), ('Sonucu oku', "Arvela OS'e gönder")]:
+    link(c, a_, b_)
+ai_wf = wf('ai-claude', 'Arvela · Yapay zekâ (Claude)', nodes, c)
+ai_wf['settings'].update({'saveDataSuccessExecution': 'none', 'saveManualExecutions': False})
+flows.append(ai_wf)
+
 out = pathlib.Path(__file__).resolve().parent.parent / 'app' / 'n8n-seed.json'
 IDS = {f['name']: f['id'] for f in flows}
-out.write_text(json.dumps({'version': 4, 'ids': IDS, 'workflows': flows}, ensure_ascii=False, indent=0) + '\n')
+out.write_text(json.dumps({'version': 5, 'ids': IDS, 'workflows': flows}, ensure_ascii=False, indent=0) + '\n')
 print(len(flows), 'akış', out.stat().st_size, 'bayt')

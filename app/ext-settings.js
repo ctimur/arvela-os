@@ -27,7 +27,7 @@ export function registerSettings(d) {
   route('GET', '/ayarlar', async (ctx, res) => {
     need(ctx, 'admin');
     const items = [['/ayarlar/tema', 'Tema', 'Arvela OS’in görünümünü ve tema ayarlarını seçin.'], ['/ekip', 'Ekip', 'Kullanıcılar, roller ve davetler.'], ['/otomasyonlar', 'Otomasyonlar', 'n8n bağlantıları, API anahtarları, olaylar.'],
-      ['/ayarlar/kararlar', 'Müşteri kararları', 'Karar bağlantısı e-postası ve doğrulama.'], ['/veri-saklama', 'Veri saklama (KVKK)', 'Saklama süreleri ve anonimleştirme.'], ['/forge', 'Forge', 'Değişiklik onayları ve sürümler.'], ['/kayitlar', 'İşlem kayıtları', 'Kim, ne zaman, ne yaptı.']];
+      ['/ayarlar/yapay-zeka', 'Yapay zekâ', 'Claude, Arvela\'nın hizmet kitaplarına göre taslak hazırlar; kişisel veri kuralları.'], ['/ayarlar/kararlar', 'Müşteri kararları', 'Karar bağlantısı e-postası ve doğrulama.'], ['/veri-saklama', 'Veri saklama (KVKK)', 'Saklama süreleri ve anonimleştirme.'], ['/forge', 'Forge', 'Değişiklik onayları ve sürümler.'], ['/kayitlar', 'İşlem kayıtları', 'Kim, ne zaman, ne yaptı.']];
     send(res, 200, layout(ctx, 'Ayarlar', `<div class="page-head"><div><h1>Ayarlar</h1></div></div><div class="grid">${items.map(([href, t, x]) => `<a class="card" href="${href}" style="text-decoration:none;color:inherit"><h2>${t}</h2><span class="muted">${x}</span></a>`).join('')}</div>`, '/ayarlar'));
   });
 

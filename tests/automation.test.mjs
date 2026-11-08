@@ -76,7 +76,7 @@ console.log('automation: ok');
   const k = crypto.createHmac('sha256', 'st').update('arvela-n8n-provision').digest('hex');
   await r2['POST /api/n8n/provision']({ req: { headers: { authorization: 'Bearer ' + k } } }, res);
   const out = JSON.parse(res.b);
-  assert.match(out.api_key, /^arv_[0-9a-f]{8}_/); assert.equal(out.webhook_token, 'tok'); assert.equal(out.hooks, 4);
+  assert.match(out.api_key, /^arv_[0-9a-f]{8}_/); assert.equal(out.webhook_token, 'tok'); assert.equal(out.hooks, 5);
   assert.ok(w2[0].includes("revoked_at=now()") && w2.some(s => s.includes('UPDATE webhooks SET active')));
   console.log('provision: ok');
 }
