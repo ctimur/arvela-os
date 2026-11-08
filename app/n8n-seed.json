@@ -1,5 +1,5 @@
 {
-"version": 4,
+"version": 5,
 "ids": {
 "Arvela · Olay yönlendirici": "5d628bb41d3154c2",
 "Arvela · Sabah özeti": "3f9b5075be7859c0",
@@ -9,7 +9,8 @@
 "Arvela · Görev bildirimi": "4c35a1d111415770",
 "Arvela · Acil site uyarısı": "a61b9e9a93f550d4",
 "Arvela · Web formu → aday": "00ba2c3d2dd25d35",
-"Arvela · E-posta gönderici": "887da462464558ae"
+"Arvela · E-posta gönderici": "887da462464558ae",
+"Arvela · Yapay zekâ (Claude)": "4ce656b306c153d5"
 },
 "workflows": [
 {
@@ -1639,6 +1640,202 @@
 [
 {
 "node": "Gönder",
+"type": "main",
+"index": 0
+}
+]
+]
+}
+},
+"active": false,
+"settings": {
+"executionOrder": "v1",
+"timezone": "Europe/Istanbul",
+"saveManualExecutions": false,
+"saveDataSuccessExecution": "none"
+},
+"pinData": {},
+"meta": {
+"templateCredsSetupCompleted": false
+},
+"tags": []
+},
+{
+"id": "4ce656b306c153d5",
+"name": "Arvela · Yapay zekâ (Claude)",
+"nodes": [
+{
+"id": "16fb2c48-977f-5011-b255-37681eeb2486",
+"name": "Nasıl çalışır",
+"type": "n8n-nodes-base.stickyNote",
+"typeVersion": 1,
+"position": [
+-40,
+-160
+],
+"parameters": {
+"content": "## Arvela · Yapay zekâ (Claude)\nArvela OS bir yapay zekâ aşaması için iş gönderir (istem burada hazır gelir; SS-2 onayı yoksa kişisel veriler Arvela OS'te maskelenmiştir).\nClaude API çağrılır, taslak Arvela OS'e (/api/v1/ai/result) döner ve görevin notlarına yazılır.\nAnahtar: \"Anthropic (Claude)\" kimlik bilgisi (GitHub secret ANTHROPIC_API_KEY, \"n8n bağla\" ile gelir). Başarılı çalışmalar saklanmaz.",
+"width": 480,
+"height": 230
+}
+},
+{
+"id": "137d3c5f-fa46-5274-ad56-5038296dc92b",
+"name": "Yapay zekâ isteği",
+"type": "n8n-nodes-base.webhook",
+"typeVersion": 2,
+"position": [
+0,
+300
+],
+"parameters": {
+"httpMethod": "POST",
+"path": "arvela-ai",
+"authentication": "headerAuth",
+"responseMode": "onReceived",
+"options": {}
+},
+"credentials": {
+"httpHeaderAuth": {
+"id": "arvelaHookCred1",
+"name": "Arvela webhook"
+}
+},
+"webhookId": "09b9ce2b-7a9c-5718-9901-953059517dfe"
+},
+{
+"id": "eaaea6fd-954b-50dd-b835-b52c8edfcd0b",
+"name": "İşi hazırla",
+"type": "n8n-nodes-base.code",
+"typeVersion": 2,
+"position": [
+240,
+300
+],
+"parameters": {
+"jsCode": "const b = $input.first().json.body || {};\nif (b.event !== 'ai.request' || !b.job_id || !b.prompt) return [];\nconst body = { model: b.model || 'claude-sonnet-5-5', max_tokens: Math.min(Number(b.max_tokens) || 4000, 8000), system: String(b.system || ''), messages: [{ role: 'user', content: String(b.prompt) }] };\nreturn [{ json: { job_id: b.job_id, body } }];"
+}
+},
+{
+"id": "36a2cd55-5c6d-5057-9852-8568eb3bdfbf",
+"name": "Claude",
+"type": "n8n-nodes-base.httpRequest",
+"typeVersion": 4.2,
+"position": [
+480,
+300
+],
+"parameters": {
+"method": "POST",
+"url": "https://api.anthropic.com/v1/messages",
+"authentication": "genericCredentialType",
+"genericAuthType": "httpHeaderAuth",
+"sendHeaders": true,
+"headerParameters": {
+"parameters": [
+{
+"name": "anthropic-version",
+"value": "2023-06-01"
+}
+]
+},
+"sendBody": true,
+"specifyBody": "json",
+"jsonBody": "={{ JSON.stringify($json.body) }}",
+"options": {
+"timeout": 180000
+}
+},
+"credentials": {
+"httpHeaderAuth": {
+"id": "arvelaClaudeCr1",
+"name": "Anthropic (Claude)"
+}
+},
+"onError": "continueRegularOutput",
+"retryOnFail": true,
+"maxTries": 2,
+"waitBetweenTries": 5000
+},
+{
+"id": "0c4b0912-aefa-5a02-ac68-e15cb7299eb2",
+"name": "Sonucu oku",
+"type": "n8n-nodes-base.code",
+"typeVersion": 2,
+"position": [
+720,
+300
+],
+"parameters": {
+"jsCode": "const r = $input.first().json; const job = $('İşi hazırla').first().json.job_id;\nif (r.error || !Array.isArray(r.content)) return [{ json: { job_id: job, ok: false, error: String((r.error && (r.error.message || r.error)) || 'Claude yanıtı okunamadı').slice(0, 500) } }];\nconst text = r.content.filter(x => x.type === 'text').map(x => x.text).join('\\n').trim();\nreturn [{ json: { job_id: job, ok: !!text, text, error: text ? null : 'Boş yanıt', usage: r.usage || null, model: r.model } }];"
+}
+},
+{
+"id": "976b2bcc-fef2-58fb-9c0b-69954b210485",
+"name": "Arvela OS'e gönder",
+"type": "n8n-nodes-base.httpRequest",
+"typeVersion": 4.2,
+"position": [
+960,
+300
+],
+"parameters": {
+"method": "POST",
+"url": "https://os.arveladigital.com/api/v1/ai/result",
+"authentication": "genericCredentialType",
+"genericAuthType": "httpHeaderAuth",
+"options": {},
+"sendBody": true,
+"specifyBody": "json",
+"jsonBody": "={{ JSON.stringify($json) }}"
+},
+"credentials": {
+"httpHeaderAuth": {
+"id": "arvelaApiCred01",
+"name": "Arvela OS API"
+}
+}
+}
+],
+"connections": {
+"Yapay zekâ isteği": {
+"main": [
+[
+{
+"node": "İşi hazırla",
+"type": "main",
+"index": 0
+}
+]
+]
+},
+"İşi hazırla": {
+"main": [
+[
+{
+"node": "Claude",
+"type": "main",
+"index": 0
+}
+]
+]
+},
+"Claude": {
+"main": [
+[
+{
+"node": "Sonucu oku",
+"type": "main",
+"index": 0
+}
+]
+]
+},
+"Sonucu oku": {
+"main": [
+[
+{
+"node": "Arvela OS'e gönder",
 "type": "main",
 "index": 0
 }

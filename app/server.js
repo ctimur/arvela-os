@@ -13,10 +13,11 @@ import { registerPlaybooks, migratePlaybooks } from './ext-playbooks.js';
 import { registerFlow, migrateFlow } from './ext-flow.js';
 import { applyGuide } from './ext-guide.js';
 import { registerIcons, ICON_LINKS } from './ext-icons.js';
+import { registerAi, migrateAi } from './ext-ai.js';
 import { registerDecisions, migrateDecisions, parseMultipart, decisionForm, parseRequest, BODY_MAX } from './ext-decisions.js';
 import { THEMES } from './themes.js';
 
-const VERSION = '0.19.1';
+const VERSION = '0.20.0';
 let settingsApi = null;
 const PORT = Number(process.env.PORT || 3000);
 const SETUP_TOKEN = process.env.SETUP_TOKEN || '';
@@ -242,6 +243,7 @@ tr.is-late td:first-child{box-shadow:inset 3px 0 0 var(--bad)}
 .decision{background:#FBF9F5;display:flex;flex-direction:column;gap:8px}.decision h3{margin:0}.choices{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}.choices legend{font-weight:600;margin-bottom:6px}
 .choices .opt{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line,#E6DFD2);border-radius:10px;padding:10px 12px;min-height:44px;cursor:pointer}
 .budget{background:#fff;border:1px solid var(--champ);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column}.budget strong{font-size:20px}.files{margin:4px 0 0;padding-left:18px}[hidden]{display:none!important}
+.ai-out{white-space:pre-wrap;font-family:inherit;font-size:14px;line-height:1.55;background:#FBF9F5;border-radius:10px;padding:12px 14px;margin:0;max-height:70vh;overflow:auto}
 .flow-warn{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#FBF3E4;border-radius:10px;padding:8px 12px;font-size:14px}
 .stages{margin:8px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:6px}.stages li{display:list-item}.stages .dot{display:inline-block;margin-right:6px;vertical-align:middle}
 @media (max-width:1100px){.kanban{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -397,10 +399,12 @@ async function loadSession(req) {
 let hooks = null; // otomasyon kancaları (ext-automation.js)
 let flow = null; // aşama akışı (ext-flow.js)
 let decisions = null; // müşteri kararları (ext-decisions.js)
+let ai = null; // yapay zekâ işleri (ext-ai.js)
 async function audit(ctx, action, detail = {}) {
   await q('INSERT INTO audit (agency_id, user_id, action, detail) VALUES ($1,$2,$3,$4)', [ctx.user.agency_id, ctx.user.id, action, detail]);
   if (flow) await flow.onAudit(ctx, action, detail).catch((e) => console.error('akış:', e.message)); // sıradaki aşamayı aç, onayları bağla
   if (decisions) decisions.onAudit(ctx, action, detail).catch((e) => console.error('karar e-postası:', e.message));
+  if (ai) ai.onAudit(ctx, action, detail).catch((e) => console.error('yapay zekâ:', e.message)); // beklemez: n8n'e gönderim isteği yavaşlatmasın
   if (hooks) hooks.onAudit(ctx, action, detail).catch((e) => console.error('otomasyon:', e.message));
 }
 class HttpError extends Error { constructor(status, msg) { super(msg); this.status = status; } }
@@ -737,9 +741,11 @@ const todayPage = registerToday({ all, one, h, layout, need, STAFF, forgePending
 registerSync({ route, one, all, q, HttpError, safeEqual, SETUP_TOKEN, onSynced: (a, before) => hooks?.onSiteSync(a, before) });
 decisions = registerDecisions({ route, all, one, q, need, layout, authPage, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, AP_ST, APP_URL: process.env.APP_URL, cookie, parseCookies,
   sendMail: (a, m) => hooks ? hooks.sendMail(a, m) : Promise.resolve(false) });
+ai = registerAi({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, postHook: hooks.postHook, api: hooks.api, apiBody: hooks.body });
 flow = registerFlow({ route, all, one, q, need, h, badge, fmtDate, csrfField, HttpError, int, redirect, STAFF, audit, TK_ST });
 registerIcons({ route });
 const playbooks = registerPlaybooks({ route, all, one, q, need, layout, h, badge, csrfField, HttpError, int, redirect, send, STAFF, audit, fmtDate });
-registerWork({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send, projectExtra: (ctx, pr) => playbooks.projectCard(ctx, pr), flowBanner: (ctx, pr, tasks) => flow.projectBanner(ctx, pr, tasks), taskExtra: (ctx, tk) => flow.taskCard(ctx, tk), decisions });
+registerWork({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send, projectExtra: async (ctx, pr) => (await playbooks.projectCard(ctx, pr)) + (await ai.projectCard(ctx, pr)), flowBanner: (ctx, pr, tasks) => flow.projectBanner(ctx, pr, tasks),
+  taskExtra: async (ctx, tk) => (await flow.taskCard(ctx, tk)) + (await ai.taskCard(ctx, tk)), decisions });
 
-migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => migrateFreelance({ q })).then(() => migrateRetention({ q })).then(() => migratePlaybooks({ q, all })).then((n) => n && console.log(`hizmet kitabı yazıldı: ${n}`)).then(() => migrateDecisions({ q })).then(() => migrateFlow({ q })).then(() => loadThemes(all)).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
+migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => migrateFreelance({ q })).then(() => migrateRetention({ q })).then(() => migratePlaybooks({ q, all })).then((n) => n && console.log(`hizmet kitabı yazıldı: ${n}`)).then(() => migrateDecisions({ q })).then(() => migrateFlow({ q })).then(() => migrateAi({ q })).then(() => loadThemes(all)).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });

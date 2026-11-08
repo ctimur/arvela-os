@@ -3,14 +3,14 @@
   "        [agency.id, ids[m.category], m.code, m.sub, m.name, m.billing, m.unit, m.try, m.eur, m.status]);",
   "button.ghost,.btn.ghost,.btn.sec{background:#fff;color:var(--ink);border:1px solid #DDD6C7}button.ghost:hover,.btn.sec:hover{background:var(--sand);color:var(--ink)}",
   ".pulse-all{margin-top:12px;font-size:14px}",
-  ".flow-warn{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#FBF3E4;border-radius:10px;padding:8px 12px;font-size:14px}",
-  "  const tabs = u ? `<nav class=\"tabs\" aria-label=\"Alt menü\">${TAB.map(([href, ic]) => `<a href=\"${href}\"${cur(href)}>${icon(ic)}${label[href]}</a>`).join('')}${rest.length ? `<details><summary>${icon('menu')}Menü</summary><div class=\"more\">${rest.map(([href, t]) => `<a href=\"${href}\"${cur(href)}>${t}</a>`).join('')}</div></details>` : ''}</nav>` : '';",
+  ".ai-out{white-space:pre-wrap;font-family:inherit;font-size:14px;line-height:1.55;background:#FBF9F5;border-radius:10px;padding:12px 14px;margin:0;max-height:70vh;overflow:auto}",
+  "  const label = Object.fromEntries(links);",
   "      if (/application\\/json/i.test(req.headers['content-type'] || '')) { try { const j = JSON.parse(data || '{}'); return resolve(j && typeof j === 'object' && !Array.isArray(j) ? j : {}); } catch { return reject(new HttpError(400, 'Geçersiz JSON.')); } }",
-  "  await q('DELETE FROM sessions WHERE expires_at < now()');",
-  "<div class=\"row\"><label>Yetkili<input name=\"contact_name\" value=\"${h(c.contact_name)}\"></label><label>Telefon<input name=\"phone\" value=\"${h(c.phone)}\"></label><label>E-posta<input type=\"email\" name=\"email\" value=\"${h(c.email)}\"></label></div>",
-  "<dl class=\"kv rec-kv\">${kv.map(([k, v]) => `<dt class=\"muted\">${k}</dt><dd>${v}</dd>`).join('')}</dl>${DET}`;",
-  "  if (b.role === 'client') { clientId = (await clientFor(ctx, int(b.client_id))).id; }",
-  "      }"
+  "  await q(`INSERT INTO sessions (id, user_id, csrf, expires_at) VALUES ($1,$2,$3, now() + interval '${SESSION_DAYS} days')`, [sid, u.id, csrf]);",
+  "<div class=\"row\"><label>Firma adı<input name=\"name\" value=\"${h(c.name)}\" required></label><label>Sektör<input name=\"sector\" value=\"${h(c.sector)}\"></label><label>Durum<select name=\"status\">${opts(CLIENT_ST, c.status)}</select></label></div>",
+  "  const SIDE = `<div class=\"page-head\"><div><h1>${h(c.name)}</h1></div><nav class=\"jump\" aria-label=\"Sayfa içi\"><a href=\"#hizmetler\">Hizmetler</a><a href=\"#projeler\">Projeler</a><a href=\"#onaylar\">Onaylar</a><a href=\"/musteriler/${c.id}/siteler\">Siteler</a><a href=\"/satis/${c.id}\">Satış geçmişi</a><a href=\"/musteriler/${c.id}/karar\">Karar bağlantısı</a></nav></div>",
+  "<td>${u.id === ctx.user.id ? '<span class=\"muted\">Siz</span>' : `<form class=\"inline\" method=\"post\" action=\"/ekip/${u.id}/durum\">${f}<button class=\"ghost\">${u.active ? 'Erişimi kapat' : 'Erişimi aç'}</button></form>`}</td></tr>`).join('')}</table></div>`, '/ekip'));",
+  "      // karar bağlantısı sayfaları oturumsuzdur: köken denetlenir, karar için doğrulanmış karar çerezi gerekir (SameSite=Lax)"
  ],
  "ext-sites.js": [
   "  route('POST', '/siteler', async (ctx, res) => {"
@@ -50,17 +50,18 @@
   "\"Adayı ekle\": \"Add lead\",",
   "\"İş paketine süre kaydedildi\": \"Time logged on work package\",",
   "\"Otomasyon\": \"Automation\",",
-  "\"Önceki aşama bitti, sıra bu aşamada ama sorumlusu yok. Bir kişi atayın; atanan kişiye bildirim gider ve iş onun listesine düşer.\": \"The previous stage is done and this one is up, but it has no owner. Assign someone; they will be notified and it lands on their list.\","
+  "\"Tüm aşamalar bitti\": \"All stages done\",",
+  "\"Henüz sonuç yok.\": \"No result yet.\","
  ],
  "ext-sync.js": [],
  "ext-automation.js": [
-  "    for (const [name, path, events] of DEFAULT_HOOKS) await q('INSERT INTO webhooks (agency_id, name, url, secret, events, active) VALUES ($1,$2,$3,$4,$5,false)', [a.id, name, `https://n8n.arveladigital.com/webhook/${path}`, crypto.randomBytes(24).toString('hex'), events]);",
-  "    if (meta.only) hooks.splice(0, hooks.length, ...hooks.filter(w => w.id === meta.only));",
-  "  api('GET', '/projects', 'is', async (ctx, a) => ({ data: await all(`SELECT p.id, p.name, p.status, p.due_date, p.client_id, c.name client,",
-  "  api('GET', '/quotes', 'finans', async (ctx, a) => ({ data: await all(`SELECT x.id, x.title, x.status, x.currency, x.created_at, x.sent_at, x.decided_at, x.client_id, c.name client FROM quotes x JOIN clients c ON c.id=x.client_id WHERE x.agency_id=$1 AND ($2='' OR x.status=$2) ORDER BY x.id DESC LIMIT $3`, [a, qp(ctx, 'status'), lim(ctx)]) }));",
-  "    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Seed-Version': String(seed.version) }); res.end(JSON.stringify(seed.workflows));",
-  "${hooks.map(w => `<div class=\"svc\"><div class=\"svc-h\"><span class=\"grow\"><strong>${h(w.name)}</strong><span class=\"muted\">${w.events.includes('*') ? 'Tüm olaylar' : `${w.events.length} olay`} · son 7 gün ${w.week} bildirim${w.fails ? ` · <span class=\"late\">${w.fails} başarısız</span>` : ''}</span></span>${badge(w.active ? 'Etkin' : 'Kapalı', w.active ? 'ok' : '')}</div>",
-  "    const r = await one('INSERT INTO webhooks (agency_id, name, url, secret, events, created_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id', [ctx.user.agency_id, nn(b.name), b.url.trim(), crypto.randomBytes(24).toString('hex'), ev, ctx.user.id]);"
+  "    const has = await q('SELECT 1 FROM webhooks WHERE agency_id=$1 LIMIT 1', [a.id]);",
+  "    const hooks = (await all('SELECT * FROM webhooks WHERE agency_id=$1 AND active', [agencyId])).filter(w => matches(w, event) || (event === 'ping' && w.id === meta.only));",
+  "      all('SELECT domain, platform, wp_version, wp_vulns, ssl_status, ssl_expires, issue FROM sites WHERE client_id=$1', [c.id]),",
+  "    const fin = ctx.apiKey.scopes.includes('finans') ? await all(`SELECT i.id, i.number, i.due_date, c.name client, c.phone client_phone FROM invoices i JOIN clients c ON c.id=i.client_id WHERE i.agency_id=$1 AND i.status='gonderildi' AND i.due_date < CURRENT_DATE ORDER BY i.due_date`, [a]) : undefined;",
+  "    await auditApi(ctx, 'approval.request', { id: r.id, client: c.id }); return { id: r.id, url: `${BASE}/onaylar/${r.id}` };",
+  "<li>Aşağıdaki ilgili webhook bağlantısını <strong>Etkin</strong> yapın ve \"Deneme bildirimi gönder\" ile kontrol edin.</li></ol></section>` : ''}",
+  "    if (!nn(b.name) || !validUrl(b.url)) throw new HttpError(400, 'Ad ve https ile başlayan bir webhook adresi gerekli.');"
  ],
  "n8n-seed.json": [
   "\"name\": \"Teklif olayları\",",
@@ -68,7 +69,8 @@
   "\"name\": \"Yöneticiye gönder\",",
   "\"content\": \"## Arvela · Görev bildirimi\\nGörev oluşturulunca ya da güncellenince sorumlusuna e-posta gönderir (kendi yaptığı değişiklik hariç).\\nArvela OS → Otomasyonlar → \\\"n8n · Görev bildirimi\\\" bağlantısını Etkin yap.\",",
   "\"content\": \"## Arvela · Web formu → aday\\nn8n'in barındırdığı iletişim formu (adresi düğümde, \\\"Production URL\\\"). Gönderilince Arvela OS'e aday müşteri, \\\"İlk görüşme\\\" projesi ve \\\"Adayı ara\\\" görevi ekler.\\nSitene bağlantı ya da iframe olarak koyabilirsin. Aydınlatma metni arveladigital.com/kvkk adresinde yayınlanmalı. Pazarlama onayı isteğe bağlıdır; \\\"Evet\\\" seçilirse adayın kaydına onay tarihi yazılır (İYS'ye yüklenmeli).\",",
-  "\"path\": \"arvela-mail\","
+  "\"path\": \"arvela-mail\",",
+  "\"node\": \"Arvela OS'e gönder\","
  ],
  "ext-forge.js": [
   "      await q(`UPDATE forge_changes SET status=$1, error=$2, merged_sha=COALESCE($3, merged_sha), deployed_at=CASE WHEN $1='yayinda' THEN now() ELSE deployed_at END, updated_at=now() WHERE pr=$4`,",
@@ -121,9 +123,10 @@
   "<p>${h(help.what)}</p><p class=\"muted\"><b>Sonra ne olur:</b> ${h(help.after)}</p>${btn ? `<div class=\"row\">${btn}</div>` : ''}${warn}"
  ],
  "ext-guide.js": [
-  "    ['Durumu \"Bitti\" yaptığınızda görev hizmet kitabının bir aşamasıysa sıradaki aşama açılır ve sorumlusuna haber gider. Sorumluyu değiştirirseniz yeni kişiye bildirim gider. Notlar müşteriye görünmez.', 'Setting the status to \"Done\" opens the next stage if this task is a playbook stage, and notifies its owner. Changing the owner notifies the new person. Notes are not visible to the client.']),",
-  "    ['Bir olay oluşunca eşleşen webhook\\'a gönderilir; başarısız olursa 30 sn ve 2 dk sonra yeniden denenir. n8n de API anahtarıyla Arvela OS\\'a kayıt yazabilir.', 'When an event happens it is sent to matching webhooks; failures are retried after 30 s and 2 min. n8n can also write back with an API key.']),",
-  "  'Süre kaydı': ['Çalışılan süreyi girin; saatlik paketlerde ücret bundan hesaplanır.', 'Log time worked; hourly packages are paid from this.'],"
+  "    ['Bir aşama \"Bitti\" olunca sıradaki açılır ve sorumlusuna bildirim gider. Müşteri kararı aşamasında onay isteği kendiliğinden müşteriye gider; onaylanınca akış ilerler, düzeltme istenirse önceki aşama müşterinin notuyla yeniden açılır. Son aşama bitince proje \"Onayda\" olur.', 'When a stage is \"Done\" the next one opens and its owner is notified. At a client-decision stage an approval request goes to the client automatically; approval moves the flow on, a revision request reopens the previous stage with the client\\'s note. When the last stage is done the project moves to \"In approval\".']),",
+  "  P(/^\\/faturalar$/, ['Faturalar ve ödeme durumları. Aylık hizmetlerin faturaları tek tuşla açılır.', 'Invoices and payment status. Monthly service invoices are created in one click.'],",
+  "  'Ayrıntılar': ['Görevin tanımı, sorumlusu ve tarihi. Durumu \"Bitti\" yapmak akışı ilerletir.', 'The task definition, owner and date. Setting it to \"Done\" moves the flow on.'],",
+  "  while ((m = re.exec(html))) { depth += m[0] === '</div>' ? -1 : 1; if (depth === 0) return m.index + 6; }"
  ],
  "ext-icons.js": [
   "export const MANIFEST = JSON.stringify({ name: 'Arvela OS', short_name: 'Arvela OS', icons: [{ src: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }, { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml' }], theme_color: '#0B0D12', background_color: '#0B0D12', display: 'standalone', start_url: '/' });"
@@ -133,5 +136,9 @@
   "    const r = await one(`UPDATE approvals SET status=$1, comment=$2, choice=$3, decided_by=$4, decided_at=now(), decided_via=$5, decided_name=$6 WHERE id=$7 AND status='bekliyor' RETURNING id`,",
   "    await q(`UPDATE decision_links SET code_hash=NULL, code_expires=NULL, code_tries=0, sess_hash=$1, sess_expires=now() + interval '${SESSION_MIN} minutes', verified_at=COALESCE(verified_at, now()) WHERE id=$2`, [sha(s), l.id]);",
   "    await audit(ctx, 'decision.link_revoke', { id: int(p.id), client: l.client_id }); redirect(res, `/musteriler/${l.client_id}/karar`);"
+ ],
+ "ext-ai.js": [
+  "    if (!t) throw new HttpError(404, 'Görev bulunamadı.');",
+  "<div class=\"row\">${btn}</div>${jobs.length ? `<p class=\"muted\" style=\"margin:0\">${jobs.map(j => `<a href=\"/yapay-zeka/${j.id}\">#${j.id} ${h(JOB_ST[j.status])}</a> · ${fmtDate(j.created_at)}`).join(' · ')}</p>` : ''}</section>`;"
  ]
 }

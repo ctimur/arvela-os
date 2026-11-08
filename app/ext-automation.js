@@ -24,7 +24,7 @@ export const EVENT_LABEL = {
   'approval.request': 'Onaya gönderildi', 'approval.update': 'Onay isteği düzenlendi', 'approval.decide': 'Müşteri onay kararı verdi', 'approval.decide_for_client': 'Onay müşteri adına işlendi', 'approval.reopen': 'Onay yeniden açıldı', 'approval.withdraw': 'Onay isteği geri çekildi',
   'quote.create': 'Teklif oluşturuldu', 'quote.send': 'Teklif gönderildi', 'quote.decide': 'Müşteri teklife karar verdi', 'quote.withdraw': 'Teklif geri çekildi', 'quote.copy': 'Teklif kopyalandı',
   'invoice.create': 'Fatura oluşturuldu', 'invoice.from_quote': 'Tekliften fatura', 'invoice.monthly': 'Aylık faturalar oluşturuldu', 'invoice.send': 'Fatura gönderildi', 'invoice.client_notified': 'Müşteri ödediğini bildirdi', 'invoice.paid': 'Fatura ödendi', 'invoice.cancel': 'Fatura iptal edildi',
-  'mail.send': 'İşlem e-postası', 'decision.link': 'Karar bağlantısı oluşturuldu', 'decision.verify': 'Müşteri e-postasını doğruladı', 'decision.link_revoke': 'Karar bağlantısı iptal edildi', 'site.create': 'Site eklendi', 'site.alert': 'Site acil duruma düştü', 'site.sync': 'Site durumu eşitlendi', 'ping': 'Deneme',
+  'mail.send': 'İşlem e-postası', 'ai.request': 'Yapay zekâ işi gönderildi', 'ai.result': 'Yapay zekâ sonucu geldi', 'decision.link': 'Karar bağlantısı oluşturuldu', 'decision.verify': 'Müşteri e-postasını doğruladı', 'decision.link_revoke': 'Karar bağlantısı iptal edildi', 'site.create': 'Site eklendi', 'site.alert': 'Site acil duruma düştü', 'site.sync': 'Site durumu eşitlendi', 'ping': 'Deneme',
   'package.create': 'İş paketi teklif edildi', 'package.update': 'İş paketi güncellendi', 'package.status': 'İş paketi durumu değişti', 'package.time': 'İş paketine süre kaydedildi', 'freelancer.payment': 'Freelancer ödemesi', 'retention.run': 'Veri saklama uygulandı', 'theme.update': 'Tema değişti', 'retention.settings': 'Veri saklama ayarları değişti',
 };
 const ALL_EVENTS = Object.values(EVENTS).flat();
@@ -37,6 +37,7 @@ export const DEFAULT_HOOKS = [
   ['n8n · Görev bildirimi', 'arvela-task-assigned', ['task.create', 'task.update']],
   ['n8n · Acil site uyarısı', 'arvela-site-alert', ['site.alert']],
   ['n8n · E-posta gönderici', 'arvela-mail', []], // olay değil: Arvela OS'in doğrudan gönderdiği işlem e-postaları (karar bağlantısı, doğrulama kodu)
+  ['n8n · Yapay zekâ (Claude)', 'arvela-ai', []], // olay değil: yapay zekâ işleri (ext-ai.js), sonuç /api/v1/ai/result ile döner
 ];
 export const sign = (secret, body) => 'sha256=' + crypto.createHmac('sha256', secret).update(body).digest('hex');
 export const hashKey = (k) => crypto.createHash('sha256').update(k).digest('hex');
@@ -126,21 +127,23 @@ export function registerAutomation(d) {
   }
 
   // İşlem e-postası: n8n "E-posta gönderici" akışına doğrudan gönderir. İçerik (kod, bağlantı) kayda yazılmaz; yalnız tür ve maskeli alıcı.
-  async function sendMail(agencyId, { to, subject, html, kind }) {
-    const w = await one(`SELECT * FROM webhooks WHERE agency_id=$1 AND active AND url LIKE '%/webhook/arvela-mail' LIMIT 1`, [agencyId]); if (!w) return false;
-    const masked = String(to).replace(/^(.).*@/, '$1***@');
-    const r = await one('INSERT INTO webhook_deliveries (webhook_id, agency_id, event, payload) VALUES ($1,$2,$3,$4) RETURNING id', [w.id, agencyId, 'mail.send', { event: 'mail.send', kind, to: masked }]);
-    const body = JSON.stringify({ event: 'mail.send', kind, to, subject, html, delivery: r.id });
+  // n8n'e doğrudan istek (olay değil): içerik kayda yazılmaz, yalnız özet.
+  async function postHook(agencyId, path, event, payload, summary) {
+    const w = await one(`SELECT * FROM webhooks WHERE agency_id=$1 AND active AND url LIKE $2 LIMIT 1`, [agencyId, `%/webhook/${path}`]); if (!w) return false;
+    const r = await one('INSERT INTO webhook_deliveries (webhook_id, agency_id, event, payload) VALUES ($1,$2,$3,$4) RETURNING id', [w.id, agencyId, event, { event, ...summary }]);
+    const body = JSON.stringify({ event, ...payload, delivery: r.id });
     const token = await tokenFor(agencyId).catch(() => '');
     let code = null, ok = false, error = null;
     try {
-      const x = await fetch(w.url, { method: 'POST', body, signal: AbortSignal.timeout(15_000), headers: { 'Content-Type': 'application/json', 'User-Agent': 'arvela-os-webhook/1.0', 'X-Arvela-Event': 'mail.send',
+      const x = await fetch(w.url, { method: 'POST', body, signal: AbortSignal.timeout(15_000), headers: { 'Content-Type': 'application/json', 'User-Agent': 'arvela-os-webhook/1.0', 'X-Arvela-Event': event,
         'X-Arvela-Delivery': String(r.id), 'X-Arvela-Signature': sign(w.secret, body), ...(token ? { 'X-Arvela-Token': token } : {}) } });
       code = x.status; ok = x.ok; if (!ok) error = (await x.text()).slice(0, 300);
     } catch (e) { error = String(e.message || e).slice(0, 300); }
     await q(`UPDATE webhook_deliveries SET status_code=$1, ok=$2, error=$3, attempts=1, delivered_at=CASE WHEN $2 THEN now() ELSE NULL END WHERE id=$4`, [code, ok, error, r.id]).catch(() => {});
     return ok;
   }
+  // İşlem e-postası: n8n "E-posta gönderici" akışı. İçerik (kod, bağlantı) kayda yazılmaz; yalnız tür ve maskeli alıcı.
+  const sendMail = (agencyId, { to, subject, html, kind }) => postHook(agencyId, 'arvela-mail', 'mail.send', { kind, to, subject, html }, { kind, to: String(to).replace(/^(.).*@/, '$1***@') });
 
   // İşlem kaydı kancası: server.js audit() her kayıttan sonra çağırır.
   async function onAudit(ctx, action, detail) {
@@ -423,5 +426,5 @@ ${[['GET /summary', 'Günün özeti: geciken ve bugünkü görevler, bekleyen on
     await d.audit(ctx, 'automation.key_revoke', { id: int(p.id) }); redirect(res, '/otomasyonlar');
   });
 
-  return { onAudit, onSiteSync, emit, sendMail };
+  return { onAudit, onSiteSync, emit, sendMail, postHook, api, body };
 }

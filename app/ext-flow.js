@@ -51,7 +51,7 @@ export function stageHelp(cur, next) {
   if (!cur) return { what: tx('Tüm aşamalar tamamlandı.'), after: tx('Teslimi müşteriyle kapatın ve proje durumunu "Tamamlandı" yapın. Aylık hizmet varsa faturası Faturalar\'dan açılır.') };
   if (cur.stage_role === 'musteri') return { what: cur.approval_id ? tx('Müşteriden karar bekleniyor. Onay isteği portala ve müşteriye gitti; telefonda ya da WhatsApp\'ta karar aldıysanız onay sayfasından işleyebilirsiniz.') : tx('Bu bir müşteri kararı aşaması. Akış başlayınca onay isteği kendiliğinden gönderilir.'),
     after: next ? t`Müşteri onaylarsa aşama kapanır ve sıradaki açılır (${next.title}). Düzeltme isterse önceki aşama notuyla yeniden açılır.` : tx('Müşteri onaylarsa proje "Onayda" durumuna geçer. Düzeltme isterse önceki aşama yeniden açılır.') };
-  if (cur.stage_role === 'ai') return { what: tx('Bu aşama yapay zekâ için tasarlandı. Claude bağlantısı (n8n) henüz kurulmadı; şimdilik sorumlu kişi yapay zekâ yardımıyla yürütür, çıktıyı kabul ölçütüne göre kontrol eder ve görevi "Bitti" yapar.'), after };
+  if (cur.stage_role === 'ai') return { what: tx('Bu aşama yapay zekâ için tasarlandı. Yapay zekâ açıksa Claude taslağı hazırlar, görev "İncelemede" olur; sorumlu kişi taslağı kabul ölçütüne göre kontrol edip "Bitti" yapar. Kapalıysa sorumlu kişi yürütür.'), after };
   return { what: cur.assignee ? t`${cur.assignee} bu aşamayı yürütüyor. Çıktı ve kabul ölçütü görevin açıklamasında.` : tx('Bu aşamaya sorumlu atanmadı. Görevi açıp bir sorumlu seçin; atanan kişiye bildirim gider.'), after };
 }
 
@@ -74,7 +74,7 @@ export function registerFlow(d) {
       await note(ctx, x.id, `Müşteriye onay isteği gönderildi (#${ap.id}). Müşteri portaldan karar verir; karar gelince bu aşama kendiliğinden ilerler.`);
       await audit(ctx, 'approval.request', { id: ap.id, client: p.client_id, task: x.id, via: 'flow' });
     } else if (x.stage_role === 'ai') {
-      await note(ctx, x.id, 'Sıra bu aşamada. Yapay zekâ aşaması: Claude bağlantısı kurulana kadar sorumlu kişi yapay zekâ yardımıyla yürütür, çıktıyı kontrol eder ve görevi "Bitti" yapar.');
+      await note(ctx, x.id, 'Sıra bu aşamada. Yapay zekâ aşaması: yapay zekâ açıksa Claude taslağı kendiliğinden ister ve notlara yazar; sorumlu kişi kontrol edip görevi "Bitti" yapar.');
     } else {
       await note(ctx, x.id, prev ? `Önceki aşama tamamlandı (${tidy(prev.title)}). Sıra bu görevde; bitince "Bitti" yapın, sistem sıradakine geçer.` : 'Proje başladı. Sıra bu görevde; bitince "Bitti" yapın, sistem sıradakine geçer.');
     }
