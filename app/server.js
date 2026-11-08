@@ -7,8 +7,11 @@ import { als, lang, M1, M2, exact, translateHtml, pickLang, locale, LANGS } from
 import { registerCrm, migrateCrm, crmActions } from './ext-crm.js';
 import { registerFreelance, migrateFreelance, packageActions } from './ext-freelance.js';
 import { registerRetention, migrateRetention } from './ext-retention.js';
+import { registerSettings, loadThemes, currentThemeCss } from './ext-settings.js';
+import { THEMES } from './themes.js';
 
-const VERSION = '0.14.0';
+const VERSION = '0.15.0';
+let settingsApi = null;
 const PORT = Number(process.env.PORT || 3000);
 const SETUP_TOKEN = process.env.SETUP_TOKEN || '';
 const COOKIE_SECURE = process.env.COOKIE_SECURE !== '0';
@@ -170,6 +173,11 @@ details summary{cursor:pointer;font-weight:600}
 .seg{display:inline-flex;gap:0;margin-left:auto}.seg .btn{border-radius:0;min-height:40px}.seg .btn:first-child{border-radius:12px 0 0 12px}.seg .btn:last-child{border-radius:0 12px 12px 0}
 .brief{background:#FBF6EA;border:1px solid #E9D9B4;border-radius:18px;padding:14px 18px;margin:0;line-height:1.6}.brief b{color:#7A5A1E}
 .cmdk{border:0;border-radius:18px;padding:0;width:min(560px,calc(100vw - 24px));max-height:70vh;box-shadow:0 30px 80px rgba(11,13,18,.35)}.cmdk::backdrop{background:rgba(11,13,18,.45)}.cmdk form{padding:12px;border-bottom:1px solid var(--line)}.cmdk input{width:100%;min-height:48px;font-size:16px;border:0;outline:0;padding:0 8px}.cmdk nav{padding:8px;overflow:auto;max-height:50vh;display:flex;flex-direction:column}.cmdk nav a{display:flex;align-items:center;min-height:44px;padding:0 12px;border-radius:10px;color:var(--ink);text-decoration:none}.cmdk nav a:hover,.cmdk nav a.on{background:var(--sand)}.cmdk nav a span{margin-left:auto;color:var(--stone);font-size:12px}.cmdk .hint{padding:8px 14px 12px;font-size:12px;color:var(--stone);margin:0}
+input[type=radio],input[type=checkbox]{accent-color:var(--gold)}
+.preview-bar{position:sticky;top:0;z-index:50;background:var(--night);color:#fff;padding:10px 16px;font-size:13px;text-align:center}.preview-bar a{color:var(--champ);margin-left:10px}
+.theme-card.is-sel{border-color:var(--gold)}.swatch{display:flex;height:56px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}.swatch span{flex:1}
+.theme-opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}.theme-opts fieldset{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:0;display:flex;flex-direction:column;gap:4px}.theme-opts legend{font-weight:600;font-size:13px;padding:0 4px}
+label.opt{flex-direction:row;align-items:center;gap:10px;font-weight:500;min-height:40px}label.opt input{min-height:0;width:18px;height:18px}.sw{width:18px;height:18px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.1)}
 .kbd{font-size:11px;border:1px solid #3A404B;border-radius:5px;padding:1px 6px;color:#A3ABB8}.act.hero h2{font-size:28px;line-height:1.2}.act p{margin:0;color:#4A4538;font-size:16px;line-height:1.55;max-width:720px}
 .act-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.act-btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}.act-btns .btn{min-height:48px}
 .act-pair{display:grid;grid-template-columns:1fr 1fr;gap:20px}.act.mid h3{font-size:20px}
@@ -267,7 +275,7 @@ function layout(ctx, title, body, active = '') {
   const links = !u ? [] :
     u.role === 'client' ? [['/portal', 'Portalım'], ['/portal/siteler', 'Sitelerim'], ['/portal/teklifler', 'Tekliflerim'], ['/portal/faturalar', 'Faturalarım']] :
     u.role === 'freelancer' ? [['/paketler', 'İş paketlerim'], ['/gorevler', 'Görevlerim']] :
-    [['/panel', 'Bugün'], ['/satis', 'Satış hattı'], ['/musteriler', 'Müşteriler'], ['/gorevler', 'Görevlerim'], ['/onaylar', 'Onaylar'], ['/siteler', 'Siteler'], ['/projeler', 'Projeler'], ['/paketler', 'İş paketleri'], ['/katalog', 'Katalog'], ['/otomasyonlar', 'Otomasyonlar'], ...(u.role === 'admin' ? [['/teklifler', 'Teklifler'], ['/faturalar', 'Faturalar'], ['/odemeler', 'Freelancer ödemeleri'], ['/ekip', 'Ekip'], ['/forge', 'Forge'], ['/kayitlar', 'Kayıtlar']] : [])];
+    [['/panel', 'Bugün'], ['/satis', 'Satış hattı'], ['/musteriler', 'Müşteriler'], ['/gorevler', 'Görevlerim'], ['/onaylar', 'Onaylar'], ['/siteler', 'Siteler'], ['/projeler', 'Projeler'], ['/paketler', 'İş paketleri'], ['/katalog', 'Katalog'], ['/otomasyonlar', 'Otomasyonlar'], ...(u.role === 'admin' ? [['/teklifler', 'Teklifler'], ['/faturalar', 'Faturalar'], ['/odemeler', 'Freelancer ödemeleri'], ['/ekip', 'Ekip'], ['/forge', 'Forge'], ['/kayitlar', 'Kayıtlar'], ['/ayarlar', 'Ayarlar']] : [])];
   const staffish = u && (u.role === 'admin' || u.role === 'staff');
   const isOn = (href) => active === href;
   const cur = (href) => isOn(href) ? ' class="on" aria-current="page"' : '';
@@ -282,9 +290,11 @@ function layout(ctx, title, body, active = '') {
   const tabs = u ? `<nav class="tabs" aria-label="Alt menü">${TAB.map(([href, ic]) => `<a href="${href}"${cur(href)}>${icon(ic)}${label[href]}</a>`).join('')}${rest.length ? `<details><summary>${icon('menu')}Menü</summary><div class="more">${rest.map(([href, t]) => `<a href="${href}"${cur(href)}>${t}</a>`).join('')}</div></details>` : ''}</nav>` : '';
   const out = u ? `<form class="inline" method="post" action="/cikis">${csrfField(ctx)}<button class="btn-out">Çıkış</button></form>` : '';
   const flash = ctx.flash ? `<div class="flash" role="status">${h(ctx.flash)}</div>` : '';
+  const pv = u?.role === 'admin' ? ctx.url?.searchParams?.get('onizle') : null; const pvCss = pv && settingsApi ? settingsApi.previewCss(pv, u.agency_id) : null;
+  const pageTheme = pvCss !== null && pvCss !== undefined ? { css: pvCss, banner: `<div class="preview-bar" role="status">Önizleme: ${escHtml(THEMES[pv].name)} · yalnız size görünür <a href="/ayarlar/tema?tema=${escHtml(pv)}">Ayarlara dön</a></div>` } : { css: currentThemeCss(u?.agency_id), banner: '' };
   return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#F7F4EE">
 <title>${h(title)} · Arvela OS</title><link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500&display=swap" rel="stylesheet"><style>${CSS}</style></head><body>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500&display=swap" rel="stylesheet"><style>${CSS}${pageTheme.css}</style></head><body>${pageTheme.banner}
 ${u ? `<aside class="side"><a class="brand" href="/">Arvela<span>OS</span></a>${staffish ? `<form class="side-search" method="get" action="/ara" role="search"><input type="search" name="q" data-cmdk placeholder="Ara…" aria-label="Ara"></form>` : ''}<nav aria-label="Ana menü">${side}</nav><div class="who"><span><strong>${h(u.name)}</strong><br>${h(ROLE[u.role])}</span><div class="who-row">${out}${langSwitch(ctx, 'dark')}</div></div></aside>` : ''}
 <div class="shell${u ? '' : ' bare'}">${u ? `<header class="mtop"><a class="brand" href="/">Arvela<span>OS</span></a><div class="who">${langSwitch(ctx)}${staffish ? `<a class="icon-btn" href="/ara" data-cmdk aria-label="Ara">${icon('search').replace('class="ti"', 'class="ti" style="width:auto;height:auto"')}</a>` : ''}${out}</div></header>` : ''}
 <main>${flash}${body}</main></div>${tabs}${staffish ? cmdk(u) : ''}<script src="/app.js" defer></script></body></html>`;
@@ -303,7 +313,7 @@ const csrfField = (ctx) => ctx.session ? `<input type="hidden" name="csrf" value
 
 function authPage(title, body) {
   return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0B0D12"><title>${h(title)} · Arvela OS</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@500&display=swap" rel="stylesheet"><style>${CSS}</style></head>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@500&display=swap" rel="stylesheet"><style>${CSS}${currentThemeCss(1)}</style></head>
 <body><div class="auth"><div class="card"><div class="row" style="justify-content:space-between;align-items:center"><p class="brand" style="color:var(--ink);margin:0">Arvela<span>OS</span></p>${langSwitch({ url: { pathname: '/giris', search: '' } })}</div>${body}</div></div></body></html>`;
 }
 
@@ -666,8 +676,9 @@ const forge = registerForge({ route, all, one, q, need, layout, h, badge, fmtDat
 const crm = registerCrm({ route, all, one, q, need, layout, h, badge, fmtMoney, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, opts });
 const freelance = registerFreelance({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, opts });
 registerRetention({ route, all, one, q, need, layout, h, csrfField, HttpError, redirect, send, audit, fmtDate });
+settingsApi = registerSettings({ route, all, q, need, layout, h, csrfField, redirect, send, audit });
 const todayPage = registerToday({ all, one, h, layout, need, STAFF, forgePending: forge.pendingCount, extraActions: async (a) => [...crmActions(await crm.openLeads(a)), ...packageActions(await freelance.awaitingReview(a))] });
 registerSync({ route, one, all, q, HttpError, safeEqual, SETUP_TOKEN, onSynced: (a, before) => hooks?.onSiteSync(a, before) });
 registerWork({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send });
 
-migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => migrateFreelance({ q })).then(() => migrateRetention({ q })).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
+migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => migrateFreelance({ q })).then(() => migrateRetention({ q })).then(() => loadThemes(all)).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
