@@ -1,16 +1,17 @@
 {
  "server.js": [
-  "        [agency.id, ids[m.category], m.code, m.sub, m.name, m.billing, m.unit, m.try, m.eur, m.status]);",
-  "button.ghost,.btn.ghost,.btn.sec{background:#fff;color:var(--ink);border:1px solid #DDD6C7}button.ghost:hover,.btn.sec:hover{background:var(--sand);color:var(--ink)}",
-  ".pulse-all{margin-top:12px;font-size:14px}",
-  ".ai-out{white-space:pre-wrap;font-family:inherit;font-size:14px;line-height:1.55;background:#FBF9F5;border-radius:10px;padding:12px 14px;margin:0;max-height:70vh;overflow:auto}",
-  "  const label = Object.fromEntries(links);",
-  "      if (/application\\/json/i.test(req.headers['content-type'] || '')) { try { const j = JSON.parse(data || '{}'); return resolve(j && typeof j === 'object' && !Array.isArray(j) ? j : {}); } catch { return reject(new HttpError(400, 'Geçersiz JSON.')); } }",
-  "  await q(`INSERT INTO sessions (id, user_id, csrf, expires_at) VALUES ($1,$2,$3, now() + interval '${SESSION_DAYS} days')`, [sid, u.id, csrf]);",
-  "<div class=\"row\"><label>Firma adı<input name=\"name\" value=\"${h(c.name)}\" required></label><label>Sektör<input name=\"sector\" value=\"${h(c.sector)}\"></label><label>Durum<select name=\"status\">${opts(CLIENT_ST, c.status)}</select></label></div>",
-  "  const SIDE = `<div class=\"page-head\"><div><h1>${h(c.name)}</h1></div><nav class=\"jump\" aria-label=\"Sayfa içi\"><a href=\"#hizmetler\">Hizmetler</a><a href=\"#projeler\">Projeler</a><a href=\"#onaylar\">Onaylar</a><a href=\"/musteriler/${c.id}/siteler\">Siteler</a><a href=\"/satis/${c.id}\">Satış geçmişi</a><a href=\"/musteriler/${c.id}/karar\">Karar bağlantısı</a></nav></div>",
-  "<td>${u.id === ctx.user.id ? '<span class=\"muted\">Siz</span>' : `<form class=\"inline\" method=\"post\" action=\"/ekip/${u.id}/durum\">${f}<button class=\"ghost\">${u.active ? 'Erişimi kapat' : 'Erişimi aç'}</button></form>`}</td></tr>`).join('')}</table></div>`, '/ekip'));",
-  "      // karar bağlantısı sayfaları oturumsuzdur: köken denetlenir, karar için doğrulanmış karar çerezi gerekir (SameSite=Lax)"
+  "      await q('INSERT INTO services (agency_id, category_id, code, sub, name, billing, unit, price_try, price_eur, availability) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT DO NOTHING',",
+  "button:hover,.btn:hover{background:var(--graphite);color:#fff}button:disabled{opacity:.45;cursor:not-allowed}",
+  ".pulse{position:sticky;top:24px;border:0;border-radius:24px;gap:0}.pulse h2{margin-bottom:8px}",
+  ".budget{background:#fff;border:1px solid var(--champ);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column}.budget strong{font-size:20px}.files{margin:4px 0 0;padding-left:18px}[hidden]{display:none!important}",
+  "    [['/panel', 'Bugün'], ['/satis', 'Satış hattı'], ['/musteriler', 'Müşteriler'], ['/gorevler', 'Görevlerim'], ['/onaylar', 'Onaylar'], ['/siteler', 'Siteler'], ['/projeler', 'Projeler'], ['/paketler', 'İş paketleri'], ['/katalog', 'Katalog'], ['/otomasyonlar', 'Otomasyonlar'], ...(u.role === 'admin' ? [['/teklifler', 'Teklifler'], ['/faturalar', 'Faturalar'], ['/odemeler', 'Freelancer ödemeleri'], ['/ekip', 'Ekip'], ['/forge', 'Forge'], ['/kayitlar', 'Kayıtlar'], ['/ayarlar', 'Ayarlar']] : [])];",
+  "// Dosya yüklemesi yalnız karar formlarında kabul edilir (multipart/form-data, en çok ~26 MB).",
+  "  redirect(res, '/giris?ok=1');",
+  "  const cu = await all(`SELECT id, name, email, last_login, active FROM users WHERE client_id=$1 AND role='client'`, [c.id]);",
+  "  const lastNote = await one('SELECT n.kind, n.body, n.created_at FROM client_notes n WHERE n.client_id=$1 ORDER BY n.created_at DESC LIMIT 1', [c.id]).catch(() => null);",
+  "<details class=\"card\"><summary>Ekip üyesi ekle</summary><form class=\"row\" method=\"post\" action=\"/ekip\">${f}<label>Ad soyad<input name=\"name\" required></label><label>E-posta<input type=\"email\" name=\"email\" required></label>",
+  "  if (!ap || ap.status !== 'bekliyor') throw new HttpError(404, 'Onay bulunamadı ya da zaten karar verildi.');",
+  "  taskExtra: async (ctx, tk) => (await flow.taskCard(ctx, tk)) + (await ai.taskCard(ctx, tk)) + (await suggest.taskCards(ctx, tk)), decisions });"
  ],
  "ext-sites.js": [
   "  route('POST', '/siteler', async (ctx, res) => {"
@@ -55,12 +56,12 @@
  ],
  "ext-sync.js": [],
  "ext-automation.js": [
-  "    const has = await q('SELECT 1 FROM webhooks WHERE agency_id=$1 LIMIT 1', [a.id]);",
-  "    const hooks = (await all('SELECT * FROM webhooks WHERE agency_id=$1 AND active', [agencyId])).filter(w => matches(w, event) || (event === 'ping' && w.id === meta.only));",
-  "      all('SELECT domain, platform, wp_version, wp_vulns, ssl_status, ssl_expires, issue FROM sites WHERE client_id=$1', [c.id]),",
-  "    const fin = ctx.apiKey.scopes.includes('finans') ? await all(`SELECT i.id, i.number, i.due_date, c.name client, c.phone client_phone FROM invoices i JOIN clients c ON c.id=i.client_id WHERE i.agency_id=$1 AND i.status='gonderildi' AND i.due_date < CURRENT_DATE ORDER BY i.due_date`, [a]) : undefined;",
-  "    await auditApi(ctx, 'approval.request', { id: r.id, client: c.id }); return { id: r.id, url: `${BASE}/onaylar/${r.id}` };",
-  "<li>Aşağıdaki ilgili webhook bağlantısını <strong>Etkin</strong> yapın ve \"Deneme bildirimi gönder\" ile kontrol edin.</li></ol></section>` : ''}",
+  "  for (const a of (await q('SELECT id FROM agencies')).rows) await q(`INSERT INTO settings (agency_id, key, value) VALUES ($1, 'webhook_token', $2) ON CONFLICT DO NOTHING`, [a.id, crypto.randomBytes(24).toString('hex')]);",
+  "    if (!ok && attempt + 1 < RETRY.length) setTimeout(() => deliver(hook, deliveryId, body, attempt + 1).catch(() => {}), RETRY[attempt + 1]).unref?.();",
+  "      all('SELECT cs.id, cs.status, cs.start_date, cs.end_date, cs.notes, s.code, s.name, s.billing FROM client_services cs JOIN services s ON s.id=cs.service_id WHERE cs.client_id=$1', [c.id]),",
+  "      all(`SELECT s.*, c.name client FROM sites s LEFT JOIN clients c ON c.id=s.client_id WHERE s.agency_id=$1`, [a])]);",
+  "    const r = await one('INSERT INTO approvals (agency_id, client_id, project_id, title, body) VALUES ($1,$2,$3,$4,$5) RETURNING id', [a, c.id, pid, nn(b.title), nn(b.body)]);",
+  "<li>Hazır \"Arvela ·\" iş akışlarını açıp kimlik bilgilerini seçin, alıcı e-postasını kontrol edin ve <strong>Active</strong> yapın.</li>",
   "    if (!nn(b.name) || !validUrl(b.url)) throw new HttpError(400, 'Ad ve https ile başlayan bir webhook adresi gerekli.');"
  ],
  "n8n-seed.json": [
@@ -126,7 +127,7 @@
   "    ['Bir aşama \"Bitti\" olunca sıradaki açılır ve sorumlusuna bildirim gider. Müşteri kararı aşamasında onay isteği kendiliğinden müşteriye gider; onaylanınca akış ilerler, düzeltme istenirse önceki aşama müşterinin notuyla yeniden açılır. Son aşama bitince proje \"Onayda\" olur.', 'When a stage is \"Done\" the next one opens and its owner is notified. At a client-decision stage an approval request goes to the client automatically; approval moves the flow on, a revision request reopens the previous stage with the client\\'s note. When the last stage is done the project moves to \"In approval\".']),",
   "  P(/^\\/faturalar$/, ['Faturalar ve ödeme durumları. Aylık hizmetlerin faturaları tek tuşla açılır.', 'Invoices and payment status. Monthly service invoices are created in one click.'],",
   "  'Ayrıntılar': ['Görevin tanımı, sorumlusu ve tarihi. Durumu \"Bitti\" yapmak akışı ilerletir.', 'The task definition, owner and date. Setting it to \"Done\" moves the flow on.'],",
-  "  while ((m = re.exec(html))) { depth += m[0] === '</div>' ? -1 : 1; if (depth === 0) return m.index + 6; }"
+  "const esc = (s) => String(s).replace(/[&<>\"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[c]));"
  ],
  "ext-icons.js": [
   "export const MANIFEST = JSON.stringify({ name: 'Arvela OS', short_name: 'Arvela OS', icons: [{ src: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }, { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml' }], theme_color: '#0B0D12', background_color: '#0B0D12', display: 'standalone', start_url: '/' });"
@@ -138,7 +139,12 @@
   "    await audit(ctx, 'decision.link_revoke', { id: int(p.id), client: l.client_id }); redirect(res, `/musteriler/${l.client_id}/karar`);"
  ],
  "ext-ai.js": [
-  "    if (!t) throw new HttpError(404, 'Görev bulunamadı.');",
-  "<div class=\"row\">${btn}</div>${jobs.length ? `<p class=\"muted\" style=\"margin:0\">${jobs.map(j => `<a href=\"/yapay-zeka/${j.id}\">#${j.id} ${h(JOB_ST[j.status])}</a> · ${fmtDate(j.created_at)}`).join(' · ')}</p>` : ''}</section>`;"
+  "    const t = await one(`SELECT t.*, p.name pname, p.description pdesc, p.playbook, p.ai_engine, p.client_id, s.name service FROM tasks t JOIN projects p ON p.id=t.project_id LEFT JOIN services s ON s.id=p.service_id WHERE t.id=$1 AND t.agency_id=$2`, [taskId, a]);",
+  "    return `<section class=\"flowbar small\"><p class=\"eyebrow\">Yapay zekâ · Claude</p><p>${cfg.enabled ? 'Claude bu görevin tanımına, hizmet kitabına ve kabul ölçütüne göre bir taslak hazırlar. Taslak notlara düşer, görev \"İncelemede\" olur; siz kontrol edip \"Bitti\" yapınca akış ilerler.' : 'Yapay zekâ henüz kapalı. Ayarlar → Yapay zekâ\\'dan açınca bu aşamanın taslağı Claude ile hazırlanır.'}${cfg.enabled && !cfg.piiOk ? ' Müşteri adı ve iletişim bilgileri maskelenerek gönderilir.' : ''}</p>"
+ ],
+ "ext-suggest.js": [
+  "  await q(`CREATE TABLE IF NOT EXISTS reminders (id SERIAL PRIMARY KEY, agency_id INT NOT NULL, task_id INT REFERENCES tasks(id) ON DELETE CASCADE, project_id INT REFERENCES projects(id) ON DELETE CASCADE,",
+  "    const t = await taskOf(ctx, c.task_id);",
+  "    if (staff) out.push(`<section class=\"card\" id=\"hatirlatmalar\"><h2>Hatırlatmalar</h2>${rems.map(r => `<div class=\"line\"><span class=\"grow\"><strong>${h(r.title)}</strong><span class=\"muted\">${fmtDate(r.due_at)}${r.repeat_days ? ` · her ${r.repeat_days} günde` : ''} · ${h(COND[r.cond])}</span></span><form method=\"post\" action=\"/hatirlatma/${r.id}/iptal\">${f}<button class=\"linkish\">İptal</button></form></div>`).join('') || '<p class=\"muted\">Etkin hatırlatma yok.</p>'}"
  ]
 }

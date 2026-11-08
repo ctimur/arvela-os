@@ -127,6 +127,9 @@ export const SECTIONS = {
   'Yapay zekâ motoru': ['Bu projede kullanılacak motor. Claude\'dan, aşamalara göre hangi motorun uygun olduğuna dair öneri alabilirsiniz.', 'The engine for this project. You can ask Claude which engine suits each stage.'],
   'Claude bağlantısı': ['Kaydettiğiniz ayar tüm ekip için geçerli olur.', 'The setting applies to the whole team.'],
   'Gönderilen istem': ['Claude\'a giden metnin aynısı; maskeli alanlar köşeli parantezle görünür.', 'Exactly what was sent to Claude; masked fields appear in brackets.'],
+  'Alt görevler': ['Bu göreve bağlı işler. Hepsi bitince ana görevi "Bitti" yapın.', 'Work linked to this task. When all are done, set the main task to "Done".'],
+  'Kontrol listesi': ['Görevin küçük adımları; işaretledikçe ilerleme görünür. Sorumlu ve freelancer da işaretleyebilir.', 'Small steps of the task; progress shows as you tick. The owner and freelancer can tick too.'],
+  'Hatırlatmalar': ['Zamanı gelince görevin notlarına yazılır ve sorumluya bildirim gider. "Görev bitmediyse" koşulunda görev bitmişse gönderilmez.', 'When due, a note is added and the owner is notified. With "if the task is not done", nothing is sent once the task is done.'],
   'Sürümler': ['Yayındaki ve önceki sürümler; gerekirse geri alın.', 'Live and previous versions; roll back if needed.'],
 };
 
