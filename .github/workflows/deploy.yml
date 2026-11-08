@@ -42,4 +42,7 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           SETUP_TOKEN: ${{ secrets.SETUP_TOKEN }}
           FORGE_GITHUB_TOKEN: ${{ secrets.FORGE_GITHUB_TOKEN }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+          BACKUP_GITHUB_TOKEN: ${{ secrets.BACKUP_GITHUB_TOKEN }}
+          BACKUP_REPO: ${{ vars.BACKUP_REPO }}
         run: python3 -u deploy/deploy.py

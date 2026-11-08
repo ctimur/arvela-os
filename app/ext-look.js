@@ -60,7 +60,7 @@ body.menu-open .scrim{opacity:1;pointer-events:auto}body.menu-open{overflow:hidd
 main.has-insp{display:grid;grid-template-columns:minmax(0,1fr) var(--insp-w,360px);align-items:start}
 .has-insp .page-main{max-width:1180px;margin:0;width:100%}
 .insp{position:sticky;top:60px;max-height:calc(100vh - 60px);min-height:calc(100vh - 60px);overflow:auto;background:var(--surf);border-left:1px solid var(--line);padding:24px 22px 32px;display:flex;flex-direction:column;gap:22px;scrollbar-width:thin}
-.insp>section{display:flex;flex-direction:column;gap:10px}
+.insp>section{display:flex;flex-direction:column;gap:10px}.insp p{margin:0}
 .insp h2{font:600 11.5px/1.2 Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--stone);margin:0}
 .insp .kv{grid-template-columns:110px minmax(0,1fr);gap:10px 12px;font-size:14px;margin:0}.insp .kv dd{overflow-wrap:anywhere}
 .insp .flowbar{background:var(--gold-soft);border-color:var(--gold-line);border-radius:14px;padding:16px}.insp .flowbar h2{font:600 16px/1.35 Inter,sans-serif;letter-spacing:0;text-transform:none;color:var(--ink)}

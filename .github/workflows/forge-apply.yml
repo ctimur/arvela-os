@@ -38,4 +38,7 @@ jobs:
           VPS_ID: ${{ vars.VPS_ID || '1249062' }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           FORGE_GITHUB_TOKEN: ${{ secrets.FORGE_GITHUB_TOKEN }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+          BACKUP_GITHUB_TOKEN: ${{ secrets.BACKUP_GITHUB_TOKEN }}
+          BACKUP_REPO: ${{ vars.BACKUP_REPO }}
         run: python3 deploy/forge.py apply

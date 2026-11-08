@@ -1,0 +1,28 @@
+name: Kesinti izleme
+
+# 5 dakikada bir Arvela OS, n8n ve arveladigital.com kontrol edilir; erişilemezse "kesinti" etiketli kayıt açılır (GitHub e-posta gönderir).
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: deploy/uptime.py
+      - name: Kontrol
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 deploy/uptime.py
