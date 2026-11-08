@@ -10,17 +10,35 @@ const ACCENTS = {
 };
 
 export const THEMES = {
+  atlas: {
+    name: 'Atlas',
+    desc: 'Varsayılan: sakin açık zemin, koyu ve gruplu (akordiyon) menü, üstte arama çubuğu. Açık ve koyu mod; mobilde soldan açılan menü.',
+    swatch: ['#F6F5F2', '#0B0D12', '#E2BE7A', '#FFFFFF'], dark: true,
+    options: {
+      vurgu: { label: 'Vurgu rengi (bağlantılar, başlık üstleri)', type: 'color', values: Object.fromEntries(Object.entries(ACCENTS).map(([k, v]) => [k, v.label])), colors: Object.fromEntries(Object.entries(ACCENTS).map(([k, v]) => [k, v.fill])), default: 'altin' },
+      yogunluk: { label: 'Yoğunluk', type: 'select', values: { rahat: 'Rahat', sik: 'Sıkı' }, default: 'rahat' },
+    },
+    css: (o) => {
+      const a = ACCENTS[o.vurgu] || ACCENTS.altin;
+      let css = `:root{--paper:#F6F5F2;--sand:#F0EEE9;--line:#E7E3DA;--line2:#EFECE6;--soft:#FAF9F6;--acc-t:${a.text}}
+a{color:var(--acc-t)}.card{border-radius:14px}.act{box-shadow:0 1px 0 var(--line)}table,.tbl{border-radius:14px}th{text-transform:none;letter-spacing:0;font-size:12.5px}
+.badge{text-transform:none;letter-spacing:0;font-size:12px}`;
+      if (o.yogunluk === 'sik') css += `
+main{gap:16px}.card{padding:16px;gap:8px}th,td{padding:8px 12px}.act{padding:18px;gap:8px}`;
+      return css;
+    },
+  },
   klasik: {
     name: 'Klasik',
     desc: 'İlk tasarım: koyu kenar çubuğu, sıcak kâğıt zemin, yumuşak gölgeli kartlar.',
-    swatch: ['#0B0D12', '#F7F4EE', '#E2BE7A', '#FFFFFF'],
+    swatch: ['#0B0D12', '#F7F4EE', '#E2BE7A', '#FFFFFF'], dark: true,
     options: {},
     css: () => '',
   },
   defter: {
     name: 'Defter',
-    desc: 'İlişki öncelikli, sade: beyaz zemin, açık kenar çubuğu, ince çizgili kartlar, tablolar ve kayıt sayfaları ön planda.',
-    swatch: ['#FFFFFF', '#FAF8F3', '#B08433', '#141A22'],
+    desc: 'Yalnız açık mod. İlişki öncelikli, sade: beyaz zemin, açık kenar çubuğu, ince çizgili kartlar, tablolar ve kayıt sayfaları ön planda.',
+    swatch: ['#FFFFFF', '#FAF8F3', '#B08433', '#141A22'], dark: false,
     options: {
       kenar: { label: 'Kenar çubuğu', type: 'select', values: { acik: 'Açık renkli', koyu: 'Koyu renkli' }, default: 'acik' },
       zemin: { label: 'Zemin', type: 'select', values: { beyaz: 'Beyaz', kagit: 'Kâğıt' }, default: 'beyaz' },
@@ -45,22 +63,22 @@ input:focus,select:focus,textarea:focus{border-color:${a.fill};box-shadow:0 0 0 
 .summary{border-radius:${r}px;background:${a.soft};border-color:${a.line}}.summary h2{color:${a.text}}
 .kcol{border-radius:${r}px;background:#FAF8F3;border:1px solid var(--line)}
 .flash{border-radius:${r}px}.err{border-radius:${r}px}
-.side nav a.on{box-shadow:inset 3px 0 0 ${a.fill}}
+.side .side-nav a.on{box-shadow:inset 3px 0 0 ${a.fill}}
 :focus-visible{outline-color:${a.fill}}input[type=radio],input[type=checkbox]{accent-color:${a.fill}}`;
       if (light) css += `
 .side{background:${sideBg};color:var(--ink);border-right:1px solid var(--line)}.side .brand{color:var(--ink)}.side .brand span{color:${a.text}}
-.side nav a{color:#3C3A33;font-size:14px;font-weight:500;border-radius:8px}.side nav a:hover{background:#fff;color:var(--ink)}
-.side nav a.on{background:#fff;color:var(--ink);box-shadow:0 0 0 1px var(--line),inset 3px 0 0 ${a.fill}}
+.side .side-nav a{color:#3C3A33;font-size:14px;font-weight:500;border-radius:8px}.side .side-nav a:hover{background:#fff;color:var(--ink)}
+.side .side-nav a.on{background:#fff;color:var(--ink);box-shadow:0 0 0 1px var(--line),inset 3px 0 0 ${a.fill}}
 .side .who{border-top-color:var(--line);color:var(--stone)}.who strong{color:var(--ink)}.side .btn-out{color:var(--ink);border-color:var(--line)}
-.side-search input{background:#fff;border-color:var(--line);color:var(--ink)}.side-search input::placeholder{color:#8A8475}`;
+.ng-h{color:#5E5849}.ng-h:hover{background:#fff;color:var(--ink)}.side .side-x{border-color:var(--line);color:var(--ink)}.side .side-nav{scrollbar-color:#D8D1C3 transparent}.side .lang.dark{border-color:var(--line)}.side .lang.dark button{color:#5E5849}`;
       if (o.yogunluk === 'sik') css += `
-main{gap:16px;padding-top:24px}.card{padding:16px;gap:8px}th,td{padding:8px 12px}.act{padding:18px;gap:8px}.side nav a{padding:8px 12px}`;
+main{gap:16px;padding-top:24px}.card{padding:16px;gap:8px}th,td{padding:8px 12px}.act{padding:18px;gap:8px}.side .side-nav a{padding:8px 12px}`;
       return css;
     },
   },
 };
 
-export const DEFAULT_THEME = 'klasik';
+export const DEFAULT_THEME = 'atlas';
 
 // Kayıtlı değerleri doğrular; bilinmeyen tema ya da seçenek varsayılana döner.
 export function resolveTheme(id, raw = {}) {

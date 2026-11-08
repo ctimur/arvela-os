@@ -2,7 +2,7 @@
 import { THEMES, resolveTheme, themeCss } from './themes.js';
 
 const cache = new Map(); // ajans → { id, opts, css }
-export const currentThemeCss = (agencyId) => cache.get(agencyId || 1)?.css || '';
+export const currentThemeCss = (agencyId) => cache.get(agencyId || 1)?.css ?? themeCss(null, {});
 export const currentTheme = (agencyId) => cache.get(agencyId || 1) || resolveTheme(null);
 
 // Sayfaların okuduğu tema ayarları (Yönetici önizlemesi dahil).

@@ -1,3 +1,4 @@
+import { LOOK_JS } from './ext-look.js';
 // Arvela OS — iş yönetimi: projeler, görevler (açıklama, yorum, düzenleme), onaylar, hizmet kayıtları ve arama.
 import { parseRequest, decisionForm, KINDS } from './ext-decisions.js';
 import { locale, t } from './i18n.js';
@@ -64,7 +65,7 @@ export function registerWork(d) {
   };
   const dueTxt = (t) => t.due_date ? `<span class="${isLate(t) ? 'late' : ''}">${fmtDate(t.due_date)}${isLate(t) ? ' · gecikti' : ''}</span>` : '—';
 
-  route('GET', '/app.js', async (ctx, res) => { res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'public, max-age=300' }); res.end(APP_JS); });
+  route('GET', '/app.js', async (ctx, res) => { res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'public, max-age=300' }); res.end(APP_JS + LOOK_JS); });
 
   // ---------- projeler ----------
   async function projectFor(ctx, id) {
@@ -116,7 +117,7 @@ ${rows.map(p => `<tr><td><a href="/projeler/${p.id}"><strong>${h(p.name)}</stron
       ctx.user.role === 'admin' ? all(`SELECT id, name FROM clients WHERE agency_id=$1 ORDER BY name`, [a]) : [],
       one(`SELECT count(*)::int n FROM tasks WHERE project_id=$1`, [p.id]),
     ]);
-    const f = csrfField(ctx); const done = tasks.filter(t => t.status === 'bitti').length;
+    const f = csrfField(ctx); const done = tasks.filter(t => t.status === 'bitti').length; const tablo = qp(ctx, 'gorunum') === 'tablo';
     const subs = {}; for (const t of tasks) if (t.parent_id) (subs[t.parent_id] ||= []).push(t);
     const col = (st) => { const list = tasks.filter(t => t.status === st && !t.parent_id); return `<section class="kcol" aria-label="${TK_ST[st]}"><h3>${TK_ST[st]} <span class="muted">${list.length}</span></h3>
 ${list.map(t => `<article class="kcard${isLate(t) ? ' is-late' : ''}"><a class="kt" href="/gorev/${t.id}">${t.priority === 'yuksek' ? '<span class="badge bad">Öncelikli</span> ' : ''}${h(t.title)}</a>
@@ -126,7 +127,9 @@ ${list.map(t => `<article class="kcard${isLate(t) ? ' is-late' : ''}"><a class="
 <div class="act-btns"><a class="btn gold" href="#yeni-gorev" data-open="yeni-gorev">+ Görev</a><a class="btn ghost" href="#proje-bilgileri" data-open="proje-duzenle">Düzenle</a></div></div>
 <div class="prog big" role="img" aria-label="${done}/${tasks.length} görev tamam"><span style="width:${tasks.length ? Math.round(100 * done / tasks.length) : 0}%"></span></div>
 ${flowBanner ? flowBanner(ctx, p, tasks) : ''}
-<div class="kanban">${Object.keys(TK_ST).map(col).join('')}</div>
+<div class="ptbl-actions"><h2>Görevler</h2><nav class="viewseg" aria-label="Görünüm"><a href="/projeler/${p.id}"${tablo ? '' : ' class="on" aria-current="page"'}>Pano</a><a href="/projeler/${p.id}?gorunum=tablo"${tablo ? ' class="on" aria-current="page"' : ''}>Tablo</a></nav></div>
+${tablo ? `<div class="tbl"><table><tr><th>Görev</th><th>Aşama</th><th>Sorumlu</th><th>Teslim</th><th>Durum</th><th>Öncelik</th><th>Not</th></tr>
+${tasks.map(t => `<tr${isLate(t) ? ' class="is-late"' : ''}><td><a href="/gorev/${t.id}">${t.parent_id ? '↳ ' : ''}${h(t.title)}</a></td><td data-sort="${t.stage_no ?? ''}">${t.stage_no != null ? t.stage_no : '—'}</td><td>${h(t.assignee || 'Atanmadı')}</td><td data-sort="${t.due_date ? new Date(t.due_date).toISOString().slice(0, 10) : ''}">${dueTxt(t)}</td><td>${badge(TK_ST[t.status], tkTone[t.status])}</td><td>${t.priority === 'yuksek' ? 'Öncelikli' : 'Normal'}</td><td>${t.notes || 0}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">Henüz görev yok.</td></tr>'}</table></div>` : `<div class="kanban">${Object.keys(TK_ST).map(col).join('')}</div>`}
 <details class="card add" id="yeni-gorev"><summary>Yeni görev ekle</summary><form class="stack" method="post" action="/projeler/${p.id}/gorev">${f}
 <div class="row"><label class="wide">Görev<input name="title" required></label><label>Sorumlu<select name="assignee_id">${peopleOpts(team, null)}</select></label><label>Teslim<input type="date" name="due_date"></label><label>Öncelik<select name="priority">${opts(PRIO, 'normal')}</select></label></div>
 <label>Açıklama<textarea name="description" rows="2"></textarea></label><div><button class="gold">Görevi ekle</button></div></form></details>

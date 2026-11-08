@@ -1,10 +1,11 @@
 {
  "server.js": [
   "      await q('INSERT INTO services (agency_id, category_id, code, sub, name, billing, unit, price_try, price_eur, availability) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT DO NOTHING',",
-  "button,.btn{font:inherit;font-weight:600;border:0;border-radius:14px;padding:11px 18px;background:var(--ink);color:#fff;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px}",
-  ".later-row{background:#fff;border-radius:18px;padding:14px 16px;border:1px solid transparent}.later-row:hover{border-color:var(--champ);color:var(--ink)}",
-  ".stack-col{display:flex;flex-direction:column;gap:16px;min-width:0}.note.sys{background:#FBF9F5;border-radius:10px;padding:10px 12px}.note.sys .note-h strong{color:#7A5A1E}details.more>summary{font-size:13px;color:#7A5A1E}",
-  ".more a{flex:none;flex-direction:row;justify-content:flex-start;font-size:15px;padding:14px;color:var(--ink);border-radius:12px}.more a:hover,.more a.on{background:var(--sand)}",
+  "button,.btn{font:inherit;font-weight:600;border:0;border-radius:14px;padding:11px 18px;background:var(--btn);color:var(--btn-t);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px}",
+  ".later-row{background:var(--surf);border-radius:18px;padding:14px 16px;border:1px solid transparent}.later-row:hover{border-color:var(--champ);color:var(--ink)}",
+  ".stack-col{display:flex;flex-direction:column;gap:16px;min-width:0}.note.sys{background:var(--soft);border-radius:10px;padding:10px 12px}.note.sys .note-h strong{color:var(--acc-t)}details.more>summary{font-size:13px;color:var(--acc-t)}",
+  "  globe: '<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z\"/>',",
+  "function layout(ctx, title, body, active = '') {",
   "    ['/panel', 'Bugün', 'G B'], ['/satis', 'Satış hattı', 'G S'], ['/musteriler', 'Müşteriler', 'G M'], ['/gorevler', 'Görevlerim', 'G G'], ['/onaylar', 'Onaylar', ''], ['/projeler', 'Projeler', ''],",
   "const nn = (v) => (v === undefined || v === null || String(v).trim() === '') ? null : String(v).trim();",
   "<label>Not<textarea name=\"notes\" rows=\"2\"></textarea></label><div><button class=\"gold\">Kaydet</button></div></form></details>",
@@ -38,6 +39,7 @@
  "ext-work.js": [
   "  // Görev durumu için tek dokunuşluk düğmeler (seçili olan vurgulu)",
   "        ORDER BY t.stage_no NULLS LAST, (t.priority='yuksek') DESC, t.due_date NULLS LAST, t.id`, [p.id]),",
+  "${tablo ? `<div class=\"tbl\"><table><tr><th>Görev</th><th>Aşama</th><th>Sorumlu</th><th>Teslim</th><th>Durum</th><th>Öncelik</th><th>Not</th></tr>",
   "    await audit(ctx, 'project.delete', { id: p.id, name: p.name }); redirect(res, `/musteriler/${p.client_id}`);",
   "    await q('UPDATE tasks SET status=$1 WHERE id=$2', [st, t.id]);",
   "    const prjs = await all('SELECT id, name FROM projects WHERE client_id=$1 ORDER BY created_at DESC', [x.client_id]);",
@@ -147,5 +149,10 @@
   "  await q(`CREATE TABLE IF NOT EXISTS reminders (id SERIAL PRIMARY KEY, agency_id INT NOT NULL, task_id INT REFERENCES tasks(id) ON DELETE CASCADE, project_id INT REFERENCES projects(id) ON DELETE CASCADE,",
   "    const t = await taskOf(ctx, c.task_id);",
   "    if (staff) out.push(`<${rems.length ? 'section' : 'details'} class=\"card${rems.length ? '' : ' add'}\" id=\"hatirlatmalar\">${rems.length ? '<h2>Hatırlatmalar</h2>' : '<summary>Hatırlatma ekle</summary>'}${rems.map(r => `<div class=\"line\"><span class=\"grow\"><strong>${h(r.title)}</strong><span class=\"muted\">${fmtDate(r.due_at)}${r.repeat_days ? ` · her ${r.repeat_days} günde` : ''} · ${h(COND[r.cond])}</span></span><form method=\"post\" action=\"/hatirlatma/${r.id}/iptal\">${f}<button class=\"linkish\">İptal</button></form></div>`).join('') || ''}"
+ ],
+ "ext-look.js": [
+  "export const NAV_CSS = `",
+  "const VARS = '--paper:#0E1116;--surf:#161A21;--soft:#1B2029;--gold-soft:#231E14;--sand:#1D222B;--chip:#262C36;--line:#272D37;--line2:#20262F;--line3:#3A414D;--ink:#ECEEF1;--ink2:#C4C9D1;--stone:#9EA6B2;--stone2:#9EA6B2;--acc-t:#E2BE7A;--ok-bg:#1A2C20;--ok-t:#93CFA0;--warn-bg:#2D2514;--warn-t:#E9C886;--bad-bg:#34211C;--bad-t:#F4A48E;--bad-line:#5C3328;--gold-line:#4A3E22;--track:#2A303A;--dot:#4A5260;--champ-l:#2A2315;--btn:#E2BE7A;--btn-t:#0B0D12;--btn-h:#ECCB8E;--graphite:#2A2F38;--night:#0A0C10;--ok:#7FBF8E;--bad:#F08A62;color-scheme:dark';",
+  "export const LOOK_JS = `"
  ]
 }

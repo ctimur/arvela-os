@@ -2,7 +2,10 @@ import { THEMES, resolveTheme, themeCss, DEFAULT_THEME } from '../app/themes.js'
 import { registerSettings, loadThemes, currentThemeCss, currentTheme } from '../app/ext-settings.js';
 import assert from 'node:assert';
 
-assert.ok(THEMES.klasik && THEMES.defter, 'iki tema kayıtlı');
+assert.ok(THEMES.klasik && THEMES.defter && THEMES.atlas, 'üç tema kayıtlı');
+assert.equal(DEFAULT_THEME, 'atlas', 'Atlas varsayılan');
+assert.ok(themeCss('atlas', { vurgu: 'lacivert' }).includes('#2F4A6B') && themeCss('atlas', {}).includes('--paper:#F6F5F2'), 'Atlas vurgu rengi');
+assert.equal(THEMES.defter.dark, false, 'Defter yalnız açık mod'); assert.ok(THEMES.atlas.dark && THEMES.klasik.dark);
 assert.equal(themeCss('klasik'), '', 'klasik temel CSS ile aynı');
 assert.equal(resolveTheme('yok').id, DEFAULT_THEME, 'bilinmeyen tema varsayılana döner');
 const r = resolveTheme('defter', { vurgu: 'lacivert', kenar: '<script>', yogunluk: 'sik' });
@@ -32,4 +35,4 @@ import { themeOpts, splitRecord } from '../app/ext-settings.js';
   assert.equal(splitRecord(c), true, 'Defter: varsayılan yan yana');
   assert.equal(splitRecord({ ...c, url: new URL('http://x/?onizle=klasik') }), false, 'önizleme ayarı uygulanır');
   assert.equal(splitRecord({ user: { role: 'staff', agency_id: 7 }, url: new URL('http://x/?onizle=klasik') }), true, 'önizleme yalnız Yönetici');
-  assert.equal(themeOpts({ user: { role: 'admin', agency_id: 99 }, url: new URL('http://x/') }).id, 'klasik'); console.log('tema düzeni: ok'); }
+  assert.equal(themeOpts({ user: { role: 'admin', agency_id: 99 }, url: new URL('http://x/') }).id, 'atlas'); console.log('tema düzeni: ok'); }
