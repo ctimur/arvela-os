@@ -1,13 +1,17 @@
 """Arvela OS'i Hostinger KVM 1'e yayınlar (GitHub Actions ya da elle).
 
 1. deploy/rechunk.py ile kaynak dosyaları 8.192 karakterlik parçalara böler.
-2. Her parçayı arvela-src-NN projesi olarak Hostinger Docker API'sine yazar (yalnızca değişenleri).
+2. Her parçayı kalıcı adlı bir projeye yazar (yalnızca değişenleri): arvela-src-<dosya>-NN.
+   Ad dosyaya bağlıdır; bir dosyanın parça sayısı değişince diğer dosyaların projeleri yeniden yazılmaz.
+   server.js'in ilk parçası paylaşılan arvela_src birimini oluşturduğu için adı arvela-src-00 olarak kalır.
 3. deploy/docker-compose.yml'deki SHA-256 özetlerini günceller ve arvela-os projesini yeniden yayınlar.
 4. /healthz'in sağlıklı dönmesini bekler.
 
 Ortam değişkenleri: HOSTINGER_API_TOKEN, VPS_ID, DB_PASSWORD, SETUP_TOKEN
 """
-import hashlib, json, os, pathlib, re, sys, time, urllib.request, urllib.error
+import functools, hashlib, json, os, pathlib, re, sys, time, urllib.request, urllib.error
+
+print = functools.partial(print, flush=True)  # noqa: A001 — iş akışı kesilse de kayıt görünsün
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / 'deploy'))
@@ -36,6 +40,15 @@ def call(method, path, body=None):
             raise SystemExit(f'{method} {path}: HTTP {e.code} {e.read().decode()[:500]}')
 
 
+def project_name(chunk):
+    """chunks/<dosya>.<NN>.yml → kalıcı Hostinger proje adı."""
+    m = re.match(r'^(.+)\.(\d\d)\.yml$', chunk)
+    name, idx = m.group(1), int(m.group(2))
+    if name == ORDER[0][0] and idx == 0:
+        return 'arvela-src-00'  # paylaşılan birimi (arvela_src) oluşturan proje
+    return f"arvela-src-{re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')}-{idx:02d}"
+
+
 def remote_content(project):
     try:
         return call('GET', f'/virtual-machines/{VM}/docker/{project}').get('content')
@@ -55,15 +68,15 @@ def main():
         parts[name] = len(files)
         names += files
     changed = 0
-    for i, f in enumerate(names):
-        project = f'arvela-src-{i:02d}'
+    for f in names:
+        project = project_name(f.name)
         content = f.read_text()
         if remote_content(project) == content:
             continue
         call('POST', f'/virtual-machines/{VM}/docker', {'project_name': project, 'content': content})
         changed += 1
         print('yazıldı', project, f.name)
-        time.sleep(8)
+        time.sleep(4)
     print(f'{changed} parça güncellendi')
 
     compose = (ROOT / 'deploy' / 'docker-compose.yml').read_text()
