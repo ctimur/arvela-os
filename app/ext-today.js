@@ -19,8 +19,16 @@ const wa = (phone, text) => { const n = waNumber(phone); return n ? `https://wa.
 // Veriden sıralı aksiyon listesi kurar. Saf fonksiyon: test edilebilir.
 export function buildActions(d, { admin, now = Date.now() }) {
   const out = [];
-  for (const s of d.sites || []) {
-    const hl = siteHealth(s); if (hl.label !== 'Acil') continue;
+  // Acil siteler: ertelenmişse gösterilme; birden çoksa tek kartta toplanır (ekran site uyarılarıyla dolmasın)
+  const urgent = d.sitesSnoozed ? [] : (d.sites || []).filter(s => siteHealth(s).label === 'Acil');
+  if (urgent.length > 1) {
+    const names = urgent.slice(0, 4).map(s => s.domain).join(', ') + (urgent.length > 4 ? t` ve ${urgent.length - 4} site daha` : '');
+    out.push({ score: 88, tone: 'bad', tag: 'Acil · Site', meta: t`${urgent.length} site · Hostinger eşitlemesi`, title: t`${urgent.length} sitede acil sorun var`,
+      body: t`${names}. Önerilen sıra: yedek al, düzelt, siteyi dışarıdan kontrol et. Bakımı sonraya bıraktıysanız 30 gün erteleyin; süre dolunca yeniden hatırlatılır.`,
+      actions: [['Siteleri aç', '/siteler', 'pri'], ...(admin ? [['30 gün ertele', '/bugun/site-ertele', 'sec', false, 'post']] : [])] });
+  }
+  for (const s of urgent.length > 1 ? [] : urgent) {
+    const hl = siteHealth(s);
     const why = s.issue || (s.ssl_status === 'expired' ? 'SSL sertifikasının süresi dolmuş.' : 'SSL kurulamadı.');
     out.push({ score: 90, tone: 'bad', tag: 'Acil · Site', meta: t`${s.client || 'Müşterisiz'} · ${ago(daysSince(s.checked_at, now))}`,
       title: t`${s.domain} için müdahale gerekiyor`, body: t`${why} Önerilen sıra: yedek al, düzelt, siteyi dışarıdan kontrol et.`,
@@ -82,11 +90,12 @@ export function daySummary(acts) {
   return { top, more: Math.max(0, acts.length - top.length), counts };
 }
 function actionCard(x, h, size) {
-  const btns = x.actions.map(([t, href, cls, ext], i) => `<a class="btn ${cls}" href="${h(href)}"${ext ? ' target="_blank" rel="noopener"' : ''}>${h(t)}</a>`).join('');
+  const btns = x.actions.map(([t, href, cls, ext, method], i) => method === 'post' ? `<form class="inline" method="post" action="${h(href)}">${x.csrf || ''}<button class="btn ${cls}">${h(t)}</button></form>`
+    : `<a class="btn ${cls}" href="${h(href)}"${ext ? ' target="_blank" rel="noopener"' : ''}>${h(t)}</a>`).join('');
   return `<article class="act ${size}${size === 'hero' ? '' : ''}"><div class="act-meta"><span class="badge ${x.tone}">${h(x.tag)}</span><span class="muted">${h(x.meta)}</span></div>
 <${size === 'hero' ? 'h2' : 'h3'}>${h(x.title)}</${size === 'hero' ? 'h2' : 'h3'}>${x.body ? `<p>${h(x.body)}</p>` : ''}<div class="act-btns">${btns}</div></article>`;
 }
-export function registerToday({ all, one, h, layout, need, STAFF, forgePending, extraActions }) {
+export function registerToday({ all, one, h, layout, need, STAFF, forgePending, extraActions, csrfField }) {
   return async function todayPage(ctx, res, send) {
     need(ctx, ...STAFF); const a = ctx.user.agency_id; const admin = ctx.user.role === 'admin';
     const period = new Date().toISOString().slice(0, 7);
@@ -106,9 +115,10 @@ export function registerToday({ all, one, h, layout, need, STAFF, forgePending, 
       one(`SELECT count(*)::int n FROM tasks WHERE agency_id=$1 AND assignee_id=$2 AND status='bitti'`, [a, ctx.user.id]),
     ]);
     const fp = admin && forgePending ? await forgePending().catch(() => 0) : 0;
-    const d = { sites, tasks, approvals, clients, overdue, notified, draftQuotes, draftInvoices, monthlyDue: md?.n || 0, period, forgePending: fp };
+    const snooze = (await one(`SELECT value FROM settings WHERE agency_id=$1 AND key='today.sites_snooze'`, [a]).catch(() => null))?.value;
+    const d = { sites, tasks, approvals, clients, overdue, notified, draftQuotes, draftInvoices, monthlyDue: md?.n || 0, period, forgePending: fp, sitesSnoozed: !!snooze && new Date(snooze) > new Date() };
     const extra = extraActions ? await extraActions(a).catch(() => []) : [];
-    const acts = [...buildActions(d, { admin }), ...extra].sort((x, y) => y.score - x.score); const pulse = buildPulse(d);
+    const acts = [...buildActions(d, { admin }), ...extra].sort((x, y) => y.score - x.score); const cf = csrfField ? csrfField(ctx) : ''; for (const x of acts) x.csrf = cf; const pulse = buildPulse(d);
     const first = ctx.user.name.split(' ')[0]; const summary = daySummary(acts);
     const [hero, ...rest] = acts; const pair = rest.slice(0, 2); const later = rest.slice(2);
     const head = !acts.length ? 'Bugün her şey yolunda.' : lang() === 'en' ? `${acts.length} things to do today.` : `Bugün ${acts.length} iş var.`;

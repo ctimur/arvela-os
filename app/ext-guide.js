@@ -147,17 +147,22 @@ function afterHead(html) {
   return -1;
 }
 
-// Sayfa gövdesine rehberi yerleştirir. M1/M2: çeviri işaretleri (metin zaten seçili dilde).
-export function applyGuide(html, { path, lang = 'tr', hidden = false, csrf = '', M1 = '', M2 = '' }) {
+// Sayfa gövdesine "Ayrıntılar" düğmesini ve bilgi katmanını yerleştirir. Bilgi katmanı (sayfa rehberi, bölüm açıklamaları)
+// her zaman HTML'de vardır; görünürlüğü <body class="info-on"> belirler (düğme anında açar/kapatır, tercih çerezde kalır).
+export function applyGuide(html, { path, lang = 'tr', M1 = '', M2 = '' }) {
   const mark = (s) => M1 + esc(s) + M2;
   const g = findPage(path);
-  const toggle = (on) => `<form class="guide-toggle" method="post" action="/rehber">${csrf}<input type="hidden" name="back" value="${esc(path)}"><button class="linkish" name="rehber" value="${on ? 'acik' : 'kapali'}">${mark(on ? (lang === 'en' ? 'Show guide' : 'Rehberi göster') : (lang === 'en' ? 'Hide guide' : 'Rehberi gizle'))}</button></form>`;
   if (!g) return html;
-  if (hidden) { const at = afterHead(html); return at < 0 ? toggle(true) + html : html.slice(0, at) + toggle(true) + html.slice(at); }
-  // dar ekranda kapalı başlar (app.js); başlığa dokununca açılır
-  const box = `<details class="guide" open><summary>${mark(lang === 'en' ? 'What is this page for?' : 'Bu sayfa ne işe yarar?')}</summary><p>${mark(pick(g.ne, lang))}</p><p><b>${mark(lang === 'en' ? 'What happens next' : 'Sonra ne olur')}</b> ${mark(pick(g.sonra, lang))}</p>${toggle(false)}</details>`;
+  const en = lang === 'en';
+  const btn = `<button type="button" class="info-btn" data-info aria-pressed="false" aria-controls="sayfa-bilgi"><span aria-hidden="true">i</span>${mark(en ? 'Details' : 'Ayrıntılar')}</button>`;
+  const box = `<section class="guide" id="sayfa-bilgi" aria-label="${en ? 'Page guide' : 'Sayfa rehberi'}"><div><p class="eyebrow">${mark(en ? 'What this page is for' : 'Bu sayfa ne işe yarar')}</p><p>${mark(pick(g.ne, lang))}</p></div><div><p class="eyebrow">${mark(en ? 'What happens next' : 'Sonra ne olur')}</p><p>${mark(pick(g.sonra, lang))}</p></div></section>`;
   const at = afterHead(html);
-  let out = at < 0 ? box + html : html.slice(0, at) + box + html.slice(at);
+  let out;
+  if (at < 0) out = `<div class="info-bar">${btn}</div>` + box + html;
+  else {
+    const head = html.slice(0, at - 6); // page-head'in kapanış </div>'inden önce: düğme sağ üstte
+    out = head + btn + '</div>' + box + html.slice(at);
+  }
   const hint = (label) => { const k = sectionKey(label); return SECTIONS[k] ? `<p class="g-hint">${mark(pick(SECTIONS[k], lang))}</p>` : ''; };
   out = out.replace(/(<h2(?:\s[^>]*)?>)([^<]*)((?:<span[^>]*>[^<]*<\/span>)?)(<\/h2>)/g, (m, a, label, span, end) => m + hint(label));
   out = out.replace(/(<summary>)([^<]+)(<\/summary>)/g, (m, a, label) => m + hint(label));

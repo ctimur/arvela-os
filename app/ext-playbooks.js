@@ -124,7 +124,7 @@ export function registerPlaybooks(d) {
   route('GET', '/katalog/:id', async (ctx, res, p) => {
     need(ctx, ...STAFF); const s = await svcFor(ctx, int(p.id)); const admin = ctx.user.role === 'admin';
     send(res, 200, layout(ctx, s.name, `<nav class="crumb"><a href="/katalog">Katalog</a> › ${h(s.cat)}</nav><div class="page-head"><div><p class="eyebrow">${h(s.code)} · ${h(s.sub || '')}</p><h1>${h(s.name)}</h1>
-<div class="chips"><span class="muted">${h(s.billing || '')}</span>${s.playbook_updated_at ? `<span class="muted">${h(t`Son düzenleme: ${fmtDate(s.playbook_updated_at)}`)}</span>` : ''}</div></div>${admin ? '<a class="btn ghost" href="#duzenle">Düzenle</a>' : ''}</div>
+<div class="chips"><span class="muted">${h(s.billing || '')}</span>${s.playbook_updated_at ? `<span class="muted">${h(t`Son düzenleme: ${fmtDate(s.playbook_updated_at)}`)}</span>` : ''}</div></div>${admin ? '<a class="btn ghost" href="#duzenle" data-open="duzenle">Düzenle</a>' : ''}</div>
 ${viewHtml(s.playbook, h, badge)}
 ${admin ? `<details class="card" id="duzenle"><summary>Hizmet kitabını düzenle</summary><p class="muted">Buradaki değişiklik yeni eklenen müşteri ve projelere uygulanır; önceden eklenmiş olanlar kendi kopyasını korur.</p>${editorHtml(s.playbook, h, `/katalog/${s.id}/kitap`, csrfField(ctx))}</details>` : ''}`, '/katalog'));
   });
