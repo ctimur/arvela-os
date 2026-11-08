@@ -11,4 +11,8 @@ for name in FILES:
     ok = txt == (ROOT / 'app' / name).read_text()
     bad += not ok
     print('OK ' if ok else 'BOZUK', name)
+# arvela-os compose'u (birleştirme listesiyle) Hostinger sınırına sığıyor mu
+import deploy  # noqa: E402
+c = deploy.build_compose(deploy.part_counts())
+print(f'OK  arvela-os compose {len(c)} / {deploy.LIMIT} karakter')
 sys.exit(1 if bad else 0)

@@ -19,11 +19,10 @@ import rechunk  # noqa: E402
 
 API = 'https://developers.hostinger.com/api/vps/v1'
 TOKEN = os.environ.get('HOSTINGER_API_TOKEN', '').strip()
-if not TOKEN:
-    raise SystemExit('HOSTINGER_API_TOKEN boş: GitHub → Settings → Secrets and variables → Actions')
+LIMIT = 8192  # Hostinger Docker API: compose içeriği en fazla 8.192 karakter
 VM = os.environ.get('VPS_ID', '1249062')
 # Projeler arvela-src-NN olarak sıralı numaralanır; sıra deploy/boundaries.json ile birlikte sabittir.
-ORDER = [(n, None) for n in ['server.js', 'package.json', 'seed-catalog.json', 'ext-sites.js', 'import-sites.json', 'ext-quotes.js', 'ext-invoices.js', 'ext-today.js', 'ext-work.js', 'i18n.js', 'i18n-en.json', 'ext-sync.js', 'ext-automation.js', 'n8n-seed.json', 'ext-forge.js', 'ext-crm.js', 'ext-freelance.js', 'ext-retention.js', 'themes.js', 'ext-settings.js', 'ext-playbooks.js', 'playbooks.json', 'ext-flow.js', 'ext-guide.js', 'ext-icons.js', 'ext-decisions.js']]
+ORDER = [(n, None) for n in rechunk.FILES]  # dosya listesi tek yerde: deploy/rechunk.py
 
 
 def call(method, path, body=None):
@@ -56,8 +55,27 @@ def remote_content(project):
         return None
 
 
+def build_compose(parts):
+    """arvela-os compose'u: birleştirme listesi (dosya, parça sayısı, SHA-256). 8.192 sınırını aşarsa durur."""
+    compose = (ROOT / 'deploy' / 'docker-compose.yml').read_text()
+    lines = '\n'.join(f"        {n} {c} {hashlib.sha256((ROOT / 'app' / n).read_bytes()).hexdigest()}" for n, c in parts.items())
+    if compose.count('        __LISTE__\n') != 1:
+        raise SystemExit('docker-compose.yml içinde __LISTE__ satırı bulunamadı')
+    compose = compose.replace('        __LISTE__\n', lines + '\n')
+    if len(compose) > LIMIT:
+        raise SystemExit(f'arvela-os compose {len(compose)} karakter > {LIMIT}: docker-compose.yml kısaltılmalı')
+    return compose
+
+
+def part_counts():
+    return {name: len(sorted((ROOT / 'chunks').glob(f'{name}.[0-9][0-9].yml'))) for name, _ in ORDER}
+
+
 def main():
+    if not TOKEN:
+        raise SystemExit('HOSTINGER_API_TOKEN boş: GitHub → Settings → Secrets and variables → Actions')
     rechunk.main()
+    build_compose(part_counts())  # sınırı yazmaya başlamadan önce denetle
     print('API kontrolü:', type(call('GET', f'/virtual-machines/{VM}')).__name__)
     names = []
     parts = {}
@@ -79,17 +97,7 @@ def main():
         time.sleep(4)
     print(f'{changed} parça güncellendi')
 
-    compose = (ROOT / 'deploy' / 'docker-compose.yml').read_text()
-    # Parçaları adlarıyla tek tek birleştir: parça sayısı azalırsa diskte kalan eski parça karışmasın.
-    cats = '\n'.join(f"        cat {' '.join(f'/src/{n}.{i:02d}' for i in range(c))} > /app/{n}" for n, c in parts.items())
-    compose, n = re.subn(r'^        for f in [^\n]*; do cat /src/\$\$f\.\* > /app/\$\$f; done$', lambda m: cats, compose, flags=re.M)
-    if n != 1:
-        raise SystemExit('docker-compose.yml içinde birleştirme satırı bulunamadı')
-    for name, _ in ORDER:
-        sha = hashlib.sha256((ROOT / 'app' / name).read_bytes()).hexdigest()
-        compose, n = re.subn(rf'[0-9a-f]{{64}}(  /app/{re.escape(name)})', rf'{sha}\1', compose)
-        if n != 1:
-            raise SystemExit(f'docker-compose.yml içinde {name} özeti bulunamadı')
+    compose = build_compose(parts)
     env = f"DB_PASSWORD={os.environ['DB_PASSWORD']}\nSETUP_TOKEN={os.environ['SETUP_TOKEN']}\n"
     if os.environ.get('FORGE_GITHUB_TOKEN'):  # isteğe bağlı: Forge onayından hemen sonra yayın
         env += f"FORGE_GITHUB_TOKEN={os.environ['FORGE_GITHUB_TOKEN']}\n"
