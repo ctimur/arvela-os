@@ -25,7 +25,7 @@ export const EVENT_LABEL = {
   'quote.create': 'Teklif oluşturuldu', 'quote.send': 'Teklif gönderildi', 'quote.decide': 'Müşteri teklife karar verdi', 'quote.withdraw': 'Teklif geri çekildi', 'quote.copy': 'Teklif kopyalandı',
   'invoice.create': 'Fatura oluşturuldu', 'invoice.from_quote': 'Tekliften fatura', 'invoice.monthly': 'Aylık faturalar oluşturuldu', 'invoice.send': 'Fatura gönderildi', 'invoice.client_notified': 'Müşteri ödediğini bildirdi', 'invoice.paid': 'Fatura ödendi', 'invoice.cancel': 'Fatura iptal edildi',
   'site.create': 'Site eklendi', 'site.alert': 'Site acil duruma düştü', 'site.sync': 'Site durumu eşitlendi', 'ping': 'Deneme',
-  'package.create': 'İş paketi teklif edildi', 'package.update': 'İş paketi güncellendi', 'package.status': 'İş paketi durumu değişti', 'package.time': 'İş paketine süre kaydedildi', 'freelancer.payment': 'Freelancer ödemesi', 'retention.run': 'Veri saklama uygulandı', 'retention.settings': 'Veri saklama ayarları değişti',
+  'package.create': 'İş paketi teklif edildi', 'package.update': 'İş paketi güncellendi', 'package.status': 'İş paketi durumu değişti', 'package.time': 'İş paketine süre kaydedildi', 'freelancer.payment': 'Freelancer ödemesi', 'retention.run': 'Veri saklama uygulandı', 'theme.update': 'Tema değişti', 'retention.settings': 'Veri saklama ayarları değişti',
 };
 const ALL_EVENTS = Object.values(EVENTS).flat();
 const FINANCE = (e) => e.startsWith('quote.') || e.startsWith('invoice.') || e === 'freelancer.payment';

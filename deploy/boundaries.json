@@ -1,15 +1,15 @@
 {
  "server.js": [
-  "  const b = crypto.scryptSync(pw, salt, 64);",
-  ".err{background:#F6E1DE;border:1px solid #E2B1A9;padding:12px 16px;border-radius:14px;color:#7A2418}",
-  ".kcard{background:#fff;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;border:1px solid transparent}.kcard:hover{border-color:var(--champ)}.kcard.is-late{border-left:3px solid var(--bad)}",
-  "const icon = (k) => `<span class=\"ti\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">${ICON[k]}</svg></span>`;",
-  "    req.on('end', () => {",
-  "  const back = String(ctx.body.back || '/');",
-  "${svcs.length ? svcs.map(s => `<div class=\"svc\"><div class=\"svc-h\"><span class=\"grow\"><strong>${h(s.code)} · ${h(s.name)}</strong><span class=\"muted\">${h(s.billing || '')}${s.start_date ? ' · başlangıç ' + fmtDate(s.start_date) : ''}${s.end_date ? ' · bitiş ' + fmtDate(s.end_date) : ''}${s.notes ? ' · ' + h(s.notes) : ''}</span></span>",
-  "  await audit(ctx, 'approval.request', { id: r.id, client: c.id }); redirect(res, `/musteriler/${c.id}`);",
-  "  const prjs = await all(`SELECT p.*, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id)::int total, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id AND t.status='bitti')::int done FROM projects p WHERE p.client_id=$1 ORDER BY (p.status='tamamlandi'), p.created_at DESC`, [cid]);",
-  "const freelance = registerFreelance({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, opts });"
+  "  const [alg, salt, hash] = String(stored).split('$');",
+  ".badge.ok{background:#E3EFE4;color:#24502B}.badge.warn{background:#F7E9CF;color:#6B4A0F}.badge.bad{background:#F6E1DE;color:#7A2418}",
+  ".jump{display:flex;gap:6px;flex-wrap:wrap}.jump a{padding:8px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);text-decoration:none;color:var(--ink);font-size:14px}.jump a:hover{border-color:var(--champ)}",
+  "h1{font-size:28px}.today-head h1{font-size:30px}.today-count{display:none}",
+  "  const cur = lang(); const back = ctx.url ? ctx.url.pathname + ctx.url.search : '/';",
+  "  if (ctx.user) return redirect(res, '/');",
+  "  const catalog = await all(`SELECT s.id, s.code, s.name, sc.name cat FROM services s JOIN service_categories sc ON sc.id=s.category_id WHERE s.agency_id=$1 AND s.active ORDER BY sc.sort, s.code`, [a]);",
+  "  const s = await one('SELECT id, code FROM services WHERE id=$1 AND agency_id=$2', [int(ctx.body.service_id), ctx.user.agency_id]);",
+  "  const rows = await all('SELECT a.*, u.name FROM audit a LEFT JOIN users u ON u.id=a.user_id WHERE a.agency_id=$1 ORDER BY a.created_at DESC LIMIT 200', [ctx.user.agency_id]);",
+  "    if (!res.headersSent) send(res, status, ctx.user ? layout(ctx, 'Hata', body) : authPage('Hata', body));"
  ],
  "ext-sites.js": [
   "  route('POST', '/siteler', async (ctx, res) => {"
@@ -51,8 +51,8 @@
  ],
  "ext-sync.js": [],
  "ext-automation.js": [
-  "  const { route, all, one, q, need, layout, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, STAFF, TK_ST, PR_ST, APP_URL, safeEqual } = d;",
-  "    if (action === 'client.create' && data.status === 'lead') { action = 'lead.create'; data = (await entity(action, detail).catch(() => null)) || data; }",
+  "  await q(`DELETE FROM webhook_deliveries WHERE created_at < now() - interval '30 days'`);",
+  "    let data = (await entity(action, detail).catch(() => null)) || { ...detail };",
   "    FROM approvals ap JOIN clients c ON c.id=ap.client_id WHERE ap.agency_id=$1 AND ($2='' OR ap.status=$2) ORDER BY ap.created_at DESC LIMIT $3`, [a, qp(ctx, 'status'), lim(ctx)]) }));",
   "    await auditApi(ctx, status === 'lead' ? 'lead.create' : 'client.create', { id: r.id, name: b.name });",
   "  const pickEvents = (b) => { const ev = ALL_EVENTS.filter(e => b['ev_' + e]); return ev.length === ALL_EVENTS.length ? ['*'] : ev; };",
@@ -83,5 +83,7 @@
  ],
  "ext-retention.js": [
   "    await put(a, 'lead_months', clampMonths(b.lead_months, DEFAULTS.lead_months)); await put(a, 'audit_months', clampMonths(b.audit_months, DEFAULTS.audit_months)); await put(a, 'auto', b.auto ? '1' : '0');"
- ]
+ ],
+ "themes.js": [],
+ "ext-settings.js": []
 }
