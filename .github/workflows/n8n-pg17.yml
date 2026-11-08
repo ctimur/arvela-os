@@ -1,0 +1,33 @@
+name: n8n Postgres 17
+
+# n8n veritabanını Postgres 16'dan 17'ye taşır; eski veritabanı korunur. Geri dönüş: mode = rollback.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "migrate (17'ye taşı) ya da rollback (eski veritabanına dön)"
+        required: true
+        default: migrate
+        type: choice
+        options: [migrate, rollback]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: n8n
+  cancel-in-progress: false
+
+jobs:
+  pg17:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Uygula
+        env:
+          HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
+          MODE: ${{ inputs.mode }}
+          VPS_ID: ${{ vars.VPS_ID || '1249062' }}
+        run: python3 deploy/n8n_pg17.py
