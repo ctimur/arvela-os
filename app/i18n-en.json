@@ -1152,5 +1152,14 @@
 "site daha": "more sites",
 ". Önerilen sıra: yedek al, düzelt, siteyi dışarıdan kontrol et. Bakımı sonraya bıraktıysanız 30 gün erteleyin; süre dolunca yeniden hatırlatılır.": ". Suggested order: back up, fix, check the site from outside. If maintenance is postponed, snooze for 30 days; you'll be reminded when it ends.",
 "alt görev": "subtasks",
-"İlerleme, engel, bağlantı…": "Progress, blocker, link…"
+"İlerleme, engel, bağlantı…": "Progress, blocker, link…",
+"Menüyü aç": "Open menu",
+"Menüyü kapat": "Close menu",
+"Açık / koyu mod": "Light / dark mode",
+"İçeriğe geç": "Skip to content",
+"Henüz görev yok.": "No tasks yet.",
+"Tablo": "Table",
+"Vurgu rengi (bağlantılar, başlık üstleri)": "Accent colour (links, eyebrows)",
+"Varsayılan: sakin açık zemin, koyu ve gruplu (akordiyon) menü, üstte arama çubuğu. Açık ve koyu mod; mobilde soldan açılan menü.": "Default: calm light background, dark grouped (accordion) menu, search bar on top. Light and dark mode; slide-in menu on mobile.",
+"Yalnız açık mod.": "Light mode only."
 }
