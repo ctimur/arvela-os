@@ -1,5 +1,6 @@
 // Arvela OS — satış hattı: adaylar, aşamalar, 15 dk ön görüşme, sonraki adım ve iletişim geçmişi.
 // Aday, durumu "lead" olan müşteri kaydıdır; kazanılınca aynı kayıt aktif müşteriye döner (geçmiş korunur).
+import { themeOpts } from './ext-settings.js';
 import { t } from './i18n.js';
 import { splitRecord } from './ext-settings.js';
 
@@ -160,7 +161,9 @@ ${open && l.status === 'lead' ? `<div class="row"><form method="post" action="/s
 <dl class="kv rec-kv">${kv.map(([k, v]) => `<dt class="muted">${k}</dt><dd>${v}</dd>`).join('')}</dl>
 <details class="card"><summary>Bilgileri düzenle</summary>${INFO.replace('<section class="card"><h2>Aday bilgileri</h2>', '').replace(/<\/section>$/, '')}</details>`;
     const SUM = `<section class="summary"><h2>Özet</h2>${leadSummary(l, notes, new Date(), fmtDT).map(x => `<p>${h(x)}</p>`).join('')}</section>`;
-    send(res, 200, layout(ctx, l.name, `<nav class="crumb"><a href="/satis">Satış hattı</a>${l.status !== 'lead' ? ` › <a href="/musteriler/${l.id}">Müşteri sayfası</a>` : ''}</nav><div class="rec"><aside class="rec-side">${SIDE}</aside><div class="rec-main">${SUM}${HIST}</div></div>`, '/satis'));
+    const CR = `<nav class="crumb"><a href="/satis">Satış hattı</a>${l.status !== 'lead' ? ` › <a href="/musteriler/${l.id}">Müşteri sayfası</a>` : ''}</nav>`;
+    if (themeOpts(ctx).id === 'atlas') { const cut = SIDE.indexOf('<dl class="kv rec-kv">'); return send(res, 200, layout(ctx, l.name, `${CR}${SIDE.slice(0, cut)}${SUM}${HIST}<aside class="insp"><section><h2>Aday bilgileri</h2>${SIDE.slice(cut)}</section></aside>`, '/satis')); }
+    send(res, 200, layout(ctx, l.name, `${CR}<div class="rec"><aside class="rec-side">${SIDE}</aside><div class="rec-main">${SUM}${HIST}</div></div>`, '/satis'));
   });
 
   route('POST', '/satis/:id', async (ctx, res, p) => {

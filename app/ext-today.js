@@ -1,6 +1,7 @@
 // Arvela OS — "Bugün" akışı: ekibe ve müşteriye sıradaki işi öne çıkaran aksiyon listesi.
+import { themeOpts } from './ext-settings.js';
 import { siteHealth } from './ext-sites.js';
-import { t, lang } from './i18n.js';
+import { t, lang, locale } from './i18n.js';
 
 const DAY = 86400000;
 const daysSince = (d, now) => d ? Math.max(0, Math.floor((now - new Date(d)) / DAY)) : 0;
@@ -95,7 +96,33 @@ function actionCard(x, h, size) {
   return `<article class="act ${size}${size === 'hero' ? '' : ''}"><div class="act-meta"><span class="badge ${x.tone}">${h(x.tag)}</span><span class="muted">${h(x.meta)}</span></div>
 <${size === 'hero' ? 'h2' : 'h3'}>${h(x.title)}</${size === 'hero' ? 'h2' : 'h3'}>${x.body ? `<p>${h(x.body)}</p>` : ''}<div class="act-btns">${btns}</div></article>`;
 }
+const CATS = { karar: 'Karar', gorev: 'Görev', para: 'Para', satis: 'Satış', site: 'Site', diger: 'Diğer' };
+export function catOf(tag) {
+  const x = String(tag || '').toLocaleLowerCase('tr');
+  if (/onay|karar|forge/.test(x)) return 'karar';
+  if (/görev|sıra sende|aşama|paket/.test(x)) return 'gorev';
+  if (/fatura|havale|ödeme/.test(x)) return 'para';
+  if (/aday|teklif|görüşme|satış/.test(x)) return 'satis';
+  if (/site/.test(x)) return 'site';
+  return 'diger';
+}
 export function registerToday({ all, one, h, layout, need, STAFF, forgePending, extraActions, csrfField }) {
+  // Bugünün akışı: saatli ön görüşmeler, bugünkü hatırlatmalar ve bugün teslim görevler
+  async function dayFlow(a, uid) {
+    const [calls, rems, due] = await Promise.all([
+      all(`SELECT id, name, contact_name, call_at FROM clients WHERE agency_id=$1 AND call_at::date = CURRENT_DATE ORDER BY call_at`, [a]).catch(() => []),
+      all(`SELECT r.id, r.title, r.due_at, r.task_id FROM reminders r WHERE r.agency_id=$1 AND r.status='aktif' AND r.due_at::date = CURRENT_DATE ORDER BY r.due_at`, [a]).catch(() => []),
+      all(`SELECT t.id, t.title, p.name project FROM tasks t JOIN projects p ON p.id=t.project_id WHERE t.agency_id=$1 AND t.assignee_id=$2 AND t.status<>'bitti' AND t.due_date = CURRENT_DATE ORDER BY t.id LIMIT 6`, [a, uid]).catch(() => []),
+    ]);
+    const tm = (d) => new Date(d).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Istanbul' });
+    const now = Date.now(); const items = [];
+    for (const c of calls) items.push({ at: +new Date(c.call_at), time: tm(c.call_at), title: t`Ön görüşme · ${c.name}`, sub: c.contact_name || '15 dk', href: `/satis/${c.id}` });
+    for (const r of rems) items.push({ at: +new Date(r.due_at), time: tm(r.due_at), title: r.title, sub: 'Hatırlatma', href: r.task_id ? `/gorev/${r.task_id}` : '/gorevler' });
+    items.sort((x, y) => x.at - y.at);
+    const next = items.find(x => x.at >= now - 30 * 60000); if (next) next.cur = true;
+    for (const k of due) items.push({ at: Infinity, time: lang() === 'en' ? 'Today' : 'Gün içi', title: k.title, sub: t`Teslim bugün · ${k.project}`, href: `/gorev/${k.id}` });
+    return items.slice(0, 8);
+  }
   return async function todayPage(ctx, res, send) {
     need(ctx, ...STAFF); const a = ctx.user.agency_id; const admin = ctx.user.role === 'admin';
     const period = new Date().toISOString().slice(0, 7);
@@ -119,22 +146,38 @@ export function registerToday({ all, one, h, layout, need, STAFF, forgePending, 
     const d = { sites, tasks, approvals, clients, overdue, notified, draftQuotes, draftInvoices, monthlyDue: md?.n || 0, period, forgePending: fp, sitesSnoozed: !!snooze && new Date(snooze) > new Date() };
     const extra = extraActions ? await extraActions(a).catch(() => []) : [];
     const acts = [...buildActions(d, { admin }), ...extra].sort((x, y) => y.score - x.score); const cf = csrfField ? csrfField(ctx) : ''; for (const x of acts) x.csrf = cf; const pulse = buildPulse(d);
-    const first = ctx.user.name.split(' ')[0]; const summary = daySummary(acts);
+    const first = ctx.user.name.split(' ')[0]; const summary = daySummary(acts); const o = themeOpts(ctx);
+    const [kp, flowItems] = await Promise.all([
+      one(`SELECT (SELECT count(*)::int FROM projects WHERE agency_id=$1 AND status<>'tamamlandi') open_p,
+        (SELECT count(*)::int FROM tasks WHERE agency_id=$1 AND status<>'bitti' AND due_date < CURRENT_DATE) late_t,
+        (SELECT count(*)::int FROM tasks WHERE agency_id=$1 AND status<>'bitti' AND due_date >= CURRENT_DATE AND due_date < CURRENT_DATE + 7) week_t,
+        ${admin ? `(SELECT COALESCE(sum(x.sub + round(x.sub * x.vat_pct / 100)),0)::bigint FROM (SELECT i.vat_pct, COALESCE((SELECT sum(qty*unit_price) FROM invoice_items WHERE invoice_id=i.id),0) sub FROM invoices i WHERE i.agency_id=$1 AND i.status='odendi' AND i.currency='TRY' AND date_trunc('month', i.paid_at)=date_trunc('month', now())) x)` : '0::bigint'} paid`, [a]).catch(() => ({})),
+      dayFlow(a, ctx.user.id),
+    ]);
+    const money = (n) => Number(n || 0).toLocaleString(locale(), { maximumFractionDigits: 0 }) + ' TL';
+    const kpis = [
+      ...(admin ? [['Bu ay tahsil edilen', money(kp?.paid), 'TL faturalar, ödendi']] : [['Tamamladığınız görev', String(done.n), 'toplam']]),
+      ['Açık proje', String(kp?.open_p ?? 0), kp?.late_t ? t`${kp.late_t} görev gecikmiş` : 'gecikme yok'],
+      ['Bu hafta teslim', String(kp?.week_t ?? 0), 'önümüzdeki 7 gün'],
+      ['Müşteride bekleyen', String(approvals.length), 'onay ya da karar'],
+    ];
+    const head = !acts.length ? t`Günaydın ${first}, bugün her şey yolunda.` : lang() === 'en' ? `Good morning ${first}, ${acts.length} things are waiting for you` : `Günaydın ${first}, ${acts.length} iş seni bekliyor`;
+    const cats = {}; for (const x of acts) { x.cat = catOf(x.tag); cats[x.cat] = (cats[x.cat] || 0) + 1; }
+    const fseg = acts.length > 3 ? `<div class="fseg" role="group" aria-label="İşleri süz" data-target="#isler"><button type="button" aria-pressed="true" data-f="">Tümü ${acts.length}</button>${Object.entries(CATS).filter(([k]) => cats[k]).map(([k, v]) => `<button type="button" aria-pressed="false" data-f="${k}">${v} ${cats[k]}</button>`).join('')}</div>` : '';
+    const btn = (x, a, cls) => { const [tt, href, , ext, method] = a; return method === 'post' ? `<form class="inline" method="post" action="${h(href)}">${x.csrf || ''}<button class="btn ${cls}">${h(tt)}</button></form>` : `<a class="btn ${cls}" href="${h(href)}"${ext ? ' target="_blank" rel="noopener"' : ''}>${h(tt)}</a>`; };
+    const row = (x, i) => `<article class="r${i === 0 ? ' top' : ''}" data-cat="${x.cat}"><span class="dot ${x.tone}"></span><div class="rt"><b>${h(x.title)}</b><span class="rs">${h(x.tag)} · ${h(x.meta)}${x.body ? ' — ' + h(x.body) : ''}</span></div><div class="ra">${x.actions.slice(1, 2).map(a => btn(x, a, 'ghost')).join('')}${btn(x, x.actions[0], 'pri')}</div></article>`;
+    const listView = acts.length ? `<section class="sechead"><h2>Sıradaki işler</h2>${fseg}</section><div class="rows" id="isler">${acts.map(row).join('')}</div>`
+      : `<div class="rows"><div class="r"><div class="rt"><b>Sıra boş</b><span class="rs">Yeni bir teklif ya da proje başlatabilirsiniz.</span></div><div class="ra"><a class="btn ghost" href="/musteriler">Müşteriler</a></div></div></div>`;
     const [hero, ...rest] = acts; const pair = rest.slice(0, 2); const later = rest.slice(2);
-    const head = !acts.length ? 'Bugün her şey yolunda.' : lang() === 'en' ? `${acts.length} things to do today.` : `Bugün ${acts.length} iş var.`;
-    const later_ = later.length ? `<section class="later"><p class="eyebrow">Sonra</p>${later.map(x => `<a class="later-row" href="${h(x.actions[0][1])}"${x.actions[0][3] ? ' target="_blank" rel="noopener"' : ''}><span class="dot ${x.tone}"></span><span class="grow"><strong>${h(x.title)}</strong><span class="muted">${h(x.tag)} · ${h(x.meta)}</span></span><span class="chev" aria-hidden="true">›</span></a>`).join('')}</section>` : '';
-    const body = `<div class="today">
-<section class="today-main">
-<div class="today-head"><div><p class="eyebrow">Günaydın, ${h(first)}</p><h1>${h(head)}</h1><p class="muted lead">${acts.length ? 'En önemlisinden başlayın; biri bitince sıradaki öne gelir.' : 'Bekleyen iş yok. Yeni bir teklif ya da proje başlatabilirsiniz.'}</p></div>
-<div class="today-count"><span class="stat">${done.n}</span><span class="muted">tamamladığınız görev</span></div></div>
-${summary ? `<p class="brief"><b>Günün özeti</b> · ${summary.top.map(x => `${h(x.title)} <span class="muted">(${h(x.tag)})</span>`).join(' · ')}${summary.more ? ` · ${t`+${summary.more} iş daha`}` : ''}</p>` : ''}
-${hero ? actionCard(hero, h, 'hero') : `<article class="act hero"><h2>Sıra boş</h2><p>Müşterilere bakmak için <a href="/musteriler">Müşteriler</a>'e geçin.</p></article>`}
-${pair.length ? `<div class="act-pair">${pair.map(x => actionCard(x, h, 'mid')).join('')}</div>` : ''}
-${later_}
-</section>
-<aside class="pulse card"><h2>Müşteri nabzı</h2>${pulse.slice(0, 8).map(p => `<a class="pulse-row" href="/musteriler/${p.id}"><span class="dot ${p.tone}"></span><span class="grow">${h(p.name)}</span><span class="muted">${h(p.label)}</span></a>`).join('') || '<p class="muted">Aktif müşteri yok.</p>'}
-<a class="pulse-all" href="/musteriler">${clients.length} müşterinin tümü</a></aside>
-</div>`;
+    const cardView = `${hero ? actionCard(hero, h, 'hero') : ''}${pair.length ? `<div class="act-pair">${pair.map(x => actionCard(x, h, 'mid')).join('')}</div>` : ''}${later.length ? `<section class="sechead"><h2>Sonra</h2></section><div class="rows">${later.map((x, i) => row(x, i + 1)).join('')}</div>` : ''}`;
+    const tl = flowItems.map(f => `<a class="tl-i${f.cur ? ' cur' : ''}" href="${h(f.href)}"><span class="tm">${h(f.time)}</span><span class="bd"><b>${h(f.title)}</b><span>${h(f.sub)}</span></span></a>`).join('');
+    const body = `<div class="page-head"><div><h1>${h(head)}</h1><p class="ph-meta">${acts.length ? 'Sıralama aciliyete göre; biri bitince sıradaki yukarı çıkar.' : 'Bekleyen iş yok.'}</p></div></div>
+${o.kpi === 'gizle' ? '' : `<div class="kpi">${kpis.map(([k, v, s]) => `<div><span>${k}</span><b>${h(v)}</b><span>${s}</span></div>`).join('')}</div>`}
+${summary && o.ozet !== 'gizle' ? `<p class="brief"><b>Günün özeti</b> · ${summary.top.map(x => `${h(x.title)} <span class="muted">(${h(x.tag)})</span>`).join(' · ')}${summary.more ? ` · ${t`+${summary.more} iş daha`}` : ''}</p>` : ''}
+${o.bugun === 'kartlar' ? cardView : listView}
+<aside class="insp"><section><h2>Bugünün akışı</h2><div class="tl">${tl || '<p class="muted">Bugün için saatli bir iş yok.</p>'}</div></section>
+<section><h2>Müşteri nabzı</h2><div class="pl">${pulse.slice(0, 8).map(p => `<a class="pulse-row" href="/musteriler/${p.id}"><span class="dot ${p.tone}"></span><span class="grow">${h(p.name)}</span><span class="muted">${h(p.label)}</span></a>`).join('') || '<p class="muted">Aktif müşteri yok.</p>'}</div>
+<a class="pulse-all" href="/musteriler">${clients.length} müşterinin tümü</a></section></aside>`;
     send(res, 200, layout(ctx, 'Bugün', body, '/panel'));
   };
 }
