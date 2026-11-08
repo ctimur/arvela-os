@@ -19,7 +19,7 @@ import { registerDecisions, migrateDecisions, parseMultipart, decisionForm, pars
 import { THEMES } from './themes.js';
 import { NAV_CSS, DARK_CSS, NAV_ICON, navGroups } from './ext-look.js';
 
-const VERSION = '0.23.0';
+const VERSION = '0.24.0';
 let settingsApi = null;
 const PORT = Number(process.env.PORT || 3000);
 const SETUP_TOKEN = process.env.SETUP_TOKEN || '';
