@@ -2,6 +2,8 @@
 // İş n8n'e gider (webhook arvela-ai), n8n Claude API'yi çağırır, sonuç /api/v1/ai/result ile döner.
 // Anthropic ile SS-2 sözleşmesi imzalanıp bildirilene kadar müşteri kişisel verisi gönderilmez: metin maskelenir.
 
+import { FORMAT } from './ext-suggest.js';
+
 export const ENGINES = {
   claude: { name: 'Claude (Anthropic)', ready: true, models: { 'claude-sonnet-5-5': 'Claude Sonnet 5.5 (dengeli, önerilen)', 'claude-opus-5-5': 'Claude Opus 5.5 (en güçlü, daha pahalı)', 'claude-haiku-5-5': 'Claude Haiku 5.5 (hızlı, ekonomik)' } },
   openai: { name: 'OpenAI', ready: false, models: {} },
@@ -40,7 +42,7 @@ Köşeli parantezli yer tutucular ([Müşteri], [e-posta] vb.) gizlenmiş kişis
 
 const list = (arr, f = (x) => x) => (Array.isArray(arr) ? arr.map((x) => '- ' + (typeof x === 'string' ? x : f(x))).join('\n') : '');
 // Aşama görevi için istem. piiOk false ise müşteri adı/yetkili ve kişisel veriler maskelenir.
-export function buildPrompt({ task, project, service, playbook, client, piiOk }) {
+export function buildPrompt({ task, project, service, playbook, client, piiOk, extra }) {
   const names = piiOk ? [] : [client?.name, client?.contact_name];
   const m = (x) => (piiOk ? String(x ?? '') : mask(x, names));
   const lines = [
@@ -53,9 +55,9 @@ export function buildPrompt({ task, project, service, playbook, client, piiOk })
     `Aşama: ${m(String(task?.title || '').replace(/^Yapay zekâ:\s*/, ''))}`,
     task?.description ? `Aşama tanımı:\n${m(task.description)}` : '',
     project?.description ? `Proje notları:\n${m(project.description)}` : '',
-    'Bu aşamanın çıktısını taslak olarak hazırla.',
+    extra ? `Ek istek: ${m(extra)}` : 'Bu aşamanın çıktısını taslak olarak hazırla.',
   ];
-  return { system: SYSTEM, prompt: lines.filter(Boolean).join('\n\n').slice(0, 12000), masked: !piiOk };
+  return { system: SYSTEM + FORMAT, prompt: lines.filter(Boolean).join('\n\n').slice(0, 12000), masked: !piiOk };
 }
 
 // Proje için motor önerisi istemi (yalnız aşama adları ve rolleri; müşteri bilgisi yok).
@@ -66,6 +68,7 @@ export function suggestPrompt({ stages, service }) {
 
 export function registerAi(d) {
   const { route, all, one, q, need, layout, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, postHook, api, apiBody } = d;
+  const onResult = (...a) => (d.onResult ? d.onResult(...a) : null);
   const get = async (a, k) => (await one('SELECT value FROM settings WHERE agency_id=$1 AND key=$2', [a, k]))?.value ?? DEFAULTS[k];
   const put = (a, k, v) => q(`INSERT INTO settings (agency_id, key, value) VALUES ($1,$2,$3) ON CONFLICT (agency_id, key) DO UPDATE SET value=EXCLUDED.value`, [a, k, v]);
   const note = (taskId, body) => q('INSERT INTO task_comments (task_id, user_id, body) VALUES ($1,NULL,$2)', [taskId, ('Arvela OS · ' + body).slice(0, 8000)]);
@@ -73,7 +76,7 @@ export function registerAi(d) {
   async function config(a) { const [enabled, auto, model, piiOk] = await Promise.all(['ai.enabled', 'ai.auto', 'ai.model', 'ai.pii_ok'].map(k => get(a, k))); return { enabled: enabled === '1', auto: auto === '1', model, piiOk: piiOk === '1' }; }
 
   // Görev için taslak işi oluştur ve n8n'e gönder.
-  async function draft(ctx, taskId) {
+  async function draft(ctx, taskId, extra) {
     const a = ctx.user.agency_id; const cfg = await config(a);
     if (!cfg.enabled) throw new HttpError(400, 'Yapay zekâ kapalı: Ayarlar → Yapay zekâ.');
     const t = await one(`SELECT t.*, p.name pname, p.description pdesc, p.playbook, p.ai_engine, p.client_id, s.name service FROM tasks t JOIN projects p ON p.id=t.project_id LEFT JOIN services s ON s.id=p.service_id WHERE t.id=$1 AND t.agency_id=$2`, [taskId, a]);
@@ -81,13 +84,13 @@ export function registerAi(d) {
     if (await one(`SELECT 1 FROM ai_jobs WHERE task_id=$1 AND status IN ('sirada','gonderildi') AND created_at > now() - interval '15 minutes'`, [t.id])) throw new HttpError(409, 'Bu görev için bir taslak zaten hazırlanıyor.');
     const client = await one('SELECT name, contact_name FROM clients WHERE id=$1', [t.client_id]);
     const pb = t.playbook || {};
-    const pr = buildPrompt({ task: t, project: { name: t.pname, description: t.pdesc }, service: t.service, playbook: pb, client, piiOk: cfg.piiOk });
+    const pr = buildPrompt({ task: t, project: { name: t.pname, description: t.pdesc }, service: t.service, playbook: pb, client, piiOk: cfg.piiOk, extra });
     const job = await one(`INSERT INTO ai_jobs (agency_id, kind, task_id, project_id, engine, model, masked, prompt, created_by) VALUES ($1,'taslak',$2,$3,'claude',$4,$5,$6,$7) RETURNING id`,
       [a, t.id, t.project_id, cfg.model, pr.masked, pr.prompt, ctx.user.id || null]);
     return dispatch(ctx, job.id, pr, cfg.model, t.id);
   }
   async function dispatch(ctx, jobId, pr, model, taskId) {
-    const ok = await postHook(ctx.user.agency_id, 'arvela-ai', 'ai.request', { job_id: jobId, model, max_tokens: 4000, system: pr.system, prompt: pr.prompt }, { job_id: jobId, model, masked: pr.masked });
+    const ok = await postHook(ctx.user.agency_id, 'arvela-ai', 'ai.request', { job_id: jobId, model, max_tokens: 6000, system: pr.system, prompt: pr.prompt }, { job_id: jobId, model, masked: pr.masked });
     await q(`UPDATE ai_jobs SET status=$1, error=$2 WHERE id=$3`, [ok ? 'gonderildi' : 'hata', ok ? null : 'n8n "Yapay zekâ (Claude)" bağlantısına ulaşılamadı. Otomasyonlar sayfasından bağlantının etkin olduğunu kontrol edin.', jobId]);
     if (taskId) await note(taskId, ok ? `Yapay zekâ taslağı istendi (Claude, iş #${jobId}${pr.masked ? ', kişisel veriler maskelendi' : ''}). Taslak gelince bu görevin notlarına yazılır ve görev "İncelemede" olur.` : `Yapay zekâ taslağı gönderilemedi (iş #${jobId}): n8n bağlantısı yok.`);
     await audit(ctx, 'ai.request', { job: jobId, task: taskId || undefined, ok });
@@ -110,9 +113,11 @@ export function registerAi(d) {
     if (job.status === 'bitti') return { id: job.id, status: job.status };
     const ok = b.ok !== false && b.ok !== 'false' && nn(b.text);
     await q(`UPDATE ai_jobs SET status=$1, result=$2, error=$3, usage=$4, done_at=now() WHERE id=$5`, [ok ? 'bitti' : 'hata', ok ? String(b.text).slice(0, 60000) : null, ok ? null : String(b.error || 'Boş yanıt').slice(0, 1000), b.usage && typeof b.usage === 'object' ? b.usage : null, job.id]);
+    const sx = ok ? await onResult(job, String(b.text)) : null; const shown = sx ? sx.text : String(b.text || '');
+    if (sx) await q('UPDATE ai_jobs SET result=$1 WHERE id=$2', [shown.slice(0, 60000), job.id]);
     if (job.task_id) {
       if (ok) {
-        await note(job.task_id, `Yapay zekâ taslağı (${job.model}, iş #${job.id}) — kontrol edip düzeltin, uygunsa görevi "Bitti" yapın:\n\n${String(b.text).slice(0, 7000)}`);
+        await note(job.task_id, `Yapay zekâ taslağı (${job.model}, iş #${job.id}) — kontrol edip düzeltin, uygunsa görevi "Bitti" yapın.${sx?.count ? ` Claude ${sx.count} öneri de gönderdi; görev sayfasında "Claude'un önerileri" bölümünden seçip uygulayabilirsiniz.` : ''}\n\n${shown.slice(0, 7000)}`);
         await q(`UPDATE tasks SET status='incelemede' WHERE id=$1 AND status IN ('yapilacak','yapiliyor')`, [job.task_id]);
       } else await note(job.task_id, `Yapay zekâ taslağı alınamadı (iş #${job.id}): ${String(b.error || 'boş yanıt').slice(0, 300)}. Görevi elle yürütün ya da yeniden deneyin.`);
       await audit(ctx, 'task.update', { id: job.task_id, ai: ok ? 'draft' : 'error', via: 'api' }); // sorumluya n8n görev bildirimi
