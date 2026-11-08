@@ -1,7 +1,8 @@
 import { LOOK_JS } from './ext-look.js';
 // Arvela OS — iş yönetimi: projeler, görevler (açıklama, yorum, düzenleme), onaylar, hizmet kayıtları ve arama.
 import { parseRequest, decisionForm, KINDS } from './ext-decisions.js';
-import { locale, t } from './i18n.js';
+import { locale, t, t as tr } from './i18n.js';
+import { themeOpts } from './ext-settings.js';
 // Yönetici ve çalışan tüm iş ayrıntılarını görüp düzenler; freelancer yalnız kendine atanan görevi görür,
 // durumunu değiştirir ve not yazar.
 
@@ -117,35 +118,45 @@ ${rows.map(p => `<tr><td><a href="/projeler/${p.id}"><strong>${h(p.name)}</stron
       ctx.user.role === 'admin' ? all(`SELECT id, name FROM clients WHERE agency_id=$1 ORDER BY name`, [a]) : [],
       one(`SELECT count(*)::int n FROM tasks WHERE project_id=$1`, [p.id]),
     ]);
-    const f = csrfField(ctx); const done = tasks.filter(t => t.status === 'bitti').length; const tablo = qp(ctx, 'gorunum') === 'tablo';
+    const f = csrfField(ctx); const done = tasks.filter(t => t.status === 'bitti').length;
     const subs = {}; for (const t of tasks) if (t.parent_id) (subs[t.parent_id] ||= []).push(t);
     const col = (st) => { const list = tasks.filter(t => t.status === st && !t.parent_id); return `<section class="kcol" aria-label="${TK_ST[st]}"><h3>${TK_ST[st]} <span class="muted">${list.length}</span></h3>
 ${list.map(t => `<article class="kcard${isLate(t) ? ' is-late' : ''}"><a class="kt" href="/gorev/${t.id}">${t.priority === 'yuksek' ? '<span class="badge bad">Öncelikli</span> ' : ''}${h(t.title)}</a>
 <div class="kmeta">${t.stage_no != null ? `<span>Aşama ${t.stage_no}</span>` : ''}${t.ready_at && t.status !== 'bitti' ? '<span class="badge warn">Sırada</span>' : ''}<span>${h(t.assignee || 'Atanmadı')}</span><span>${dueTxt(t)}</span>${t.notes ? `<span>${t.notes} not</span>` : ''}${subs[t.id] ? `<span>↳ ${subs[t.id].filter(x => x.status === 'bitti').length}/${subs[t.id].length} alt görev</span>` : ''}</div>${statusForm(ctx, t, '')}</article>`).join('') || '<p class="muted kempty">Boş</p>'}</section>`; };
+    const view = ['liste', 'pano', 'tablo'].includes(qp(ctx, 'gorunum')) ? qp(ctx, 'gorunum') : (themeOpts(ctx).proje || 'liste');
+    const stages = tasks.filter(t => t.stage_no != null && !t.parent_id).sort((x, y) => x.stage_no - y.stage_no);
+    const curStage = stages.find(t => t.status !== 'bitti');
+    const stepper = stages.length > 1 ? `<nav class="stepper" aria-label="Aşamalar"><ol>${stages.map(t => `<li class="${t.status === 'bitti' ? 'done' : t === curStage ? 'cur' : ''}"${t === curStage ? ' aria-current="step"' : ''}><i aria-hidden="true">${t.status === 'bitti' ? '✓' : ''}</i><a href="/gorev/${t.id}" title="${h(t.title)}">${t.stage_no}. ${h(t.title)}</a></li>`).join('')}</ol></nav>` : '';
+    const chips = (t) => `${badge(TK_ST[t.status], tkTone[t.status])}${t.ready_at && t.status === 'yapilacak' ? ' <span class="badge warn">Sırada</span>' : ''}<span class="chipd${isLate(t) ? ' late' : ''}">${t.due_date ? fmtDate(t.due_date).replace(/\.\d{4}$/, '') : '—'}</span>`;
+    const trow = (t) => `<div class="r${isLate(t) ? ' is-late' : ''}"><span class="no">${t.stage_no ?? '•'}</span><div class="rt"><a class="t" href="/gorev/${t.id}">${t.priority === 'yuksek' ? '<span class="badge bad">Öncelikli</span> ' : ''}${h(t.title)}</a><span class="rs">${h(t.assignee || 'Atanmadı')}${subs[t.id] ? ` · ↳ ${subs[t.id].filter(x => x.status === 'bitti').length}/${subs[t.id].length} alt görev` : ''}${t.notes ? ` · ${t.notes} not` : ''}</span></div><div class="ra">${chips(t)}</div></div>`;
+    const top = tasks.filter(t => !t.parent_id);
+    const grp = [['Şu an', top.filter(t => t.status === 'yapiliyor' || t.status === 'incelemede' || (t.status === 'yapilacak' && t === curStage))],
+      ['Sırada', top.filter(t => t.status === 'yapilacak' && t !== curStage)], ['Tamamlandı', top.filter(t => t.status === 'bitti')]];
+    const listView = top.length ? `<div class="rows">${grp.filter(([, l]) => l.length).map(([n, l]) => `<div class="rh">${n} · ${l.length}</div>${l.map(trow).join('')}`).join('')}</div>` : '<div class="rows"><div class="r"><div class="rt"><b>Henüz görev yok</b><span class="rs">Hizmet kitabından başlatın ya da ilk görevi ekleyin.</span></div></div></div>';
+    const tableView = `<div class="tbl"><table><tr><th>Görev</th><th>Aşama</th><th>Sorumlu</th><th>Teslim</th><th>Durum</th><th>Öncelik</th><th>Not</th></tr>
+${tasks.map(t => `<tr${isLate(t) ? ' class="is-late"' : ''}><td><a href="/gorev/${t.id}">${t.parent_id ? '↳ ' : ''}${h(t.title)}</a></td><td data-sort="${t.stage_no ?? ''}">${t.stage_no != null ? t.stage_no : '—'}</td><td>${h(t.assignee || 'Atanmadı')}</td><td data-sort="${t.due_date ? new Date(t.due_date).toISOString().slice(0, 10) : ''}">${dueTxt(t)}</td><td>${badge(TK_ST[t.status], tkTone[t.status])}</td><td>${t.priority === 'yuksek' ? 'Öncelikli' : 'Normal'}</td><td>${t.notes || 0}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">Henüz görev yok.</td></tr>'}</table></div>`;
+    const vlink = (k, n) => `<a href="/projeler/${p.id}?gorunum=${k}"${view === k ? ' class="on" aria-current="page"' : ''}>${n}</a>`;
+    const crew = [...new Set(tasks.map(t => t.assignee).filter(Boolean))];
     send(res, 200, layout(ctx, p.name, `<nav class="crumb"><a href="/projeler">Projeler</a> › <a href="/musteriler/${p.client_id}">${h(p.client)}</a></nav>
-<div class="page-head"><div><h1>${h(p.name)}</h1><div class="chips">${badge(PR_ST[p.status], prTone[p.status])}<span class="muted">Teslim ${fmtDate(p.due_date)}</span><span class="muted">${done}/${tasks.length} görev tamam</span></div></div>
-<div class="act-btns"><a class="btn gold" href="#yeni-gorev" data-open="yeni-gorev">+ Görev</a><a class="btn ghost" href="#proje-bilgileri" data-open="proje-duzenle">Düzenle</a></div></div>
-<div class="prog big" role="img" aria-label="${done}/${tasks.length} görev tamam"><span style="width:${tasks.length ? Math.round(100 * done / tasks.length) : 0}%"></span></div>
-${flowBanner ? flowBanner(ctx, p, tasks) : ''}
-<div class="ptbl-actions"><h2>Görevler</h2><nav class="viewseg" aria-label="Görünüm"><a href="/projeler/${p.id}"${tablo ? '' : ' class="on" aria-current="page"'}>Pano</a><a href="/projeler/${p.id}?gorunum=tablo"${tablo ? ' class="on" aria-current="page"' : ''}>Tablo</a></nav></div>
-${tablo ? `<div class="tbl"><table><tr><th>Görev</th><th>Aşama</th><th>Sorumlu</th><th>Teslim</th><th>Durum</th><th>Öncelik</th><th>Not</th></tr>
-${tasks.map(t => `<tr${isLate(t) ? ' class="is-late"' : ''}><td><a href="/gorev/${t.id}">${t.parent_id ? '↳ ' : ''}${h(t.title)}</a></td><td data-sort="${t.stage_no ?? ''}">${t.stage_no != null ? t.stage_no : '—'}</td><td>${h(t.assignee || 'Atanmadı')}</td><td data-sort="${t.due_date ? new Date(t.due_date).toISOString().slice(0, 10) : ''}">${dueTxt(t)}</td><td>${badge(TK_ST[t.status], tkTone[t.status])}</td><td>${t.priority === 'yuksek' ? 'Öncelikli' : 'Normal'}</td><td>${t.notes || 0}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">Henüz görev yok.</td></tr>'}</table></div>` : `<div class="kanban">${Object.keys(TK_ST).map(col).join('')}</div>`}
+<div class="page-head"><div><h1>${h(p.name)}</h1><p class="ph-meta">${badge(PR_ST[p.status], prTone[p.status])}${curStage ? `<span>${tr`Aşama ${curStage.stage_no}/${stages.length}`}</span>` : ''}<span>Teslim ${fmtDate(p.due_date)}</span><span>${done}/${tasks.length} görev tamam</span></p></div>
+<div class="act-btns"><nav class="viewseg" aria-label="Görünüm">${vlink('liste', 'Liste')}${vlink('pano', 'Pano')}${vlink('tablo', 'Tablo')}</nav><a class="btn gold" href="#yeni-gorev" data-open="yeni-gorev">+ Görev</a></div></div>
+${stepper || `<div class="prog big" role="img" aria-label="${done}/${tasks.length} görev tamam"><span style="width:${tasks.length ? Math.round(100 * done / tasks.length) : 0}%"></span></div>`}
+${view === 'pano' ? `<div class="kanban">${Object.keys(TK_ST).map(col).join('')}</div>` : view === 'tablo' ? tableView : listView}
 <details class="card add" id="yeni-gorev"><summary>Yeni görev ekle</summary><form class="stack" method="post" action="/projeler/${p.id}/gorev">${f}
 <div class="row"><label class="wide">Görev<input name="title" required></label><label>Sorumlu<select name="assignee_id">${peopleOpts(team, null)}</select></label><label>Teslim<input type="date" name="due_date"></label><label>Öncelik<select name="priority">${opts(PRIO, 'normal')}</select></label></div>
 <label>Açıklama<textarea name="description" rows="2"></textarea></label><div><button class="gold">Görevi ekle</button></div></form></details>
-<div class="two">
-<section class="card"><h2>Onaylar</h2>${aps.map(x => `<a class="line" href="/onaylar/${x.id}"><span class="grow"><strong>${h(x.title)}</strong><span class="muted">${fmtDate(x.decided_at || x.created_at)}${x.comment ? ' · ' + h(x.comment) : ''}</span></span>${badge(AP_ST[x.status], apTone(x.status))}</a>`).join('') || '<p class="muted">Bu projeye bağlı onay yok.</p>'}
-<details class="add"><summary>Müşteriye onaya gönder</summary><form class="stack" method="post" action="/projeler/${p.id}/onay">${f}<label>Konu<input name="title" required></label><label>Açıklama ya da bağlantı<textarea name="body" rows="2"></textarea></label>${decisions ? decisions.requestFields() : ''}<div><button class="gold">Onaya gönder</button></div></form></details></section>
-<section class="card" id="proje-bilgileri"><h2>Proje bilgileri</h2><dl class="kv"><dt>Müşteri</dt><dd><a href="/musteriler/${p.client_id}">${h(p.client)}</a></dd><dt>Durum</dt><dd>${badge(PR_ST[p.status], prTone[p.status])}</dd><dt>Teslim</dt><dd>${fmtDate(p.due_date)}</dd></dl>
+${projectExtra ? await projectExtra(ctx, p).catch(() => '') : ''}
+<aside class="insp">${flowBanner ? flowBanner(ctx, p, tasks) : ''}
+<section id="proje-bilgileri"><h2>Proje bilgileri</h2><dl class="kv"><dt>Müşteri</dt><dd><a href="/musteriler/${p.client_id}">${h(p.client)}</a></dd><dt>Durum</dt><dd>${badge(PR_ST[p.status], prTone[p.status])}</dd><dt>İlerleme</dt><dd>${done}/${tasks.length} görev${tasks.length ? ` · %${Math.round(100 * done / tasks.length)}` : ''}</dd><dt>Teslim</dt><dd>${fmtDate(p.due_date)}</dd>${crew.length ? `<dt>Ekip</dt><dd>${crew.map(x => h(x)).join(', ')}</dd>` : ''}</dl>
 ${p.description ? `<p class="desc">${h(p.description)}</p>` : ''}
 <details class="add" id="proje-duzenle"><summary>Düzenle</summary><form class="stack" method="post" action="/projeler/${p.id}">${f}
 <label>Proje adı<input name="name" value="${h(p.name)}" required></label>
-<div class="row"><label>Durum<select name="status">${opts(PR_ST, p.status)}</select></label><label>Teslim<input type="date" name="due_date" value="${dateVal(p.due_date)}"></label>
-${clients.length ? `<label>Müşteri<select name="client_id">${clients.map(c => `<option value="${c.id}"${c.id === p.client_id ? ' selected' : ''}>${h(c.name)}</option>`).join('')}</select></label>` : ''}</div>
+<label>Durum<select name="status">${opts(PR_ST, p.status)}</select></label><label>Teslim<input type="date" name="due_date" value="${dateVal(p.due_date)}"></label>
+${clients.length ? `<label>Müşteri<select name="client_id">${clients.map(c => `<option value="${c.id}"${c.id === p.client_id ? ' selected' : ''}>${h(c.name)}</option>`).join('')}</select></label>` : ''}
 <label>Açıklama<textarea name="description" rows="4">${h(p.description)}</textarea></label><div><button>Kaydet</button></div></form>
 ${ctx.user.role === 'admin' ? `<details class="danger"><summary>Projeyi sil</summary><form method="post" action="/projeler/${p.id}/sil" data-confirm="Proje ve ${cnt.n} görevi kalıcı olarak silinsin mi?">${f}<p class="muted">Projenin ${cnt.n} görevi ve notları da silinir; bağlı onaylar müşteride kalır.</p><button class="danger">Kalıcı olarak sil</button></form></details>` : ''}</details></section>
-</div>
-${projectExtra ? await projectExtra(ctx, p).catch(() => '') : ''}</div>`, '/projeler'));
+<section><h2>Onaylar</h2>${aps.map(x => `<a class="line" href="/onaylar/${x.id}"><span class="grow"><strong>${h(x.title)}</strong><span class="muted">${fmtDate(x.decided_at || x.created_at)}${x.comment ? ' · ' + h(x.comment) : ''}</span></span>${badge(AP_ST[x.status], apTone(x.status))}</a>`).join('') || '<p class="muted">Bu projeye bağlı onay yok.</p>'}
+<details class="add"><summary>Müşteriye onaya gönder</summary><form class="stack" method="post" action="/projeler/${p.id}/onay">${f}<label>Konu<input name="title" required></label><label>Açıklama ya da bağlantı<textarea name="body" rows="2"></textarea></label>${decisions ? decisions.requestFields() : ''}<div><button class="gold">Onaya gönder</button></div></form></details></section></aside>`, '/projeler'));
   });
 
   route('POST', '/projeler/:id', async (ctx, res, prm) => {
@@ -207,14 +218,16 @@ ${projectExtra ? await projectExtra(ctx, p).catch(() => '') : ''}</div>`, '/proj
 <label>Açıklama<textarea name="description" rows="5" placeholder="Ne yapılacak, bağlantılar, kabul ölçütü">${h(t.description)}</textarea></label><div><button>Kaydet</button></div></form>
 ${staff ? `<details class="danger"><summary>Görevi sil</summary><form method="post" action="/gorev/${t.id}/sil" data-confirm="Görev ve notları kalıcı olarak silinsin mi?">${f}<p class="muted">Görev ve ${notes.length} not kalıcı olarak silinir.</p><button class="danger">Kalıcı olarak sil</button></form></details>` : ''}</details>`
       : descView(t.description);
-    send(res, 200, layout(ctx, t.title, `<nav class="crumb">${staff ? `<a href="/projeler/${t.project_id}">${h(t.project)}</a> › <a href="/musteriler/${t.client_id}">${h(t.client)}</a>` : `<a href="/gorevler">Görevlerim</a> › ${h(t.project)}`}</nav>
-<div class="page-head"><div><h1>${h(t.title)}</h1><div class="chips">${t.priority === 'yuksek' ? badge('Öncelikli', 'bad') : ''}<span class="muted">${h(t.assignee || 'Atanmadı')}</span><span class="muted">Teslim ${dueTxt(t)}</span></div></div></div>
-${statusBtns(ctx, t, 'task')}
-<div class="two wide-first"><div class="stack-col"><section class="card"><h2>Ne yapılacak</h2>${editForm}</section>${flowCard}</div>
+    send(res, 200, layout(ctx, t.title, `<nav class="crumb">${staff ? `<a href="/musteriler/${t.client_id}">${h(t.client)}</a> › <a href="/projeler/${t.project_id}">${h(t.project)}</a>` : `<a href="/gorevler">Görevlerim</a> › ${h(t.project)}`}</nav>
+<div class="page-head"><div><h1>${h(t.title)}</h1><p class="ph-meta">${t.priority === 'yuksek' ? badge('Öncelikli', 'bad') : ''}${t.stage_no != null ? `<span>${tr`Aşama ${t.stage_no}`}</span>` : ''}<span>${h(t.assignee || 'Atanmadı')}</span><span>Teslim ${dueTxt(t)}</span></p></div></div>
+${statusBtns(ctx, t, 'task')}<p class="hint">Durumu tek dokunuşla değiştirin. "Bitti" dediğinizde akıştaki sıradaki aşama açılır ve sorumlusuna haber gider.</p>
+<div class="cols2"><div class="stack-col"><section class="card"><h2>Ne yapılacak</h2>${editForm}</section>${flowCard}</div>
 <section class="card"><h2>Notlar <span class="muted">${notes.length}</span></h2>
 <form class="stack" method="post" action="/gorev/${t.id}/not">${f}<label>Not ekle<textarea name="body" rows="2" required placeholder="İlerleme, engel, bağlantı…"></textarea></label><div><button class="gold">Notu kaydet</button></div></form>
 ${notes.map(n => { const sys = String(n.body).startsWith('Arvela OS · '); const body = sys ? String(n.body).slice(12) : String(n.body); const long = body.length > 600;
-  return `<div class="note${sys ? ' sys' : ''}"><div class="note-h"><strong>${h(n.author && !sys ? n.author : sys ? 'Arvela OS' : n.author || 'Silinmiş kullanıcı')}</strong><span class="muted">${new Date(n.created_at).toLocaleString(locale(), { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Istanbul' })}</span></div>${long ? `<p>${h(body.slice(0, 420))}…</p><details class="more"><summary>Tamamını göster</summary><p>${h(body)}</p></details>` : `<p>${h(body)}</p>`}</div>`; }).join('') || '<p class="muted">Henüz not yok. İlerlemeyi, engelleri ve bağlantıları buraya yazın.</p>'}</section></div>`, staff ? '/projeler' : '/gorevler'));
+  return `<div class="note${sys ? ' sys' : ''}"><div class="note-h"><strong>${h(n.author && !sys ? n.author : sys ? 'Arvela OS' : n.author || 'Silinmiş kullanıcı')}</strong><span class="muted">${new Date(n.created_at).toLocaleString(locale(), { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Istanbul' })}</span></div>${long ? `<p>${h(body.slice(0, 420))}…</p><details class="more"><summary>Tamamını göster</summary><p>${h(body)}</p></details>` : `<p>${h(body)}</p>`}</div>`; }).join('') || '<p class="muted">Henüz not yok. İlerlemeyi, engelleri ve bağlantıları buraya yazın.</p>'}</section></div>
+<aside class="insp"><section><h2>Görev bilgileri</h2><dl class="kv"><dt>Durum</dt><dd>${badge(TK_ST[t.status], tkTone[t.status])}</dd><dt>Sorumlu</dt><dd>${h(t.assignee || 'Atanmadı')}</dd><dt>Teslim</dt><dd>${dueTxt(t)}</dd><dt>Öncelik</dt><dd>${PRIO[t.priority] || 'Normal'}</dd>${t.stage_no != null ? `<dt>Aşama</dt><dd>${t.stage_no}</dd>` : ''}<dt>Proje</dt><dd>${staff ? `<a href="/projeler/${t.project_id}">${h(t.project)}</a>` : h(t.project)}</dd>${staff ? `<dt>Müşteri</dt><dd><a href="/musteriler/${t.client_id}">${h(t.client)}</a></dd>` : ''}<dt>Not</dt><dd>${notes.length}</dd></dl></section>
+<section><h2>Kısayollar</h2><p class="muted">⌘K ya da / — ara ve komut · Esc — kapat</p></section></aside>`, staff ? '/projeler' : '/gorevler'));
   });
 
   route('POST', '/gorev/:id', async (ctx, res, prm) => {

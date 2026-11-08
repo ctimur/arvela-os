@@ -149,7 +149,7 @@ function afterHead(html) {
 
 // Sayfa gövdesine "Ayrıntılar" düğmesini ve bilgi katmanını yerleştirir. Bilgi katmanı (sayfa rehberi, bölüm açıklamaları)
 // her zaman HTML'de vardır; görünürlüğü <body class="info-on"> belirler (düğme anında açar/kapatır, tercih çerezde kalır).
-export function applyGuide(html, { path, lang = 'tr', M1 = '', M2 = '' }) {
+export function applyGuide(html, { path, lang = 'tr', M1 = '', M2 = '', btn: withBtn = true }) {
   const mark = (s) => M1 + esc(s) + M2;
   const g = findPage(path);
   if (!g) return html;
@@ -158,7 +158,8 @@ export function applyGuide(html, { path, lang = 'tr', M1 = '', M2 = '' }) {
   const box = `<section class="guide" id="sayfa-bilgi" aria-label="${en ? 'Page guide' : 'Sayfa rehberi'}"><div><p class="eyebrow">${mark(en ? 'What this page is for' : 'Bu sayfa ne işe yarar')}</p><p>${mark(pick(g.ne, lang))}</p></div><div><p class="eyebrow">${mark(en ? 'What happens next' : 'Sonra ne olur')}</p><p>${mark(pick(g.sonra, lang))}</p></div></section>`;
   const at = afterHead(html);
   let out;
-  if (at < 0) out = `<div class="info-bar">${btn}</div>` + box + html;
+  if (!withBtn) out = at < 0 ? box + html : html.slice(0, at) + box + html.slice(at);
+  else if (at < 0) out = `<div class="info-bar">${btn}</div>` + box + html;
   else {
     const head = html.slice(0, at - 6); // page-head'in kapanış </div>'inden önce: düğme sağ üstte
     out = head + btn + '</div>' + box + html.slice(at);

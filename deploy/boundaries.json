@@ -34,13 +34,15 @@
  ],
  "ext-today.js": [
   "  for (const s of d.sites || []) if (s.client_id) { const hl = siteHealth(s); if (hl.label === 'Acil') put(s.client_id, s.client, 4, 'bad', s.ssl_status === 'expired' ? 'SSL doldu' : s.ssl_status === 'failed' ? 'SSL yok' : 'Site sorunu'); else if (hl.label === 'Güncelleme') put(s.client_id, s.client, 2, 'warn', 'Güncelleme'); }",
-  "<aside class=\"pulse card\"><h2>Müşteri nabzı</h2>${pulse.slice(0, 8).map(p => `<a class=\"pulse-row\" href=\"/musteriler/${p.id}\"><span class=\"dot ${p.tone}\"></span><span class=\"grow\">${h(p.name)}</span><span class=\"muted\">${h(p.label)}</span></a>`).join('') || '<p class=\"muted\">Aktif müşteri yok.</p>'}"
+  "      admin ? one(`SELECT count(DISTINCT cs.client_id)::int n FROM client_services cs JOIN services s ON s.id=cs.service_id",
+  "<aside class=\"insp\"><section><h2>Bugünün akışı</h2><div class=\"tl\">${tl || '<p class=\"muted\">Bugün için saatli bir iş yok.</p>'}</div></section>"
  ],
  "ext-work.js": [
   "  // Görev durumu için tek dokunuşluk düğmeler (seçili olan vurgulu)",
   "        ORDER BY t.stage_no NULLS LAST, (t.priority='yuksek') DESC, t.due_date NULLS LAST, t.id`, [p.id]),",
-  "${tablo ? `<div class=\"tbl\"><table><tr><th>Görev</th><th>Aşama</th><th>Sorumlu</th><th>Teslim</th><th>Durum</th><th>Öncelik</th><th>Not</th></tr>",
+  "<div class=\"act-btns\"><nav class=\"viewseg\" aria-label=\"Görünüm\">${vlink('liste', 'Liste')}${vlink('pano', 'Pano')}${vlink('tablo', 'Tablo')}</nav><a class=\"btn gold\" href=\"#yeni-gorev\" data-open=\"yeni-gorev\">+ Görev</a></div></div>",
   "    await audit(ctx, 'project.delete', { id: p.id, name: p.name }); redirect(res, `/musteriler/${p.client_id}`);",
+  "      : descView(t.description);",
   "    await q('UPDATE tasks SET status=$1 WHERE id=$2', [st, t.id]);",
   "    const prjs = await all('SELECT id, name FROM projects WHERE client_id=$1 ORDER BY created_at DESC', [x.client_id]);",
   "        all(`SELECT p.id, p.name, c.name client FROM projects p JOIN clients c ON c.id=p.client_id WHERE p.agency_id=$1 AND (p.name ILIKE $2 OR p.description ILIKE $2) ORDER BY p.id DESC LIMIT 20`, [a, L]),"
@@ -94,7 +96,9 @@
  "ext-retention.js": [
   "    await put(a, 'lead_months', clampMonths(b.lead_months, DEFAULTS.lead_months)); await put(a, 'audit_months', clampMonths(b.audit_months, DEFAULTS.audit_months)); await put(a, 'auto', b.auto ? '1' : '0');"
  ],
- "themes.js": [],
+ "themes.js": [
+  "      if (o.menuGrup === 'acik') css += `.ng-h{pointer-events:none}.ng-h svg{display:none}.ng.shut .ng-b{grid-template-rows:1fr;opacity:1}.ng.shut .ng-i a{visibility:visible}`;"
+ ],
  "ext-settings.js": [],
  "ext-playbooks.js": [
   "<section class=\"card\"><h2>Aşamalar</h2><div class=\"tbl\"><table><tr><th>#</th><th>Aşama</th><th>Kim</th><th>Otomasyon</th><th>Gün</th><th>Karar</th><th>Çıktı ve kabul</th></tr>",

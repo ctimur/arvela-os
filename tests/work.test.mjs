@@ -51,7 +51,9 @@ for (const [k, p] of [['GET /projeler', {}], ['GET /projeler/:id', { id: '2' }],
   const r = await run(k, ctx('admin'), p); assert.ok(r.html.length > 200, k); console.log('ok', k);
 }
 let r = await run('GET /projeler/:id', ctx('admin'), { id: '2' });
-assert.ok(r.html.includes('Projeyi sil') && r.html.includes('class="kanban"'));
+assert.ok(r.html.includes('Projeyi sil') && r.html.includes('class="rows"') && r.html.includes('<aside class="insp">'), 'varsayılan liste görünümü, sağ panel');
+r = await run('GET /projeler/:id', ctx('admin', 1, { qs: 'gorunum=pano' }), { id: '2' }); assert.ok(r.html.includes('class="kanban"'), 'pano');
+r = await run('GET /projeler/:id', ctx('admin', 1, { qs: 'gorunum=tablo' }), { id: '2' }); assert.ok(r.html.includes('<th>Aşama</th>'), 'tablo');
 r = await run('GET /projeler/:id', ctx('staff'), { id: '2' }); assert.ok(!r.html.includes('Projeyi sil'), 'çalışan projeyi silemez');
 r = await run('GET /gorev/:id', ctx('admin'), { id: '5' }); assert.ok(r.html.includes('name="assignee_id"') && r.html.includes('Taslak hazır') && r.html.includes('gecikti'));
 r = await run('GET /gorev/:id', ctx('freelancer', 7), { id: '5' }); assert.ok(!r.html.includes('name="assignee_id"') && r.html.includes('/not'), 'freelancer yalnız durum + not');
