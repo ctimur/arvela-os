@@ -40,8 +40,9 @@ export function buildActions(d, { admin, now = Date.now() }) {
   for (const k of d.tasks || []) {
     const late = k.due_date && new Date(k.due_date) < new Date(new Date(now).toDateString());
     const today = k.due_date && new Date(k.due_date).toDateString() === new Date(now).toDateString();
-    out.push({ score: late ? 75 : today ? 65 : 40, tone: late ? 'bad' : today ? 'warn' : '', tag: late ? 'Görev · gecikti' : today ? 'Görev · bugün' : 'Görev',
-      meta: t`${k.client} · ${k.project}`, title: k.title, body: '',
+    const ready = !!k.ready_at && k.stage_no != null; // akış bu aşamayı açtı: sıra bu kişide
+    out.push({ score: late ? 75 : today ? 65 : ready ? 70 : 40, tone: late ? 'bad' : today || ready ? 'warn' : '', tag: late ? 'Görev · gecikti' : ready ? 'Sıra sende · aşama' : today ? 'Görev · bugün' : 'Görev',
+      meta: t`${k.client} · ${k.project}`, title: k.title, body: ready ? 'Önceki aşama bitti, iş sende. Bitince "Bitti" yap; sistem sıradaki aşamayı açar ve sorumlusuna haber verir.' : '',
       actions: [['Görevi aç', `/gorev/${k.id}`, 'pri'], ['Projeye git', `/projeler/${k.project_id}`, 'sec']] });
   }
   for (const a of d.approvals || []) {

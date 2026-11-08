@@ -10,9 +10,12 @@ import { registerRetention, migrateRetention } from './ext-retention.js';
 import { registerSettings, loadThemes, currentThemeCss } from './ext-settings.js';
 import { splitRecord } from './ext-settings.js';
 import { registerPlaybooks, migratePlaybooks } from './ext-playbooks.js';
+import { registerFlow, migrateFlow } from './ext-flow.js';
+import { applyGuide } from './ext-guide.js';
+import { registerIcons, ICON_LINKS } from './ext-icons.js';
 import { THEMES } from './themes.js';
 
-const VERSION = '0.17.0';
+const VERSION = '0.18.0';
 let settingsApi = null;
 const PORT = Number(process.env.PORT || 3000);
 const SETUP_TOKEN = process.env.SETUP_TOKEN || '';
@@ -230,6 +233,13 @@ label.wide{flex:2 1 260px}
 .side-search{display:flex;padding:0 4px}.side-search input{width:100%;background:#1A1F27;border:1px solid #262B34;color:#fff;min-height:40px;border-radius:10px;font-size:14px}.side-search input::placeholder{color:#7C8492}
 .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;border:1px solid #DDD6C7;background:#fff;color:var(--ink)}.icon-btn svg{width:20px;height:20px}
 tr.is-late td:first-child{box-shadow:inset 3px 0 0 var(--bad)}
+.guide{background:var(--sand,#EFE9DD);border-left:3px solid var(--gold);border-radius:12px;padding:12px 16px;font-size:14px;line-height:1.5}.guide>summary{font-weight:600;cursor:pointer;min-height:28px}.guide p{margin:6px 0 0}
+.guide-toggle{margin:0;display:flex;justify-content:flex-end}.linkish{background:none;border:0;padding:10px 0;color:#6B6558;text-decoration:underline;font-size:13px;min-height:auto;cursor:pointer}
+.g-hint{margin:2px 0 8px;color:#6B6558;font-size:13px;line-height:1.5}
+.flowbar{background:#fff;border:1px solid var(--champ);border-radius:18px;padding:18px 20px;display:flex;flex-direction:column;gap:8px}.flowbar h2{margin:0;font-size:20px}.flowbar p{margin:0}.flowbar.small{padding:14px 18px}
+.flowbar .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.flowbar form{margin:0}
+.flow-warn{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#FBF3E4;border-radius:10px;padding:8px 12px;font-size:14px}
+.stages{margin:8px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:6px}.stages li{display:list-item}.stages .dot{display:inline-block;margin-right:6px;vertical-align:middle}
 @media (max-width:1100px){.kanban{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:900px){.two,.two.wide-first{grid-template-columns:1fr}}
 @media (max-width:700px){
@@ -302,11 +312,11 @@ function layout(ctx, title, body, active = '') {
   const pv = u?.role === 'admin' ? ctx.url?.searchParams?.get('onizle') : null; const pvCss = pv && settingsApi ? settingsApi.previewCss(pv, u.agency_id) : null;
   const pageTheme = pvCss !== null && pvCss !== undefined ? { css: pvCss, banner: `<div class="preview-bar" role="status">Önizleme: ${escHtml(THEMES[pv].name)} · yalnız size görünür <a href="/ayarlar/tema?tema=${escHtml(pv)}">Ayarlara dön</a></div>` } : { css: currentThemeCss(u?.agency_id), banner: '' };
   return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#F7F4EE">
-<title>${h(title)} · Arvela OS</title><link rel="preconnect" href="https://fonts.googleapis.com">
+<title>${h(title)} · Arvela OS</title>${ICON_LINKS}<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500&display=swap" rel="stylesheet"><style>${CSS}${pageTheme.css}</style></head><body>${pageTheme.banner}
 ${u ? `<aside class="side"><a class="brand" href="/">Arvela<span>OS</span></a>${staffish ? `<form class="side-search" method="get" action="/ara" role="search"><input type="search" name="q" data-cmdk placeholder="Ara…" aria-label="Ara"></form>` : ''}<nav aria-label="Ana menü">${side}</nav><div class="who"><span><strong>${h(u.name)}</strong><br>${h(ROLE[u.role])}</span><div class="who-row">${out}${langSwitch(ctx, 'dark')}</div></div></aside>` : ''}
 <div class="shell${u ? '' : ' bare'}">${u ? `<header class="mtop"><a class="brand" href="/">Arvela<span>OS</span></a><div class="who">${langSwitch(ctx)}${staffish ? `<a class="icon-btn" href="/ara" data-cmdk aria-label="Ara">${icon('search').replace('class="ti"', 'class="ti" style="width:auto;height:auto"')}</a>` : ''}${out}</div></header>` : ''}
-<main>${flash}${body}</main></div>${tabs}${staffish ? cmdk(u) : ''}<script src="/app.js" defer></script></body></html>`;
+<main>${flash}${u ? applyGuide(body, { path: ctx.url?.pathname || '', lang: lang(), hidden: parseCookies(ctx.req || { headers: {} }).rehber === 'kapali', csrf: csrfField(ctx), M1: lang() === 'en' ? M1 : '', M2: lang() === 'en' ? M2 : '' }) : body}</main></div>${tabs}${staffish ? cmdk(u) : ''}<script src="/app.js" defer></script></body></html>`;
 }
 const cmdk = (u) => {
   const items = [['/satis#yeni-aday', 'Yeni aday', 'A'], ['/paketler#yeni-paket', 'Yeni iş paketi', ''], ...(u.role === 'admin' ? [['/teklifler#yeni', 'Yeni teklif', 'T']] : []),
@@ -321,7 +331,7 @@ const langSwitch = (ctx, cls = '') => {
 const csrfField = (ctx) => ctx.session ? `<input type="hidden" name="csrf" value="${h(ctx.session.csrf)}">` : '';
 
 function authPage(title, body) {
-  return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0B0D12"><title>${h(title)} · Arvela OS</title>
+  return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0B0D12"><title>${h(title)} · Arvela OS</title>${ICON_LINKS}
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@500&display=swap" rel="stylesheet"><style>${CSS}${currentThemeCss(1)}</style></head>
 <body><div class="auth"><div class="card"><div class="row" style="justify-content:space-between;align-items:center"><p class="brand" style="color:var(--ink);margin:0">Arvela<span>OS</span></p>${langSwitch({ url: { pathname: '/giris', search: '' } })}</div>${body}</div></div></body></html>`;
 }
@@ -367,8 +377,10 @@ async function loadSession(req) {
   return { session: { id, csrf }, user };
 }
 let hooks = null; // otomasyon kancaları (ext-automation.js)
+let flow = null; // aşama akışı (ext-flow.js)
 async function audit(ctx, action, detail = {}) {
   await q('INSERT INTO audit (agency_id, user_id, action, detail) VALUES ($1,$2,$3,$4)', [ctx.user.agency_id, ctx.user.id, action, detail]);
+  if (flow) await flow.onAudit(ctx, action, detail).catch((e) => console.error('akış:', e.message)); // sıradaki aşamayı aç, onayları bağla
   if (hooks) hooks.onAudit(ctx, action, detail).catch((e) => console.error('otomasyon:', e.message));
 }
 class HttpError extends Error { constructor(status, msg) { super(msg); this.status = status; } }
@@ -605,6 +617,12 @@ route('POST', '/ekip/:id/durum', async (ctx, res, p) => {
   if (!u.active) await q('DELETE FROM sessions WHERE user_id=$1', [id]);
   await audit(ctx, 'user.toggle', { id, active: u.active }); redirect(res, '/ekip');
 });
+// sayfa rehberini kişi başına gizle/göster (çerez, 1 yıl)
+route('POST', '/rehber', async (ctx, res) => {
+  if (!ctx.user) throw new HttpError(401);
+  const back = /^\/[A-Za-z0-9/_-]*$/.test(ctx.body.back || '') ? ctx.body.back : '/';
+  redirect(res, back, { 'Set-Cookie': cookie('rehber', ctx.body.rehber === 'kapali' ? 'kapali' : 'acik', 31536000) });
+});
 route('GET', '/kayitlar', async (ctx, res) => {
   need(ctx, 'admin');
   const rows = await all('SELECT a.*, u.name FROM audit a LEFT JOIN users u ON u.id=a.user_id WHERE a.agency_id=$1 ORDER BY a.created_at DESC LIMIT 200', [ctx.user.agency_id]);
@@ -620,7 +638,7 @@ route('GET', '/portal', async (ctx, res) => {
   const aps = await all(`SELECT * FROM approvals WHERE client_id=$1 ORDER BY (status<>'bekliyor'), created_at DESC LIMIT 30`, [cid]);
   const prjs = await all(`SELECT p.*, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id)::int total, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id AND t.status='bitti')::int done FROM projects p WHERE p.client_id=$1 ORDER BY (p.status='tamamlandi'), p.created_at DESC`, [cid]);
   const f = csrfField(ctx); const pending = aps.filter(a => a.status === 'bekliyor');
-  const todo = await portalActions({ all, cid, h, fmtMoney });
+  const todo = await portalActions({ all, cid, h, fmtMoney }) + (flow ? await flow.portalFlow(cid).catch(() => '') : '');
   send(res, 200, layout(ctx, 'Portalım', `<div><p class="eyebrow">Müşteri portalı</p><h1>${h(c?.name || 'Portal')}</h1></div>
 ${todo}
 ${pending.length ? `<section class="card" style="border-color:var(--champ)"><h2>Onayınızı bekleyenler (${pending.length})</h2>${pending.map(a => `<div class="card" style="background:#FBF9F5"><h3>${h(a.title)}</h3>${a.body ? `<p style="white-space:pre-wrap;margin:0">${h(a.body)}</p>` : ''}
@@ -697,9 +715,11 @@ const crm = registerCrm({ route, all, one, q, need, layout, h, badge, fmtMoney, 
 const freelance = registerFreelance({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, opts });
 registerRetention({ route, all, one, q, need, layout, h, csrfField, HttpError, redirect, send, audit, fmtDate });
 settingsApi = registerSettings({ route, all, q, need, layout, h, csrfField, redirect, send, audit });
-const todayPage = registerToday({ all, one, h, layout, need, STAFF, forgePending: forge.pendingCount, extraActions: async (a) => [...crmActions(await crm.openLeads(a)), ...packageActions(await freelance.awaitingReview(a))] });
+const todayPage = registerToday({ all, one, h, layout, need, STAFF, forgePending: forge.pendingCount, extraActions: async (a) => [...crmActions(await crm.openLeads(a)), ...packageActions(await freelance.awaitingReview(a)), ...(await flow.todayActions(a))] });
 registerSync({ route, one, all, q, HttpError, safeEqual, SETUP_TOKEN, onSynced: (a, before) => hooks?.onSiteSync(a, before) });
+flow = registerFlow({ route, all, one, q, need, h, badge, fmtDate, csrfField, HttpError, int, redirect, STAFF, audit, TK_ST });
+registerIcons({ route });
 const playbooks = registerPlaybooks({ route, all, one, q, need, layout, h, badge, csrfField, HttpError, int, redirect, send, STAFF, audit, fmtDate });
-registerWork({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send, projectExtra: (ctx, pr) => playbooks.projectCard(ctx, pr) });
+registerWork({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send, projectExtra: (ctx, pr) => playbooks.projectCard(ctx, pr), flowBanner: (ctx, pr, tasks) => flow.projectBanner(ctx, pr, tasks), taskExtra: (ctx, tk) => flow.taskCard(ctx, tk) });
 
-migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => migrateFreelance({ q })).then(() => migrateRetention({ q })).then(() => migratePlaybooks({ q, all })).then((n) => n && console.log(`hizmet kitabı yazıldı: ${n}`)).then(() => loadThemes(all)).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
+migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => migrateFreelance({ q })).then(() => migrateRetention({ q })).then(() => migratePlaybooks({ q, all })).then((n) => n && console.log(`hizmet kitabı yazıldı: ${n}`)).then(() => migrateFlow({ q })).then(() => loadThemes(all)).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
