@@ -9,9 +9,10 @@ import { registerFreelance, migrateFreelance, packageActions } from './ext-freel
 import { registerRetention, migrateRetention } from './ext-retention.js';
 import { registerSettings, loadThemes, currentThemeCss } from './ext-settings.js';
 import { splitRecord } from './ext-settings.js';
+import { registerPlaybooks, migratePlaybooks } from './ext-playbooks.js';
 import { THEMES } from './themes.js';
 
-const VERSION = '0.16.0';
+const VERSION = '0.17.0';
 let settingsApi = null;
 const PORT = Number(process.env.PORT || 3000);
 const SETUP_TOKEN = process.env.SETUP_TOKEN || '';
@@ -180,6 +181,8 @@ input[type=radio],input[type=checkbox]{accent-color:var(--gold)}
 .kv.rec-kv{grid-template-columns:120px minmax(0,1fr);gap:0}.rec-kv dt,.rec-kv dd{padding:9px 0;border-top:1px solid var(--line2);overflow-wrap:anywhere}
 .summary{background:#FBF6EA;border:1px solid #E9D9B4;border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}.summary h2{font-size:15px;font-family:Inter,sans-serif;font-weight:600;color:#7A5A1E}.summary p{margin:0;line-height:1.6}
 @media (max-width:1000px){.rec{grid-template-columns:1fr}.rec-side{display:contents}.rec-side>.page-head{order:1}.rec-main{order:2}.rec-side>.rec-kv{order:3}.rec-side>details{order:4}}
+.pb .lead{font-size:17px;max-width:900px;margin:0}.pb{display:flex;flex-direction:column;gap:20px}.pb ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}.pb h3{margin-top:8px}.pb-stats .stat{font-size:28px}
+.pb-edit textarea{font-size:14px}.pb-stages{border:1px solid var(--line);border-radius:14px;padding:10px;margin:0}.pb-stages input,.pb-stages select{min-height:38px;padding:6px 8px;font-size:13px;min-width:90px}.pb-stages td{padding:6px}.pb-stages td:first-child input{min-width:200px}
 .preview-bar{position:sticky;top:0;z-index:50;background:var(--night);color:#fff;padding:10px 16px;font-size:13px;text-align:center}.preview-bar a{color:var(--champ);margin-left:10px}
 .theme-card.is-sel{border-color:var(--gold)}.swatch{display:flex;height:56px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}.swatch span{flex:1}
 .theme-opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}.theme-opts fieldset{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:0;display:flex;flex-direction:column;gap:4px}.theme-opts legend{font-weight:600;font-size:13px;padding:0 4px}
@@ -491,7 +494,7 @@ route('GET', '/musteriler/:id', async (ctx, res, p) => {
 
 `;
   const REST = `<section class="card" id="hizmetler"><h2>Hizmetler</h2>
-${svcs.length ? svcs.map(s => `<div class="svc"><div class="svc-h"><span class="grow"><strong>${h(s.code)} · ${h(s.name)}</strong><span class="muted">${h(s.billing || '')}${s.start_date ? ' · başlangıç ' + fmtDate(s.start_date) : ''}${s.end_date ? ' · bitiş ' + fmtDate(s.end_date) : ''}${s.notes ? ' · ' + h(s.notes) : ''}</span></span>
+${svcs.length ? svcs.map(s => `<div class="svc"><div class="svc-h"><span class="grow"><strong><a href="/hizmet/${s.id}/kitap">${h(s.code)} · ${h(s.name)}</a>${s.playbook ? ' ' + badge('Özel kitap', 'warn') : ''}</strong><span class="muted">${h(s.billing || '')}${s.start_date ? ' · başlangıç ' + fmtDate(s.start_date) : ''}${s.end_date ? ' · bitiş ' + fmtDate(s.end_date) : ''}${s.notes ? ' · ' + h(s.notes) : ''}</span></span>
 <form class="inline-status" method="post" action="/hizmet/${s.id}">${f}<select name="status" data-auto aria-label="Durum">${opts(CS_ST, s.status)}</select><button class="ghost">Kaydet</button></form></div>
 <details><summary>Düzenle</summary><form class="stack" method="post" action="/hizmet/${s.id}">${f}<div class="row"><label>Durum<select name="status">${opts(CS_ST, s.status)}</select></label><label>Başlangıç<input type="date" name="start_date" value="${s.start_date ? new Date(s.start_date).toISOString().slice(0, 10) : ''}"></label><label>Bitiş<input type="date" name="end_date" value="${s.end_date ? new Date(s.end_date).toISOString().slice(0, 10) : ''}"></label></div>
 <label>Not<input name="notes" value="${h(s.notes)}" placeholder="Paket ayrıntısı, özel fiyat, kapsam"></label><div class="row"><button>Kaydet</button></div></form>
@@ -564,7 +567,7 @@ route('GET', '/katalog', async (ctx, res) => {
   send(res, 200, layout(ctx, 'Katalog', `<h1>Hizmet kataloğu</h1><p class="muted">${svcs.length} modül · ${cats.length} kategori${showPrice ? ' · fiyatlar KDV hariç, yalnızca yöneticiye görünür' : ''}</p>
 ${cats.map(c => `<details class="card"><summary>${h(c.name)} <span class="muted">(${svcs.filter(s => s.category_id === c.id).length})</span></summary><p class="muted">${h(c.summary)}</p>
 <div class="tbl"><table><tr><th>Kod</th><th>Modül</th><th>Alt grup</th><th>Faturalama</th>${showPrice ? '<th>TL</th><th>EUR</th>' : ''}<th>Durum</th></tr>
-${svcs.filter(s => s.category_id === c.id).map(s => `<tr><td>${h(s.code)}</td><td>${h(s.name)}</td><td>${h(s.sub)}</td><td>${h(s.billing)}</td>${showPrice ? `<td>${fmtMoney(s.price_try)}</td><td>${fmtMoney(s.price_eur)}</td>` : ''}<td>${h(s.availability)}</td></tr>`).join('')}</table></div></details>`).join('')}`, '/katalog'));
+${svcs.filter(s => s.category_id === c.id).map(s => `<tr><td>${h(s.code)}</td><td><a href="/katalog/${s.id}">${h(s.name)}</a>${s.playbook ? ' ' + badge('Kitap', 'ok') : ''}</td><td>${h(s.sub)}</td><td>${h(s.billing)}</td>${showPrice ? `<td>${fmtMoney(s.price_try)}</td><td>${fmtMoney(s.price_eur)}</td>` : ''}<td>${h(s.availability)}</td></tr>`).join('')}</table></div></details>`).join('')}`, '/katalog'));
 });
 
 // ----- ekip -----
@@ -696,6 +699,7 @@ registerRetention({ route, all, one, q, need, layout, h, csrfField, HttpError, r
 settingsApi = registerSettings({ route, all, q, need, layout, h, csrfField, redirect, send, audit });
 const todayPage = registerToday({ all, one, h, layout, need, STAFF, forgePending: forge.pendingCount, extraActions: async (a) => [...crmActions(await crm.openLeads(a)), ...packageActions(await freelance.awaitingReview(a))] });
 registerSync({ route, one, all, q, HttpError, safeEqual, SETUP_TOKEN, onSynced: (a, before) => hooks?.onSiteSync(a, before) });
-registerWork({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send });
+const playbooks = registerPlaybooks({ route, all, one, q, need, layout, h, badge, csrfField, HttpError, int, redirect, send, STAFF, audit, fmtDate });
+registerWork({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send, projectExtra: (ctx, pr) => playbooks.projectCard(ctx, pr) });
 
-migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => migrateFreelance({ q })).then(() => migrateRetention({ q })).then(() => loadThemes(all)).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
+migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => migrateFreelance({ q })).then(() => migrateRetention({ q })).then(() => migratePlaybooks({ q, all })).then((n) => n && console.log(`hizmet kitabı yazıldı: ${n}`)).then(() => loadThemes(all)).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
