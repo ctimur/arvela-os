@@ -28,5 +28,6 @@ jobs:
           check 401 https://n8n.arveladigital.com/
           check 401 https://n8n.arveladigital.com/rest/settings
           code=$(curl -s -o /dev/null -w '%{http_code}' -X POST https://n8n.arveladigital.com/webhook/arvela-events); echo "BİLGİ $code  n8n webhook (akış pasifken 404, etkinken 403/200 beklenir)"
+          for hk in arvela-new-client arvela-task-assigned arvela-site-alert; do code=$(curl -s -o /dev/null -w '%{http_code}' -X POST https://n8n.arveladigital.com/webhook/$hk); echo "BİLGİ $code  $hk (etkin akış: 403 beklenir)"; done
           curl -s https://os.arveladigital.com/healthz; echo
           exit $fail
