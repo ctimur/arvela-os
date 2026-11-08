@@ -73,6 +73,13 @@ export function buildPulse(d) {
   return [...m.values()].sort((a, b) => b.rank - a.rank || a.name.localeCompare(b.name, 'tr'));
 }
 
+// Günün özeti: en önemli üç işin tek satırlık özeti (kural tabanlı; yapay zekâ ya da dış servis kullanmaz).
+export function daySummary(acts) {
+  if (acts.length < 2) return null;
+  const top = acts.slice(0, 3).map(x => ({ title: x.title, tag: x.tag }));
+  const counts = {}; for (const x of acts) counts[x.tag] = (counts[x.tag] || 0) + 1;
+  return { top, more: Math.max(0, acts.length - top.length), counts };
+}
 function actionCard(x, h, size) {
   const btns = x.actions.map(([t, href, cls, ext], i) => `<a class="btn ${cls}" href="${h(href)}"${ext ? ' target="_blank" rel="noopener"' : ''}>${h(t)}</a>`).join('');
   return `<article class="act ${size}${size === 'hero' ? '' : ''}"><div class="act-meta"><span class="badge ${x.tone}">${h(x.tag)}</span><span class="muted">${h(x.meta)}</span></div>
@@ -101,7 +108,7 @@ export function registerToday({ all, one, h, layout, need, STAFF, forgePending, 
     const d = { sites, tasks, approvals, clients, overdue, notified, draftQuotes, draftInvoices, monthlyDue: md?.n || 0, period, forgePending: fp };
     const extra = extraActions ? await extraActions(a).catch(() => []) : [];
     const acts = [...buildActions(d, { admin }), ...extra].sort((x, y) => y.score - x.score); const pulse = buildPulse(d);
-    const first = ctx.user.name.split(' ')[0];
+    const first = ctx.user.name.split(' ')[0]; const summary = daySummary(acts);
     const [hero, ...rest] = acts; const pair = rest.slice(0, 2); const later = rest.slice(2);
     const head = !acts.length ? 'Bugün her şey yolunda.' : lang() === 'en' ? `${acts.length} things to do today.` : `Bugün ${acts.length} iş var.`;
     const later_ = later.length ? `<section class="later"><p class="eyebrow">Sonra</p>${later.map(x => `<a class="later-row" href="${h(x.actions[0][1])}"${x.actions[0][3] ? ' target="_blank" rel="noopener"' : ''}><span class="dot ${x.tone}"></span><span class="grow"><strong>${h(x.title)}</strong><span class="muted">${h(x.tag)} · ${h(x.meta)}</span></span><span class="chev" aria-hidden="true">›</span></a>`).join('')}</section>` : '';
@@ -109,6 +116,7 @@ export function registerToday({ all, one, h, layout, need, STAFF, forgePending, 
 <section class="today-main">
 <div class="today-head"><div><p class="eyebrow">Günaydın, ${h(first)}</p><h1>${h(head)}</h1><p class="muted lead">${acts.length ? 'En önemlisinden başlayın; biri bitince sıradaki öne gelir.' : 'Bekleyen iş yok. Yeni bir teklif ya da proje başlatabilirsiniz.'}</p></div>
 <div class="today-count"><span class="stat">${done.n}</span><span class="muted">tamamladığınız görev</span></div></div>
+${summary ? `<p class="brief"><b>Günün özeti</b> · ${summary.top.map(x => `${h(x.title)} <span class="muted">(${h(x.tag)})</span>`).join(' · ')}${summary.more ? ` · ${t`+${summary.more} iş daha`}` : ''}</p>` : ''}
 ${hero ? actionCard(hero, h, 'hero') : `<article class="act hero"><h2>Sıra boş</h2><p>Müşterilere bakmak için <a href="/musteriler">Müşteriler</a>'e geçin.</p></article>`}
 ${pair.length ? `<div class="act-pair">${pair.map(x => actionCard(x, h, 'mid')).join('')}</div>` : ''}
 ${later_}

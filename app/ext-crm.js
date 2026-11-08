@@ -66,7 +66,7 @@ export function registerCrm(d) {
 
   route('GET', '/satis', async (ctx, res) => {
     need(ctx, ...STAFF); const a = ctx.user.agency_id; const admin = ctx.user.role === 'admin';
-    const kaynak = ctx.url.searchParams.get('kaynak') || ''; const kim = ctx.url.searchParams.get('kim') || '';
+    const kaynak = ctx.url.searchParams.get('kaynak') || ''; const kim = ctx.url.searchParams.get('kim') || ''; const liste = ctx.url.searchParams.get('gorunum') === 'liste';
     const rows = await all(`SELECT c.*, u.name owner FROM clients c LEFT JOIN users u ON u.id=c.owner_id WHERE c.agency_id=$1 AND (c.status='lead' OR c.stage IN ('kazanildi','kaybedildi'))
       AND ($2='' OR c.lead_source=$2) AND ($3::int IS NULL OR c.owner_id=$3) ORDER BY c.call_at NULLS LAST, c.lead_score DESC NULLS LAST, c.created_at DESC`, [a, SOURCES[kaynak] ? kaynak : '', int(kim)]);
     const people = await team(a); const now = Date.now();
@@ -84,8 +84,11 @@ ${admin && l.value_estimate ? `<div class="kmeta"><span>${money(l.value_estimate
 <div class="card"><span class="muted">Planlı ön görüşme</span><span class="stat">${rows.filter(r => r.call_at && new Date(r.call_at) > now && OPEN_STAGES.includes(r.stage)).length}</span></div>
 <div class="card"><span class="muted">Son 30 günde kazanılan</span><span class="stat">${won}</span></div><div class="card"><span class="muted">Kaybedilen (toplam)</span><span class="stat">${lost}</span></div></div>
 <form class="filters" method="get" action="/satis"><select name="kaynak" aria-label="Kaynak" data-auto><option value="">Tüm kaynaklar</option>${opts(SOURCES, kaynak)}</select>
-<select name="kim" aria-label="Sorumlu" data-auto><option value="">Herkes</option>${people.map(p => `<option value="${p.id}"${String(p.id) === kim ? ' selected' : ''}>${h(p.name)}</option>`).join('')}</select><button class="ghost">Filtrele</button></form>
-<div class="kanban">${OPEN_STAGES.map(col).join('')}</div>
+<select name="kim" aria-label="Sorumlu" data-auto><option value="">Herkes</option>${people.map(p => `<option value="${p.id}"${String(p.id) === kim ? ' selected' : ''}>${h(p.name)}</option>`).join('')}</select>${liste ? '<input type="hidden" name="gorunum" value="liste">' : ''}<button class="ghost">Filtrele</button>
+<span class="seg" role="group" aria-label="Görünüm"><a class="btn ${liste ? 'ghost' : 'pri'}" href="/satis"${liste ? '' : ' aria-current="page"'}>Pano</a><a class="btn ${liste ? 'pri' : 'ghost'}" href="/satis?gorunum=liste"${liste ? ' aria-current="page"' : ''}>Liste</a></span></form>
+${liste ? `<div class="tbl"><table><tr><th>Firma</th><th>Yetkili</th><th>Aşama</th><th>Kaynak</th><th>İlgi</th><th>Puan</th><th>Sonraki adım</th></tr>
+${rows.filter(r => OPEN_STAGES.includes(r.stage)).map(l => { const sc = l.lead_score ?? leadScore(l); const late = l.next_action_at && new Date(l.next_action_at) <= now;
+  return `<tr${late ? ' class="is-late"' : ''}><td><a href="/satis/${l.id}"><strong>${h(l.name)}</strong></a></td><td>${h(l.contact_name || '—')}</td><td>${badge(STAGES[l.stage], STAGE_TONE[l.stage])}</td><td>${h(SOURCES[l.lead_source] || '—')}</td><td>${h(l.interest || '—')}</td><td>${badge(String(sc), scoreTone(sc))}</td><td>${l.call_at && OPEN_STAGES.includes(l.stage) ? h(t`Ön görüşme: ${fmtDT(l.call_at)}`) : l.next_action ? `<span class="${late ? 'late' : ''}">${h(l.next_action)}${l.next_action_at ? ' · ' + h(fmtDT(l.next_action_at)) : ''}</span>` : '<span class="muted">Sonraki adım yok</span>'}</td></tr>`; }).join('') || '<tr><td colspan="7" class="muted">Açık aday yok.</td></tr>'}</table></div>` : `<div class="kanban">${OPEN_STAGES.map(col).join('')}</div>`}
 <section class="card" id="yeni-aday"><h2>Yeni aday</h2><form class="stack" method="post" action="/satis">${f(ctx)}
 <div class="row"><label class="wide">Firma<input name="name" required></label><label class="wide">Yetkili<input name="contact_name"></label></div>
 <div class="row"><label>Telefon<input name="phone" type="tel" inputmode="tel"></label><label>E-posta<input name="email" type="email"></label><label>Kaynak<select name="lead_source">${opts(SOURCES, 'web')}</select></label></div>
