@@ -11,7 +11,7 @@ export function themeOpts(ctx) {
   if (pv && THEMES[pv]) return { id: pv, ...resolveTheme(pv, pv === cur.id ? cur.opts : {}).opts };
   return { id: cur.id, ...cur.opts };
 }
-export const splitRecord = (ctx) => themeOpts(ctx).kayit === 'yan';
+export const splitRecord = (ctx) => { const o = themeOpts(ctx); return o.id === 'atlas' || o.kayit === 'yan'; };
 export async function loadThemes(all) {
   const rows = await all(`SELECT agency_id, key, value FROM settings WHERE key IN ('theme.id','theme.opts')`);
   const by = new Map();

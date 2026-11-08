@@ -7,11 +7,11 @@ import { t, als, lang, M1, M2, exact, translateHtml, pickLang, locale, LANGS } f
 import { registerCrm, migrateCrm, crmActions } from './ext-crm.js';
 import { registerFreelance, migrateFreelance, packageActions } from './ext-freelance.js';
 import { registerRetention, migrateRetention } from './ext-retention.js';
-import { registerSettings, loadThemes, currentThemeCss, currentTheme } from './ext-settings.js';
+import { registerSettings, loadThemes, currentThemeCss, currentTheme, themeOpts } from './ext-settings.js';
 import { splitRecord } from './ext-settings.js';
 import { registerPlaybooks, migratePlaybooks } from './ext-playbooks.js';
 import { registerFlow, migrateFlow } from './ext-flow.js';
-import { applyGuide } from './ext-guide.js';
+import { applyGuide, findPage } from './ext-guide.js';
 import { registerIcons, ICON_LINKS } from './ext-icons.js';
 import { registerAi, migrateAi } from './ext-ai.js';
 import { registerSuggest, migrateSuggest } from './ext-suggest.js';
@@ -145,7 +145,7 @@ h1{font-size:34px;line-height:1.15}h2{font-size:21px}h3{font-size:17px}
 .btn-out{font:inherit;font-size:13px;background:transparent;color:#C9CED6;border:1px solid var(--graphite);border-radius:10px;padding:8px 12px;cursor:pointer;min-height:36px;align-self:flex-start}
 .shell{margin-left:248px;min-height:100vh}
 .shell.bare{margin-left:0}
-main{max-width:1240px;margin:0 auto;padding:36px 40px 72px;display:flex;flex-direction:column;gap:24px}
+main{display:block}.page-main{max-width:1240px;margin:0 auto;padding:28px 40px 72px;display:flex;flex-direction:column;gap:24px;min-width:0}
 .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 .card{background:var(--surf);border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:12px}
 a.card:hover{border-color:var(--champ)}
@@ -270,7 +270,7 @@ dl.kv dt{color:var(--stone2);font-size:13px}dl.kv dd{margin:0}
 @media (max-width:1100px){.kanban{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:900px){.two,.two.wide-first{grid-template-columns:1fr}}
 @media (max-width:700px){
-.kanban{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -20px;padding:0 20px 6px;gap:12px}.kcol{flex:0 0 82%;scroll-snap-align:start}
+.kanban{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px;padding:0 16px 6px;gap:12px}.kcol{flex:0 0 82%;scroll-snap-align:start}
 table.rs,table.rs tbody,table.rs tr,table.rs td{display:block;width:100%}table.rs{border:0;background:transparent}
 table.rs tr:first-child{display:none}table.rs tr{background:var(--surf);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px}
 table.rs td{border:0;padding:4px 0;display:flex;gap:12px;justify-content:space-between;align-items:center;text-align:right}
@@ -283,7 +283,7 @@ table.rs tr.is-late{border-left:3px solid var(--bad)}tr.is-late td:first-child{b
 }
 @media (max-width:1100px){.today{grid-template-columns:1fr}.pulse{position:static}}
 @media (max-width:900px){
-main{padding:12px 20px 32px;gap:18px}
+.page-main{padding:16px 16px 40px;gap:18px}
 h1{font-size:28px}.today-head h1{font-size:30px}.today-count{display:none}
 .act{padding:20px;border-radius:22px}.act.hero h2{font-size:22px}.act p{font-size:15px}
 .act-pair{grid-template-columns:1fr}.act-btns .btn{flex:1 1 140px;min-height:52px}.act.hero .act-btns .btn:first-child{flex-basis:100%}
@@ -327,7 +327,7 @@ const pv0 = (ctx) => { const v = ctx.user?.role === 'admin' ? ctx.url?.searchPar
 export const modeOf = (cookies) => MODES.includes(cookies.mod) ? cookies.mod : 'sistem';
 export function renderNav(u, active, closed = new Set()) {
   return navGroups(u).map(g => {
-    const links = g.items.map(([href, t]) => `<a href="${href}"${active === href ? ' class="on" aria-current="page"' : ''}>${NAV_ICON[href] ? svg(NAV_ICON[href]) : ''}<span>${t}</span></a>`).join('');
+    const links = g.items.map(([href, t]) => `<a href="${href}" title="${t}"${active === href ? ' class="on" aria-current="page"' : ''}>${NAV_ICON[href] ? svg(NAV_ICON[href]) : ''}<span>${t}</span></a>`).join('');
     if (!g.key) return `<div class="ng flat">${links}</div>`;
     const hasActive = g.items.some(([href]) => href === active);
     const shut = closed.has(g.key) && !hasActive;
@@ -348,15 +348,29 @@ function layout(ctx, title, body, active = '') {
   const pageTheme = pvCss !== null && pvCss !== undefined ? { css: pvCss, banner: `<div class="preview-bar" role="status">Önizleme: ${escHtml(THEMES[pv].name)} · yalnız size görünür <a href="/ayarlar/tema?tema=${escHtml(pv)}">Ayarlara dön</a></div>` } : { css: currentThemeCss(u?.agency_id), banner: '' };
   const back = ctx.url ? ctx.url.pathname + ctx.url.search : '/';
   const modeBtn = `<form class="inline mode-f" method="post" action="/mod"><input type="hidden" name="back" value="${escHtml(back)}"><input type="hidden" name="mod" value="${mode === 'koyu' ? 'acik' : 'koyu'}"><button class="icon-btn mode-btn" data-mode-btn aria-label="Açık / koyu mod" title="Açık / koyu mod">${svg('moon')}${svg('sun')}</button></form>`;
+  // Atlas iskeleti: sayfa yolu üst çubukta, sağ bilgi paneli (aside.insp) ayrı sütunda
+  const crumbM = /<nav class="crumb">([\s\S]*?)<\/nav>/.exec(body);
+  if (crumbM && u) body = body.replace(crumbM[0], '');
+  const inspM = /<aside class="insp"[^>]*>[\s\S]*?<\/aside>/.exec(body);
+  if (inspM) body = body.replace(inspM[0], '');
+  const path = ctx.url?.pathname || '';
+  const guided = u && findPage(path);
+  let main = u ? applyGuide(body, { path, lang: lang(), M1: lang() === 'en' ? M1 : '', M2: lang() === 'en' ? M2 : '', btn: false }) : body;
+  let insp = inspM ? inspM[0] : '';
+  if (insp) { const gm = /<section class="guide"[\s\S]*?<\/section>/.exec(main); if (gm) { main = main.replace(gm[0], ''); insp = insp.replace(/^(<aside class="insp"[^>]*>)/, '$1' + gm[0].replace('class="guide"', 'class="guide in-insp"')); } }
+  const crumbHtml = `${crumbM ? `<span class="tb-path">${crumbM[1]}</span><span class="tb-sep" aria-hidden="true">›</span>` : ''}<b class="tb-title">${h(title)}</b>`;
+  const NEW = staffish ? [['/satis#yeni-aday', 'Aday'], ['/projeler#yeni-proje', 'Proje'], ['/paketler#yeni-paket', 'İş paketi'], ...(u.role === 'admin' ? [['/teklifler#yeni', 'Teklif'], ['/faturalar', 'Fatura']] : [])] : [];
+  const newMenu = NEW.length ? `<details class="tb-new"><summary class="btn">+ <span>Yeni</span></summary><div class="tb-menu" role="menu">${NEW.map(([href, t]) => `<a role="menuitem" href="${href}">${t}</a>`).join('')}</div></details>` : '';
+  const infoBtn = guided ? `<button type="button" class="info-btn" data-info aria-pressed="false" aria-controls="sayfa-bilgi"><span aria-hidden="true">i</span><b>Ayrıntılar</b></button>` : '';
   const top = u ? `<header class="topbar"><button type="button" class="icon-btn menu-btn" data-menu aria-controls="menu" aria-expanded="false" aria-label="Menüyü aç">${svg('menu')}</button><a class="brand tb-brand" href="/">Arvela<span>OS</span></a>
-${staffish ? `<a class="tb-search" href="/ara" data-cmdk>${svg('search')}<span>Ara</span><kbd>⌘K</kbd></a>` : ''}<span class="tb-sp"></span>${staffish ? `<a class="icon-btn tb-s2" href="/ara" data-cmdk aria-label="Ara">${svg('search')}</a>` : ''}${darkOk ? modeBtn : ''}</header>` : '';
+<nav class="tb-crumb" aria-label="Sayfa yolu">${crumbHtml}</nav><span class="tb-sp"></span>${staffish ? `<a class="tb-search" href="/ara" data-cmdk>${svg('search')}<span>Ara ya da komut yaz…</span><kbd>⌘K</kbd></a><a class="icon-btn tb-s2" href="/ara" data-cmdk aria-label="Ara">${svg('search')}</a>` : ''}${infoBtn}${darkOk ? modeBtn : ''}${newMenu}</header>` : '';
   const side = u ? `<aside class="side" id="menu" aria-label="Ana menü"><div class="side-top"><a class="brand" href="/">Arvela<span>OS</span></a><button type="button" class="icon-btn side-x" data-menu-close aria-label="Menüyü kapat">${svg('close')}</button></div>
 <nav aria-label="Ana menü" class="side-nav">${renderNav(u, active, closed)}</nav><div class="who"><span><strong>${h(u.name)}</strong><br>${h(ROLE[u.role])}</span><div class="who-row">${out}${langSwitch(ctx, 'dark')}</div></div></aside><div class="scrim" data-menu-close aria-hidden="true"></div>` : '';
   return `<!doctype html><html lang="tr" data-mode="${mode}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#F6F5F2" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#0E1116" media="(prefers-color-scheme: dark)">
 <title>${h(title)} · Arvela OS</title>${ICON_LINKS}<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500&display=swap" rel="stylesheet"><style>${CSS}${pageTheme.css}${darkOk ? DARK_CSS : ''}</style></head><body${cookies.ayrinti === '1' ? ' class="info-on"' : ''}><a class="skip" href="#icerik">İçeriğe geç</a>${pageTheme.banner}
 ${side}<div class="shell${u ? '' : ' bare'}">${top}
-<main id="icerik">${flash}${u ? applyGuide(body, { path: ctx.url?.pathname || '', lang: lang(), M1: lang() === 'en' ? M1 : '', M2: lang() === 'en' ? M2 : '' }) : body}</main></div>${staffish ? cmdk(u) : ''}<script src="/app.js?v=${VERSION}" defer></script></body></html>`;
+<main id="icerik" class="${insp ? 'has-insp' : ''}"><div class="page-main">${flash}${main}</div>${insp}</main></div>${staffish ? cmdk(u) : ''}<script src="/app.js?v=${VERSION}" defer></script></body></html>`;
 }
 const cmdk = (u) => {
   const items = [['/satis#yeni-aday', 'Yeni aday', 'A'], ['/paketler#yeni-paket', 'Yeni iş paketi', ''], ...(u.role === 'admin' ? [['/teklifler#yeni', 'Yeni teklif', 'T']] : []),
@@ -603,8 +617,10 @@ ${ctx.user.role === 'admin' ? `<details class="add"><summary>Portal hesabı aç<
   const sum = [t`${activeSvc} aktif hizmet · ${openPrj} açık proje · ${waitAp} bekleyen onay`, lastNote ? t`Son temas: ${fmtDate(lastNote.created_at)} — ${String(lastNote.body || '').slice(0, 140)}` : 'Henüz temas kaydı yok.', ...(cu.length ? [] : ['Müşteri portalı hesabı yok.'])];
   const kv = [['Durum', badge(CLIENT_ST[c.status])], ['Yetkili', h(c.contact_name || '—')], ['Telefon', c.phone ? `<a href="tel:${h(c.phone.replace(/[^+\d]/g, ''))}">${h(c.phone)}</a>` : '—'],
     ['E-posta', c.email ? `<a href="mailto:${h(c.email)}">${h(c.email)}</a>` : '—'], ['Sektör', h(c.sector || '—')], ['Portal', h(t`${cu.length} hesap`)]];
-  const SIDE = `<div class="page-head"><div><h1>${h(c.name)}</h1></div><nav class="jump" aria-label="Sayfa içi"><a href="#hizmetler">Hizmetler</a><a href="#projeler">Projeler</a><a href="#onaylar">Onaylar</a><a href="/musteriler/${c.id}/siteler">Siteler</a><a href="/satis/${c.id}">Satış geçmişi</a><a href="/musteriler/${c.id}/karar">Karar bağlantısı</a></nav></div>
-<dl class="kv rec-kv">${kv.map(([k, v]) => `<dt class="muted">${k}</dt><dd>${v}</dd>`).join('')}</dl>${DET}`;
+  const SIDE_HEAD = `<div class="page-head"><div><h1>${h(c.name)}</h1></div><nav class="jump" aria-label="Sayfa içi"><a href="#hizmetler">Hizmetler</a><a href="#projeler">Projeler</a><a href="#onaylar">Onaylar</a><a href="/musteriler/${c.id}/siteler">Siteler</a><a href="/satis/${c.id}">Satış geçmişi</a><a href="/musteriler/${c.id}/karar">Karar bağlantısı</a></nav></div>`;
+  const SIDE_INFO = `<dl class="kv rec-kv">${kv.map(([k, v]) => `<dt class="muted">${k}</dt><dd>${v}</dd>`).join('')}</dl>${DET}`;
+  const SIDE = SIDE_HEAD + '\n' + SIDE_INFO;
+  if (themeOpts(ctx).id === 'atlas') return send(res, 200, layout(ctx, c.name, `<nav class="crumb"><a href="/musteriler">Müşteriler</a></nav>${SIDE_HEAD}<section class="summary"><h2>Özet</h2>${sum.map(x => `<p>${h(x)}</p>`).join('')}</section>${REST}<aside class="insp"><section><h2>Müşteri bilgileri</h2>${SIDE_INFO}</section></aside>`, '/musteriler'));
   send(res, 200, layout(ctx, c.name, `<nav class="crumb"><a href="/musteriler">Müşteriler</a></nav><div class="rec"><aside class="rec-side">${SIDE}</aside><div class="rec-main"><section class="summary"><h2>Özet</h2>${sum.map(x => `<p>${h(x)}</p>`).join('')}</section>${REST}</div></div>`, '/musteriler'));
 });
 route('POST', '/musteriler/:id', async (ctx, res, p) => {
