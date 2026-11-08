@@ -6,7 +6,7 @@ assert.ok(THEMES.klasik && THEMES.defter, 'iki tema kayıtlı');
 assert.equal(themeCss('klasik'), '', 'klasik temel CSS ile aynı');
 assert.equal(resolveTheme('yok').id, DEFAULT_THEME, 'bilinmeyen tema varsayılana döner');
 const r = resolveTheme('defter', { vurgu: 'lacivert', kenar: '<script>', yogunluk: 'sik' });
-assert.deepEqual(r.opts, { kenar: 'acik', zemin: 'beyaz', vurgu: 'lacivert', kose: 'yumusak', yogunluk: 'sik' }, 'geçersiz değer varsayılana döner');
+assert.deepEqual(r.opts, { kenar: 'acik', zemin: 'beyaz', vurgu: 'lacivert', kose: 'yumusak', yogunluk: 'sik', kayit: 'yan' }, 'geçersiz değer varsayılana döner');
 const css = themeCss('defter', r.opts);
 assert.ok(css.includes('#2F4A6B') && css.includes('padding:8px 12px') && !css.includes('<'), 'ayarlar CSS\'e yansır');
 assert.ok(!themeCss('defter', { kenar: 'koyu' }).includes('.side{background'), 'koyu kenar çubuğunda kenar rengi değişmez');
@@ -27,3 +27,9 @@ assert.ok(api.previewCss('defter', 7).includes('#4F6B3A')); assert.equal(api.pre
 await loadThemes(async () => [{ agency_id: 3, key: 'theme.id', value: 'defter' }, { agency_id: 3, key: 'theme.opts', value: 'bozuk' }]);
 assert.equal(currentTheme(3).id, 'defter', 'bozuk ayar kaydı varsayılan ayarlarla açılır');
 console.log('themes: ok');
+import { themeOpts, splitRecord } from '../app/ext-settings.js';
+{ const c = { user: { role: 'admin', agency_id: 7 }, url: new URL('http://x/') };
+  assert.equal(splitRecord(c), true, 'Defter: varsayılan yan yana');
+  assert.equal(splitRecord({ ...c, url: new URL('http://x/?onizle=klasik') }), false, 'önizleme ayarı uygulanır');
+  assert.equal(splitRecord({ user: { role: 'staff', agency_id: 7 }, url: new URL('http://x/?onizle=klasik') }), true, 'önizleme yalnız Yönetici');
+  assert.equal(themeOpts({ user: { role: 'admin', agency_id: 99 }, url: new URL('http://x/') }).id, 'klasik'); console.log('tema düzeni: ok'); }

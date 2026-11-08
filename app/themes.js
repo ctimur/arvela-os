@@ -27,6 +27,7 @@ export const THEMES = {
       vurgu: { label: 'Vurgu rengi', type: 'color', values: Object.fromEntries(Object.entries(ACCENTS).map(([k, v]) => [k, v.label])), colors: Object.fromEntries(Object.entries(ACCENTS).map(([k, v]) => [k, v.fill])), default: 'altin' },
       kose: { label: 'Köşeler', type: 'select', values: { yumusak: 'Yumuşak', keskin: 'Keskin' }, default: 'yumusak' },
       yogunluk: { label: 'Yoğunluk', type: 'select', values: { rahat: 'Rahat', sik: 'Sıkı' }, default: 'rahat' },
+      kayit: { label: 'Müşteri ve aday sayfası', type: 'select', values: { yan: 'Yan yana (bilgiler solda, akış sağda)', klasik: 'Klasik (alt alta)' }, default: 'yan' },
     },
     css: (o) => {
       const a = ACCENTS[o.vurgu] || ACCENTS.altin; const r = o.kose === 'keskin' ? 6 : 12; const rb = o.kose === 'keskin' ? 6 : 8;
@@ -41,6 +42,7 @@ input:focus,select:focus,textarea:focus{border-color:${a.fill};box-shadow:0 0 0 
 .badge{text-transform:none;letter-spacing:0;font-size:12px;font-weight:600}
 .act{border-radius:${r + 2}px;box-shadow:none;border:1px solid var(--line)}.act.hero{border:0}
 .brief{border-radius:${r}px;background:${a.soft};border-color:${a.line}}.brief b{color:${a.text}}
+.summary{border-radius:${r}px;background:${a.soft};border-color:${a.line}}.summary h2{color:${a.text}}
 .kcol{border-radius:${r}px;background:#FAF8F3;border:1px solid var(--line)}
 .flash{border-radius:${r}px}.err{border-radius:${r}px}
 .side nav a.on{box-shadow:inset 3px 0 0 ${a.fill}}

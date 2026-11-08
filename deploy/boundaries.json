@@ -1,15 +1,15 @@
 {
  "server.js": [
-  "  const [alg, salt, hash] = String(stored).split('$');",
+  "function checkPassword(pw, stored) {",
   ".badge.ok{background:#E3EFE4;color:#24502B}.badge.warn{background:#F7E9CF;color:#6B4A0F}.badge.bad{background:#F6E1DE;color:#7A2418}",
-  ".jump{display:flex;gap:6px;flex-wrap:wrap}.jump a{padding:8px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);text-decoration:none;color:var(--ink);font-size:14px}.jump a:hover{border-color:var(--champ)}",
-  "h1{font-size:28px}.today-head h1{font-size:30px}.today-count{display:none}",
-  "  const cur = lang(); const back = ctx.url ? ctx.url.pathname + ctx.url.search : '/';",
-  "  if (ctx.user) return redirect(res, '/');",
-  "  const catalog = await all(`SELECT s.id, s.code, s.name, sc.name cat FROM services s JOIN service_categories sc ON sc.id=s.category_id WHERE s.agency_id=$1 AND s.active ORDER BY sc.sort, s.code`, [a]);",
-  "  const s = await one('SELECT id, code FROM services WHERE id=$1 AND agency_id=$2', [int(ctx.body.service_id), ctx.user.agency_id]);",
-  "  const rows = await all('SELECT a.*, u.name FROM audit a LEFT JOIN users u ON u.id=a.user_id WHERE a.agency_id=$1 ORDER BY a.created_at DESC LIMIT 200', [ctx.user.agency_id]);",
-  "    if (!res.headersSent) send(res, status, ctx.user ? layout(ctx, 'Hata', body) : authPage('Hata', body));"
+  ".evgrp{border:1px solid var(--line2);border-radius:12px;padding:8px 12px;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px 16px}.evgrp legend{font-weight:600;font-size:13px;padding:0 6px}.evgrp code{color:var(--stone);font-size:11px}",
+  ".tabs a,.tabs summary{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:500;color:#6B6558;text-decoration:none;border-radius:14px;list-style:none;min-width:56px}",
+  "  const items = [['/satis#yeni-aday', 'Yeni aday', 'A'], ['/paketler#yeni-paket', 'Yeni iş paketi', ''], ...(u.role === 'admin' ? [['/teklifler#yeni', 'Yeni teklif', 'T']] : []),",
+  "<label>Şifre (en az 10 karakter)<input type=\"password\" name=\"password\" required minlength=\"10\" autocomplete=\"new-password\"></label><button class=\"gold\">Hesabı oluştur</button></form>`));",
+  "async function clientFor(ctx, id) {",
+  "${ctx.user.role === 'admin' ? `<form class=\"row\" method=\"post\" action=\"/ekip\">${f}<input type=\"hidden\" name=\"role\" value=\"client\"><input type=\"hidden\" name=\"client_id\" value=\"${c.id}\">",
+  "<div class=\"card\"><h3>Freelancer</h3><p class=\"muted\">Yalnızca kendisine atanan görevleri görür ve günceller.</p></div><div class=\"card\"><h3>Müşteri</h3><p class=\"muted\">Yalnızca kendi hizmetlerini, projelerini ve onaylarını görür.</p></div></div>",
+  "  need(ctx, 'client');"
  ],
  "ext-sites.js": [
   "  route('POST', '/siteler', async (ctx, res) => {"
@@ -71,9 +71,9 @@
   "    if (ctx.body.sha !== c.head_sha) throw new HttpError(409, 'Değişiklik siz bakarken güncellendi. Sayfayı yenileyip yeniden inceleyin.');"
  ],
  "ext-crm.js": [
-  "      return `<section class=\"kcol\" aria-label=\"${STAGES[st]}\"><h3>${STAGES[st]} <span class=\"muted\">${list.length}${admin && sum ? ' · ' + fmtMoney(sum) + ' TL' : ''}</span></h3>",
-  "    if (nn(b.note)) await q('INSERT INTO client_notes (client_id, user_id, kind, body) VALUES ($1,$2,$3,$4)', [r.id, ctx.user.id, 'not', nn(b.note)]);",
-  "    if (stage !== l.stage) await audit(ctx, 'lead.stage', { id: l.id, from: l.stage, to: stage }); else await audit(ctx, 'lead.update', { id: l.id });"
+  "  const money = (n) => n ? `${fmtMoney(n)} TL/ay` : '';",
+  "    need(ctx, ...STAFF); const b = ctx.body; const a = ctx.user.agency_id;",
+  "      ['Yetkili', h(l.contact_name || '—')], ['Telefon', l.phone ? `<a href=\"tel:${h(String(l.phone).replace(/[^+\\d]/g, ''))}\">${h(l.phone)}</a>` : '—'], ['E-posta', l.email ? `<a href=\"mailto:${h(l.email)}\">${h(l.email)}</a>` : '—'],"
  ],
  "ext-freelance.js": [
   "  const payTxt = (ctx, w) => !seesMoney(ctx, w) ? PAY[w.pay_type] : w.pay_type === 'saatlik' ? (w.hour_cap ? t`${tl(w.hourly_rate)}/saat · en çok ${w.hour_cap} saat` : t`${tl(w.hourly_rate)}/saat`) : tl(w.amount);",

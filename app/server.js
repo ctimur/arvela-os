@@ -3,14 +3,15 @@ import http from 'node:http';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import pg from 'pg';
-import { als, lang, M1, M2, exact, translateHtml, pickLang, locale, LANGS } from './i18n.js';
+import { t, als, lang, M1, M2, exact, translateHtml, pickLang, locale, LANGS } from './i18n.js';
 import { registerCrm, migrateCrm, crmActions } from './ext-crm.js';
 import { registerFreelance, migrateFreelance, packageActions } from './ext-freelance.js';
 import { registerRetention, migrateRetention } from './ext-retention.js';
 import { registerSettings, loadThemes, currentThemeCss } from './ext-settings.js';
+import { splitRecord } from './ext-settings.js';
 import { THEMES } from './themes.js';
 
-const VERSION = '0.15.0';
+const VERSION = '0.16.0';
 let settingsApi = null;
 const PORT = Number(process.env.PORT || 3000);
 const SETUP_TOKEN = process.env.SETUP_TOKEN || '';
@@ -174,6 +175,11 @@ details summary{cursor:pointer;font-weight:600}
 .brief{background:#FBF6EA;border:1px solid #E9D9B4;border-radius:18px;padding:14px 18px;margin:0;line-height:1.6}.brief b{color:#7A5A1E}
 .cmdk{border:0;border-radius:18px;padding:0;width:min(560px,calc(100vw - 24px));max-height:70vh;box-shadow:0 30px 80px rgba(11,13,18,.35)}.cmdk::backdrop{background:rgba(11,13,18,.45)}.cmdk form{padding:12px;border-bottom:1px solid var(--line)}.cmdk input{width:100%;min-height:48px;font-size:16px;border:0;outline:0;padding:0 8px}.cmdk nav{padding:8px;overflow:auto;max-height:50vh;display:flex;flex-direction:column}.cmdk nav a{display:flex;align-items:center;min-height:44px;padding:0 12px;border-radius:10px;color:var(--ink);text-decoration:none}.cmdk nav a:hover,.cmdk nav a.on{background:var(--sand)}.cmdk nav a span{margin-left:auto;color:var(--stone);font-size:12px}.cmdk .hint{padding:8px 14px 12px;font-size:12px;color:var(--stone);margin:0}
 input[type=radio],input[type=checkbox]{accent-color:var(--gold)}
+.rec{display:grid;grid-template-columns:340px minmax(0,1fr);gap:24px;align-items:start}.rec-side{display:flex;flex-direction:column;gap:16px;position:sticky;top:20px}.rec-main{display:flex;flex-direction:column;gap:20px;min-width:0}
+.rec-side .page-head{flex-direction:column;align-items:flex-start}.rec-side h1{font-size:26px}.rec-side .act-btns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}.rec-side .act-btns .btn{padding:10px 8px}
+.kv.rec-kv{grid-template-columns:120px minmax(0,1fr);gap:0}.rec-kv dt,.rec-kv dd{padding:9px 0;border-top:1px solid var(--line2);overflow-wrap:anywhere}
+.summary{background:#FBF6EA;border:1px solid #E9D9B4;border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}.summary h2{font-size:15px;font-family:Inter,sans-serif;font-weight:600;color:#7A5A1E}.summary p{margin:0;line-height:1.6}
+@media (max-width:1000px){.rec{grid-template-columns:1fr}.rec-side{display:contents}.rec-side>.page-head{order:1}.rec-main{order:2}.rec-side>.rec-kv{order:3}.rec-side>details{order:4}}
 .preview-bar{position:sticky;top:0;z-index:50;background:var(--night);color:#fff;padding:10px 16px;font-size:13px;text-align:center}.preview-bar a{color:var(--champ);margin-left:10px}
 .theme-card.is-sel{border-color:var(--gold)}.swatch{display:flex;height:56px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}.swatch span{flex:1}
 .theme-opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}.theme-opts fieldset{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:0;display:flex;flex-direction:column;gap:4px}.theme-opts legend{font-weight:600;font-size:13px;padding:0 4px}
@@ -474,15 +480,17 @@ route('GET', '/musteriler/:id', async (ctx, res, p) => {
   const cu = await all(`SELECT id, name, email, last_login, active FROM users WHERE client_id=$1 AND role='client'`, [c.id]);
   const catalog = await all(`SELECT s.id, s.code, s.name, sc.name cat FROM services s JOIN service_categories sc ON sc.id=s.category_id WHERE s.agency_id=$1 AND s.active ORDER BY sc.sort, s.code`, [a]);
   const f = csrfField(ctx);
-  send(res, 200, layout(ctx, c.name, `<nav class="crumb"><a href="/musteriler">Müşteriler</a></nav>
+  const HEAD = `
 <div class="page-head"><div><h1>${h(c.name)}</h1><div class="chips">${badge(CLIENT_ST[c.status])}${c.contact_name ? `<span class="muted">${h(c.contact_name)}</span>` : ''}${c.phone ? `<a href="tel:${h(c.phone.replace(/[^+\d]/g, ''))}">${h(c.phone)}</a>` : ''}${c.email ? `<a href="mailto:${h(c.email)}">${h(c.email)}</a>` : ''}</div></div>
 <nav class="jump" aria-label="Sayfa içi"><a href="#hizmetler">Hizmetler</a><a href="#projeler">Projeler</a><a href="#onaylar">Onaylar</a><a href="/musteriler/${c.id}/siteler">Siteler</a><a href="/satis/${c.id}">Satış geçmişi</a></nav></div>
-<details class="card"><summary>Firma bilgileri</summary><form class="stack" method="post" action="/musteriler/${c.id}">${f}
+`;
+  const DET = `<details class="card"><summary>Firma bilgileri</summary><form class="stack" method="post" action="/musteriler/${c.id}">${f}
 <div class="row"><label>Firma adı<input name="name" value="${h(c.name)}" required></label><label>Sektör<input name="sector" value="${h(c.sector)}"></label><label>Durum<select name="status">${opts(CLIENT_ST, c.status)}</select></label></div>
 <div class="row"><label>Yetkili<input name="contact_name" value="${h(c.contact_name)}"></label><label>Telefon<input name="phone" value="${h(c.phone)}"></label><label>E-posta<input type="email" name="email" value="${h(c.email)}"></label></div>
 <label>Not<textarea name="notes" rows="3">${h(c.notes)}</textarea></label><div><button>Güncelle</button></div></form></details>
 
-<section class="card" id="hizmetler"><h2>Hizmetler</h2>
+`;
+  const REST = `<section class="card" id="hizmetler"><h2>Hizmetler</h2>
 ${svcs.length ? svcs.map(s => `<div class="svc"><div class="svc-h"><span class="grow"><strong>${h(s.code)} · ${h(s.name)}</strong><span class="muted">${h(s.billing || '')}${s.start_date ? ' · başlangıç ' + fmtDate(s.start_date) : ''}${s.end_date ? ' · bitiş ' + fmtDate(s.end_date) : ''}${s.notes ? ' · ' + h(s.notes) : ''}</span></span>
 <form class="inline-status" method="post" action="/hizmet/${s.id}">${f}<select name="status" data-auto aria-label="Durum">${opts(CS_ST, s.status)}</select><button class="ghost">Kaydet</button></form></div>
 <details><summary>Düzenle</summary><form class="stack" method="post" action="/hizmet/${s.id}">${f}<div class="row"><label>Durum<select name="status">${opts(CS_ST, s.status)}</select></label><label>Başlangıç<input type="date" name="start_date" value="${s.start_date ? new Date(s.start_date).toISOString().slice(0, 10) : ''}"></label><label>Bitiş<input type="date" name="end_date" value="${s.end_date ? new Date(s.end_date).toISOString().slice(0, 10) : ''}"></label></div>
@@ -504,7 +512,16 @@ ${aps.length ? `<div class="tbl"><table><tr><th>Konu</th><th>Durum</th><th>Müş
 <section class="card"><h2>Portal kullanıcıları</h2>
 ${cu.length ? `<div class="tbl"><table><tr><th>Ad</th><th>E-posta</th><th>Son giriş</th></tr>${cu.map(x => `<tr><td>${h(x.name)}</td><td>${h(x.email)}</td><td>${fmtDate(x.last_login)}</td></tr>`).join('')}</table></div>` : '<p class="muted">Müşteri henüz portala davet edilmedi.</p>'}
 ${ctx.user.role === 'admin' ? `<form class="row" method="post" action="/ekip">${f}<input type="hidden" name="role" value="client"><input type="hidden" name="client_id" value="${c.id}">
-<label>Ad soyad<input name="name" required></label><label>E-posta<input type="email" name="email" required></label><label>İlk şifre<input name="password" required minlength="10" autocomplete="off"></label><button class="gold">Portal hesabı aç</button></form>` : ''}</section>`, '/musteriler'));
+<label>Ad soyad<input name="name" required></label><label>E-posta<input type="email" name="email" required></label><label>İlk şifre<input name="password" required minlength="10" autocomplete="off"></label><button class="gold">Portal hesabı aç</button></form>` : ''}</section>`;
+  if (!splitRecord(ctx)) return send(res, 200, layout(ctx, c.name, `<nav class="crumb"><a href="/musteriler">Müşteriler</a></nav>${HEAD}${DET}${REST}`, '/musteriler'));
+  const lastNote = await one('SELECT n.kind, n.body, n.created_at FROM client_notes n WHERE n.client_id=$1 ORDER BY n.created_at DESC LIMIT 1', [c.id]).catch(() => null);
+  const activeSvc = svcs.filter(x => x.status === 'aktif').length; const openPrj = prjs.filter(x => x.status !== 'tamamlandi').length; const waitAp = aps.filter(x => x.status === 'bekliyor').length;
+  const sum = [t`${activeSvc} aktif hizmet · ${openPrj} açık proje · ${waitAp} bekleyen onay`, lastNote ? t`Son temas: ${fmtDate(lastNote.created_at)} — ${String(lastNote.body || '').slice(0, 140)}` : 'Henüz temas kaydı yok.', ...(cu.length ? [] : ['Müşteri portalı hesabı yok.'])];
+  const kv = [['Durum', badge(CLIENT_ST[c.status])], ['Yetkili', h(c.contact_name || '—')], ['Telefon', c.phone ? `<a href="tel:${h(c.phone.replace(/[^+\d]/g, ''))}">${h(c.phone)}</a>` : '—'],
+    ['E-posta', c.email ? `<a href="mailto:${h(c.email)}">${h(c.email)}</a>` : '—'], ['Sektör', h(c.sector || '—')], ['Portal', h(t`${cu.length} hesap`)]];
+  const SIDE = `<div class="page-head"><div><h1>${h(c.name)}</h1></div><nav class="jump" aria-label="Sayfa içi"><a href="#hizmetler">Hizmetler</a><a href="#projeler">Projeler</a><a href="#onaylar">Onaylar</a><a href="/musteriler/${c.id}/siteler">Siteler</a><a href="/satis/${c.id}">Satış geçmişi</a></nav></div>
+<dl class="kv rec-kv">${kv.map(([k, v]) => `<dt class="muted">${k}</dt><dd>${v}</dd>`).join('')}</dl>${DET}`;
+  send(res, 200, layout(ctx, c.name, `<nav class="crumb"><a href="/musteriler">Müşteriler</a></nav><div class="rec"><aside class="rec-side">${SIDE}</aside><div class="rec-main"><section class="summary"><h2>Özet</h2>${sum.map(x => `<p>${h(x)}</p>`).join('')}</section>${REST}</div></div>`, '/musteriler'));
 });
 route('POST', '/musteriler/:id', async (ctx, res, p) => {
   need(ctx, ...STAFF); const c = await clientFor(ctx, int(p.id)); const b = ctx.body;

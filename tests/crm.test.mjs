@@ -50,3 +50,14 @@ await routes['POST /satis/:id'](ctx({ name: 'Aday', stage: 'yeni', marketing_con
 const cw = writes.find(w => w[0].includes('marketing_consent_at=$1'));
 assert.ok(cw && cw[1][0] && cw[1][2] === 9, 'onay tarihi yazılır');
 console.log('crm onay: ok');
+
+// kayıt özeti
+import { leadSummary } from '../app/ext-crm.js';
+const now2 = new Date('2026-11-08T10:00:00+03:00');
+const sm = leadSummary({ sector: 'Emlak', interest: 'Web sitesi', lead_source: 'web', stage: 'gorusme', next_action: 'Teklif gönder', next_action_at: '2026-11-07T10:00:00+03:00' },
+  [{ kind: 'arama', body: 'Aradım, ' + 'x'.repeat(200), created_at: '2026-11-06T12:00:00Z' }], now2);
+assert.ok(sm[0].startsWith('Emlak · Web sitesi'), 'sektör ve ilgi');
+assert.ok(sm[1].includes('…') && sm[1].length < 230, 'uzun not kısaltılır');
+assert.ok(sm.some(x => x.includes('Teklif gönder') && x.includes('gecikti')), 'geciken sonraki adım işaretlenir');
+assert.ok(leadSummary({ stage: 'yeni' }, [], now2).includes('Sonraki adım yok; bir tarih belirleyin.'));
+console.log('crm özet: ok');

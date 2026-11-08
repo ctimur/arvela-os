@@ -5,6 +5,13 @@ const cache = new Map(); // ajans → { id, opts, css }
 export const currentThemeCss = (agencyId) => cache.get(agencyId || 1)?.css || '';
 export const currentTheme = (agencyId) => cache.get(agencyId || 1) || resolveTheme(null);
 
+// Sayfaların okuduğu tema ayarları (Yönetici önizlemesi dahil).
+export function themeOpts(ctx) {
+  const a = ctx.user?.agency_id; const cur = currentTheme(a); const pv = ctx.user?.role === 'admin' ? ctx.url?.searchParams?.get('onizle') : null;
+  if (pv && THEMES[pv]) return { id: pv, ...resolveTheme(pv, pv === cur.id ? cur.opts : {}).opts };
+  return { id: cur.id, ...cur.opts };
+}
+export const splitRecord = (ctx) => themeOpts(ctx).kayit === 'yan';
 export async function loadThemes(all) {
   const rows = await all(`SELECT agency_id, key, value FROM settings WHERE key IN ('theme.id','theme.opts')`);
   const by = new Map();
