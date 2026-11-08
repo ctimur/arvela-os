@@ -1,4 +1,4 @@
-import { flowState, reworkStage, lateEnd, stageHelp, stageTasks } from '../app/ext-flow.js';
+import { clientBody, flowState, reworkStage, lateEnd, stageHelp, stageTasks } from '../app/ext-flow.js';
 import { planTasks } from '../app/ext-playbooks.js';
 import assert from 'node:assert';
 
@@ -35,4 +35,8 @@ assert.equal(plan[1].title, 'Müşteri onayı: metin');
 assert.equal(plan[2].title, 'Yapay zekâ: Taslak');
 assert.equal(plan[3].title, 'Müşteri kararı: Kapsam');
 assert.equal(plan.at(-1).due_date, '2026-11-06');
+// müşteriye giden metinde iç bilgi yok
+const cb = clientBody('Rol: Müşteri · İnsan (yapay zekâ destekli) · Karar: Onay / revizyon · n8n: Karar hatırlatma\nÇıktı: Yayın onayı\nKabul: Karar kaydı', 'Test');
+assert.ok(!/Rol:|n8n|yapay/.test(cb)); assert.ok(cb.includes('Onayınıza sunulan: Yayın onayı') && cb.includes('Tamamlanan önceki adım: Test'));
+assert.equal(clientBody('', null), null);
 console.log('flow: ok');

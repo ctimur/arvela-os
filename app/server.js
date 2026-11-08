@@ -13,9 +13,10 @@ import { registerPlaybooks, migratePlaybooks } from './ext-playbooks.js';
 import { registerFlow, migrateFlow } from './ext-flow.js';
 import { applyGuide } from './ext-guide.js';
 import { registerIcons, ICON_LINKS } from './ext-icons.js';
+import { registerDecisions, migrateDecisions, parseMultipart, decisionForm, parseRequest, BODY_MAX } from './ext-decisions.js';
 import { THEMES } from './themes.js';
 
-const VERSION = '0.18.0';
+const VERSION = '0.19.0';
 let settingsApi = null;
 const PORT = Number(process.env.PORT || 3000);
 const SETUP_TOKEN = process.env.SETUP_TOKEN || '';
@@ -238,6 +239,9 @@ tr.is-late td:first-child{box-shadow:inset 3px 0 0 var(--bad)}
 .g-hint{margin:2px 0 8px;color:#6B6558;font-size:13px;line-height:1.5}
 .flowbar{background:#fff;border:1px solid var(--champ);border-radius:18px;padding:18px 20px;display:flex;flex-direction:column;gap:8px}.flowbar h2{margin:0;font-size:20px}.flowbar p{margin:0}.flowbar.small{padding:14px 18px}
 .flowbar .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.flowbar form{margin:0}
+.decision{background:#FBF9F5;display:flex;flex-direction:column;gap:8px}.decision h3{margin:0}.choices{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}.choices legend{font-weight:600;margin-bottom:6px}
+.choices .opt{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line,#E6DFD2);border-radius:10px;padding:10px 12px;min-height:44px;cursor:pointer}
+.budget{background:#fff;border:1px solid var(--champ);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column}.budget strong{font-size:20px}.files{margin:4px 0 0;padding-left:18px}[hidden]{display:none!important}
 .flow-warn{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#FBF3E4;border-radius:10px;padding:8px 12px;font-size:14px}
 .stages{margin:8px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:6px}.stages li{display:list-item}.stages .dot{display:inline-block;margin-right:6px;vertical-align:middle}
 @media (max-width:1100px){.kanban{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -345,7 +349,21 @@ function parseCookies(req) {
   }
   return out;
 }
-function readBody(req) {
+// Dosya yüklemesi yalnız karar formlarında kabul edilir (multipart/form-data, en çok ~26 MB).
+const MULTIPART_PATHS = /^\/(karar\/[^/]+\/onay|portal\/onay|onaylar)\/\d+(\/karar)?$/;
+function readMultipart(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = []; let n = 0;
+    req.on('data', c => { n += c.length; if (n > BODY_MAX) { reject(new HttpError(413, 'Dosyalar çok büyük (en çok 5 dosya, her biri 8 MB).')); req.destroy(); } else chunks.push(c); });
+    req.on('end', () => { const { fields, files } = parseMultipart(Buffer.concat(chunks), req.headers['content-type']); resolve({ ...fields, __files: files }); });
+    req.on('error', reject);
+  });
+}
+function readBody(req, path = '') {
+  if (/^multipart\/form-data/i.test(req.headers['content-type'] || '')) {
+    if (!MULTIPART_PATHS.test(path)) return Promise.reject(new HttpError(415, 'Bu adreste dosya yüklenemez.'));
+    return readMultipart(req);
+  }
   return new Promise((resolve, reject) => {
     let data = ''; req.setEncoding('utf8');
     req.on('data', c => { data += c; if (data.length > 1e6) { reject(new Error('too large')); req.destroy(); } });
@@ -378,9 +396,11 @@ async function loadSession(req) {
 }
 let hooks = null; // otomasyon kancaları (ext-automation.js)
 let flow = null; // aşama akışı (ext-flow.js)
+let decisions = null; // müşteri kararları (ext-decisions.js)
 async function audit(ctx, action, detail = {}) {
   await q('INSERT INTO audit (agency_id, user_id, action, detail) VALUES ($1,$2,$3,$4)', [ctx.user.agency_id, ctx.user.id, action, detail]);
   if (flow) await flow.onAudit(ctx, action, detail).catch((e) => console.error('akış:', e.message)); // sıradaki aşamayı aç, onayları bağla
+  if (decisions) decisions.onAudit(ctx, action, detail).catch((e) => console.error('karar e-postası:', e.message));
   if (hooks) hooks.onAudit(ctx, action, detail).catch((e) => console.error('otomasyon:', e.message));
 }
 class HttpError extends Error { constructor(status, msg) { super(msg); this.status = status; } }
@@ -392,7 +412,7 @@ const nn = (v) => (v === undefined || v === null || String(v).trim() === '') ? n
 // ---------- rotalar ----------
 const routes = [];
 const route = (method, pattern, fn) => {
-  const keys = []; const re = new RegExp('^' + pattern.replace(/:(\w+)/g, (_, k) => { keys.push(k); return '(\\d+)'; }) + '$');
+  const keys = []; const re = new RegExp('^' + pattern.replace(/:(\w+)/g, (_, k) => { keys.push(k); return k === 'token' ? '([A-Za-z0-9_-]{20,80})' : '(\\d+)'; }) + '$');
   routes.push({ method, re, keys, fn });
 };
 
@@ -497,7 +517,7 @@ route('GET', '/musteriler/:id', async (ctx, res, p) => {
   const f = csrfField(ctx);
   const HEAD = `
 <div class="page-head"><div><h1>${h(c.name)}</h1><div class="chips">${badge(CLIENT_ST[c.status])}${c.contact_name ? `<span class="muted">${h(c.contact_name)}</span>` : ''}${c.phone ? `<a href="tel:${h(c.phone.replace(/[^+\d]/g, ''))}">${h(c.phone)}</a>` : ''}${c.email ? `<a href="mailto:${h(c.email)}">${h(c.email)}</a>` : ''}</div></div>
-<nav class="jump" aria-label="Sayfa içi"><a href="#hizmetler">Hizmetler</a><a href="#projeler">Projeler</a><a href="#onaylar">Onaylar</a><a href="/musteriler/${c.id}/siteler">Siteler</a><a href="/satis/${c.id}">Satış geçmişi</a></nav></div>
+<nav class="jump" aria-label="Sayfa içi"><a href="#hizmetler">Hizmetler</a><a href="#projeler">Projeler</a><a href="#onaylar">Onaylar</a><a href="/musteriler/${c.id}/siteler">Siteler</a><a href="/satis/${c.id}">Satış geçmişi</a><a href="/musteriler/${c.id}/karar">Karar bağlantısı</a></nav></div>
 `;
   const DET = `<details class="card"><summary>Firma bilgileri</summary><form class="stack" method="post" action="/musteriler/${c.id}">${f}
 <div class="row"><label>Firma adı<input name="name" value="${h(c.name)}" required></label><label>Sektör<input name="sector" value="${h(c.sector)}"></label><label>Durum<select name="status">${opts(CLIENT_ST, c.status)}</select></label></div>
@@ -519,10 +539,11 @@ ${prjs.length ? `<div class="tbl"><table><tr><th>Proje</th><th>Durum</th><th>İl
 <form class="row" method="post" action="/musteriler/${c.id}/proje">${f}<label style="flex:1;min-width:240px">Proje adı<input name="name" required></label><label>Teslim<input type="date" name="due_date"></label><button class="gold">Proje aç</button></form></section>
 
 <section class="card" id="onaylar"><h2>Onaylar</h2>
-${aps.length ? `<div class="tbl"><table><tr><th>Konu</th><th>Durum</th><th>Müşteri notu</th><th>Tarih</th></tr>${aps.map(x => `<tr><td><a href="/onaylar/${x.id}">${h(x.title)}</a></td><td>${badge(AP_ST[x.status], x.status === 'onaylandi' ? 'ok' : x.status === 'reddedildi' ? 'bad' : 'warn')}</td><td>${h(x.comment || '—')}</td><td>${fmtDate(x.decided_at || x.created_at)}</td></tr>`).join('')}</table></div>` : '<p class="muted">Henüz onay istenmedi.</p>'}
+${aps.length ? `<div class="tbl"><table><tr><th>Konu</th><th>Durum</th><th>Müşteri notu</th><th>Tarih</th></tr>${aps.map(x => `<tr><td><a href="/onaylar/${x.id}">${h(x.title)}</a></td><td>${badge(AP_ST[x.status], x.status === 'onaylandi' ? 'ok' : x.status === 'reddedildi' ? 'bad' : 'warn')}</td><td>${h([x.choice, x.comment].filter(Boolean).join(' · ') || '—')}</td><td>${fmtDate(x.decided_at || x.created_at)}</td></tr>`).join('')}</table></div>` : '<p class="muted">Henüz onay istenmedi.</p>'}
 <form class="stack" method="post" action="/musteriler/${c.id}/onay">${f}<div class="row"><label style="flex:1;min-width:240px">Konu<input name="title" required placeholder="Kasım gönderi takvimi"></label>
 <label>Proje<select name="project_id"><option value="">—</option>${prjs.map(p => `<option value="${p.id}">${h(p.name)}</option>`).join('')}</select></label></div>
-<label>Açıklama ya da bağlantı<textarea name="body" rows="2"></textarea></label><div><button class="gold">Onaya gönder</button></div></form></section>
+<label>Açıklama ya da bağlantı<textarea name="body" rows="2"></textarea></label>${decisions.requestFields()}<div><button class="gold">Onaya gönder</button></div></form>
+<p class="muted">Müşteri portala girmek zorunda değil: <a href="/musteriler/${c.id}/karar">karar bağlantısı</a> gönderin, e-postasını doğrulayıp giriş yapmadan karar versin.</p></section>
 
 <section class="card"><h2>Portal kullanıcıları</h2>
 ${cu.length ? `<div class="tbl"><table><tr><th>Ad</th><th>E-posta</th><th>Son giriş</th></tr>${cu.map(x => `<tr><td>${h(x.name)}</td><td>${h(x.email)}</td><td>${fmtDate(x.last_login)}</td></tr>`).join('')}</table></div>` : '<p class="muted">Müşteri henüz portala davet edilmedi.</p>'}
@@ -534,7 +555,7 @@ ${ctx.user.role === 'admin' ? `<form class="row" method="post" action="/ekip">${
   const sum = [t`${activeSvc} aktif hizmet · ${openPrj} açık proje · ${waitAp} bekleyen onay`, lastNote ? t`Son temas: ${fmtDate(lastNote.created_at)} — ${String(lastNote.body || '').slice(0, 140)}` : 'Henüz temas kaydı yok.', ...(cu.length ? [] : ['Müşteri portalı hesabı yok.'])];
   const kv = [['Durum', badge(CLIENT_ST[c.status])], ['Yetkili', h(c.contact_name || '—')], ['Telefon', c.phone ? `<a href="tel:${h(c.phone.replace(/[^+\d]/g, ''))}">${h(c.phone)}</a>` : '—'],
     ['E-posta', c.email ? `<a href="mailto:${h(c.email)}">${h(c.email)}</a>` : '—'], ['Sektör', h(c.sector || '—')], ['Portal', h(t`${cu.length} hesap`)]];
-  const SIDE = `<div class="page-head"><div><h1>${h(c.name)}</h1></div><nav class="jump" aria-label="Sayfa içi"><a href="#hizmetler">Hizmetler</a><a href="#projeler">Projeler</a><a href="#onaylar">Onaylar</a><a href="/musteriler/${c.id}/siteler">Siteler</a><a href="/satis/${c.id}">Satış geçmişi</a></nav></div>
+  const SIDE = `<div class="page-head"><div><h1>${h(c.name)}</h1></div><nav class="jump" aria-label="Sayfa içi"><a href="#hizmetler">Hizmetler</a><a href="#projeler">Projeler</a><a href="#onaylar">Onaylar</a><a href="/musteriler/${c.id}/siteler">Siteler</a><a href="/satis/${c.id}">Satış geçmişi</a><a href="/musteriler/${c.id}/karar">Karar bağlantısı</a></nav></div>
 <dl class="kv rec-kv">${kv.map(([k, v]) => `<dt class="muted">${k}</dt><dd>${v}</dd>`).join('')}</dl>${DET}`;
   send(res, 200, layout(ctx, c.name, `<nav class="crumb"><a href="/musteriler">Müşteriler</a></nav><div class="rec"><aside class="rec-side">${SIDE}</aside><div class="rec-main"><section class="summary"><h2>Özet</h2>${sum.map(x => `<p>${h(x)}</p>`).join('')}</section>${REST}</div></div>`, '/musteriler'));
 });
@@ -563,8 +584,9 @@ route('POST', '/musteriler/:id/onay', async (ctx, res, p) => {
   if (!nn(b.title)) throw new HttpError(400, 'Konu gerekli.');
   let pid = int(b.project_id);
   if (pid && !(await one('SELECT 1 FROM projects WHERE id=$1 AND client_id=$2', [pid, c.id]))) pid = null;
-  const r = await one('INSERT INTO approvals (agency_id, client_id, project_id, title, body, requested_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id',
-    [ctx.user.agency_id, c.id, pid, nn(b.title), nn(b.body), ctx.user.id]);
+  const rq = parseRequest(b); if (rq.error) throw new HttpError(400, rq.error);
+  const r = await one('INSERT INTO approvals (agency_id, client_id, project_id, title, body, requested_by, kind, options) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id',
+    [ctx.user.agency_id, c.id, pid, nn(b.title), nn(b.body), ctx.user.id, rq.kind, rq.options ? JSON.stringify(rq.options) : null]);
   await audit(ctx, 'approval.request', { id: r.id, client: c.id }); redirect(res, `/musteriler/${c.id}`);
 });
 
@@ -641,21 +663,16 @@ route('GET', '/portal', async (ctx, res) => {
   const todo = await portalActions({ all, cid, h, fmtMoney }) + (flow ? await flow.portalFlow(cid).catch(() => '') : '');
   send(res, 200, layout(ctx, 'Portalım', `<div><p class="eyebrow">Müşteri portalı</p><h1>${h(c?.name || 'Portal')}</h1></div>
 ${todo}
-${pending.length ? `<section class="card" style="border-color:var(--champ)"><h2>Onayınızı bekleyenler (${pending.length})</h2>${pending.map(a => `<div class="card" style="background:#FBF9F5"><h3>${h(a.title)}</h3>${a.body ? `<p style="white-space:pre-wrap;margin:0">${h(a.body)}</p>` : ''}
-<form class="stack" method="post" action="/portal/onay/${a.id}">${f}<label>Notunuz (isteğe bağlı)<textarea name="comment" rows="2"></textarea></label>
-<div class="row"><button class="gold" name="decision" value="onaylandi">Onayla</button><button class="ghost" name="decision" value="reddedildi">Düzeltme iste</button></div></form></div>`).join('')}</section>` : ''}
+${pending.length ? `<section class="card" style="border-color:var(--champ)"><h2>Onayınızı bekleyenler (${pending.length})</h2>${pending.map(a => decisionForm(a, `/portal/onay/${a.id}`, f, h)).join('')}</section>` : ''}
 <section><h2 style="margin-bottom:12px">Hizmetleriniz</h2><div class="grid">${svcs.map(s => `<div class="card"><span class="muted">${h(s.cat)}</span><h3>${h(s.name)}</h3><div>${badge(CS_ST[s.status], s.status === 'aktif' ? 'ok' : 'warn')}</div></div>`).join('') || '<p class="muted">Hizmet kaydı yok.</p>'}</div></section>
 <section class="card"><h2>Projeleriniz</h2>${prjs.length ? `<div class="tbl"><table><tr><th>Proje</th><th>Durum</th><th>İlerleme</th><th>Teslim</th></tr>${prjs.map(p => `<tr><td>${h(p.name)}</td><td>${badge(PR_ST[p.status])}</td><td>${p.total ? Math.round(100 * p.done / p.total) : 0}%</td><td>${fmtDate(p.due_date)}</td></tr>`).join('')}</table></div>` : '<p class="muted">Proje yok.</p>'}</section>
-<section class="card"><h2>Geçmiş onaylar</h2>${aps.filter(a => a.status !== 'bekliyor').map(a => `<p style="margin:0">${badge(AP_ST[a.status], a.status === 'onaylandi' ? 'ok' : 'bad')} ${h(a.title)} <span class="muted">· ${fmtDate(a.decided_at)}</span></p>`).join('') || '<p class="muted">Henüz yok.</p>'}</section>`, '/portal'));
+<section class="card"><h2>Geçmiş onaylar</h2>${aps.filter(a => a.status !== 'bekliyor').map(a => `<p style="margin:0">${badge(AP_ST[a.status], a.status === 'onaylandi' ? 'ok' : 'bad')} ${h(a.title)}${a.choice ? ` · ${h(a.choice)}` : ''} <span class="muted">· ${fmtDate(a.decided_at)}</span></p>`).join('') || '<p class="muted">Henüz yok.</p>'}</section>`, '/portal'));
 });
 route('POST', '/portal/onay/:id', async (ctx, res, p) => {
   need(ctx, 'client');
-  const d = ['onaylandi', 'reddedildi'].includes(ctx.body.decision) ? ctx.body.decision : null;
-  if (!d) throw new HttpError(400, 'Karar geçersiz.');
-  const r = await one(`UPDATE approvals SET status=$1, comment=$2, decided_by=$3, decided_at=now() WHERE id=$4 AND client_id=$5 AND status='bekliyor' RETURNING id`,
-    [d, nn(ctx.body.comment), ctx.user.id, int(p.id), ctx.user.client_id]);
-  if (!r) throw new HttpError(404, 'Onay bulunamadı ya da zaten karar verildi.');
-  await audit(ctx, 'approval.decide', { id: r.id, decision: d });
+  const ap = await one(`SELECT * FROM approvals WHERE id=$1 AND client_id=$2`, [int(p.id), ctx.user.client_id]);
+  if (!ap || ap.status !== 'bekliyor') throw new HttpError(404, 'Onay bulunamadı ya da zaten karar verildi.');
+  await decisions.decide(ctx, ap, ctx.body, ctx.files, 'portal', ctx.user.name);
   redirect(res, '/portal');
 });
 
@@ -667,9 +684,10 @@ const server = http.createServer(async (req, res) => {
     Object.assign(ctx, await loadSession(req));
     store.lang = ctx.lang = pickLang(ctx.user, parseCookies(req), req.headers['accept-language']);
     if (req.method === 'POST') {
-      ctx.body = await readBody(req);
+      ctx.body = await readBody(req, url.pathname); ctx.files = ctx.body.__files || []; delete ctx.body.__files;
       const isApi = url.pathname.startsWith('/api/');
-      const open = isApi || ['/giris', '/kurulum', '/dil'].includes(url.pathname);
+      // karar bağlantısı sayfaları oturumsuzdur: köken denetlenir, karar için doğrulanmış karar çerezi gerekir (SameSite=Lax)
+      const open = isApi || ['/giris', '/kurulum', '/dil'].includes(url.pathname) || url.pathname.startsWith('/karar/');
       if (!open && (!ctx.session || !safeEqual(ctx.body.csrf || '', ctx.session.csrf))) throw new HttpError(403, 'Oturum doğrulanamadı. Sayfayı yenileyip tekrar deneyin.');
       if (open) {
         const origin = req.headers.origin; const host = req.headers['x-forwarded-host'] || req.headers.host;
@@ -717,9 +735,11 @@ registerRetention({ route, all, one, q, need, layout, h, csrfField, HttpError, r
 settingsApi = registerSettings({ route, all, q, need, layout, h, csrfField, redirect, send, audit });
 const todayPage = registerToday({ all, one, h, layout, need, STAFF, forgePending: forge.pendingCount, extraActions: async (a) => [...crmActions(await crm.openLeads(a)), ...packageActions(await freelance.awaitingReview(a)), ...(await flow.todayActions(a))] });
 registerSync({ route, one, all, q, HttpError, safeEqual, SETUP_TOKEN, onSynced: (a, before) => hooks?.onSiteSync(a, before) });
+decisions = registerDecisions({ route, all, one, q, need, layout, authPage, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, AP_ST, APP_URL: process.env.APP_URL, cookie, parseCookies,
+  sendMail: (a, m) => hooks ? hooks.sendMail(a, m) : Promise.resolve(false) });
 flow = registerFlow({ route, all, one, q, need, h, badge, fmtDate, csrfField, HttpError, int, redirect, STAFF, audit, TK_ST });
 registerIcons({ route });
 const playbooks = registerPlaybooks({ route, all, one, q, need, layout, h, badge, csrfField, HttpError, int, redirect, send, STAFF, audit, fmtDate });
-registerWork({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send, projectExtra: (ctx, pr) => playbooks.projectCard(ctx, pr), flowBanner: (ctx, pr, tasks) => flow.projectBanner(ctx, pr, tasks), taskExtra: (ctx, tk) => flow.taskCard(ctx, tk) });
+registerWork({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send, projectExtra: (ctx, pr) => playbooks.projectCard(ctx, pr), flowBanner: (ctx, pr, tasks) => flow.projectBanner(ctx, pr, tasks), taskExtra: (ctx, tk) => flow.taskCard(ctx, tk), decisions });
 
-migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => migrateFreelance({ q })).then(() => migrateRetention({ q })).then(() => migratePlaybooks({ q, all })).then((n) => n && console.log(`hizmet kitabı yazıldı: ${n}`)).then(() => migrateFlow({ q })).then(() => loadThemes(all)).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
+migrate().then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => migrateFreelance({ q })).then(() => migrateRetention({ q })).then(() => migratePlaybooks({ q, all })).then((n) => n && console.log(`hizmet kitabı yazıldı: ${n}`)).then(() => migrateDecisions({ q })).then(() => migrateFlow({ q })).then(() => loadThemes(all)).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
