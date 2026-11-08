@@ -1,6 +1,7 @@
 // Arvela OS — satış hattı: adaylar, aşamalar, 15 dk ön görüşme, sonraki adım ve iletişim geçmişi.
 // Aday, durumu "lead" olan müşteri kaydıdır; kazanılınca aynı kayıt aktif müşteriye döner (geçmiş korunur).
 import { t } from './i18n.js';
+import { splitRecord } from './ext-settings.js';
 
 export const STAGES = { yeni: 'Yeni', ulasildi: 'Ulaşıldı', gorusme: 'Ön görüşme', teklif: 'Teklif', kazanildi: 'Kazanıldı', kaybedildi: 'Kaybedildi' };
 export const OPEN_STAGES = ['yeni', 'ulasildi', 'gorusme', 'teklif'];
@@ -55,6 +56,20 @@ export function crmActions(leads, now = Date.now()) {
     }
   }
   return out;
+}
+
+// Kayıt özeti: aday/müşteri için kural tabanlı kısa özet (dış servise veri gitmez).
+export function leadSummary(l, notes = [], now = new Date(), fmt = (d) => new Date(d).toISOString().slice(0, 16).replace('T', ' ')) {
+  const lines = [];
+  const who = [l.sector, l.interest].filter(Boolean).join(' · ');
+  if (who) lines.push(who + (l.lead_source && SOURCES[l.lead_source] ? t` · kaynak: ${SOURCES[l.lead_source]}` : ''));
+  const last = notes[0];
+  if (last) { const body = String(last.body || '').replace(/\s+/g, ' ').trim(); lines.push(t`Son temas: ${KINDS[last.kind] || last.kind}, ${fmt(last.created_at)}` + (body ? ` — ${body.length > 140 ? body.slice(0, 140) + '…' : body}` : '')); }
+  else lines.push('Henüz temas kaydı yok.');
+  if (l.call_at && new Date(l.call_at) > now) lines.push(t`Ön görüşme: ${fmt(l.call_at)}`);
+  if (l.next_action) lines.push(t`Sonraki adım: ${l.next_action}` + (l.next_action_at ? ` (${fmt(l.next_action_at)})` : '') + (l.next_action_at && new Date(l.next_action_at) < now ? t` — gecikti` : ''));
+  else if (OPEN_STAGES.includes(l.stage)) lines.push('Sonraki adım yok; bir tarih belirleyin.');
+  return lines;
 }
 
 export function registerCrm(d) {
@@ -114,15 +129,17 @@ ${rows.some(r => !OPEN_STAGES.includes(r.stage)) ? `<section class="card"><h2>Ka
     const [notes, people] = await Promise.all([all('SELECT n.*, u.name author FROM client_notes n LEFT JOIN users u ON u.id=n.user_id WHERE n.client_id=$1 ORDER BY n.created_at DESC', [l.id]), team(ctx.user.agency_id)]);
     const score = l.lead_score ?? leadScore(l); const wa = waLink(l.phone, `Merhaba ${l.contact_name || ''}, Arvela Digital & AI'dan yazıyorum.`.replace('  ', ' '));
     const open = OPEN_STAGES.includes(l.stage) || l.status === 'lead';
-    send(res, 200, layout(ctx, l.name, `<nav class="crumb"><a href="/satis">Satış hattı</a>${l.status !== 'lead' ? ` › <a href="/musteriler/${l.id}">Müşteri sayfası</a>` : ''}</nav>
+    const HEAD = `
 <div class="page-head"><div><h1>${h(l.name)}</h1><div class="chips">${badge(STAGES[l.stage] || 'Aday', STAGE_TONE[l.stage])}${badge(t`Puan ${score}`, scoreTone(score))}${l.contact_name ? `<span class="muted">${h(l.contact_name)}</span>` : ''}${l.lead_source ? `<span class="muted">${h(SOURCES[l.lead_source])}</span>` : ''}${l.owner ? `<span class="muted">Sorumlu: ${h(l.owner)}</span>` : ''}${l.marketing_consent_at ? badge('Pazarlama onayı var', 'ok') : `<span class="muted">Pazarlama onayı yok</span>`}</div></div>
 <div class="act-btns">${l.phone ? `<a class="btn" href="tel:${h(String(l.phone).replace(/[^+\d]/g, ''))}">Telefonla ara</a>` : ''}${wa ? `<a class="btn ghost" href="${h(wa)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}${l.email ? `<a class="btn ghost" href="mailto:${h(l.email)}">E-posta</a>` : ''}</div></div>
 ${l.call_at ? `<div class="flash"><strong>Ön görüşme:</strong> ${h(fmtDT(l.call_at))}</div>` : ''}
-<div class="two wide-first"><section class="card"><h2>İletişim geçmişi</h2>
+`;
+    const HIST = `<section class="card"><h2>İletişim geçmişi</h2>
 <form class="stack" method="post" action="/satis/${l.id}/not">${f(ctx)}<div class="row"><label>Tür<select name="kind">${opts(KINDS, 'arama')}</select></label><label class="wide">Ne konuşuldu?<input name="body" required></label></div>
 <div class="row"><label class="wide">Sonraki adım<input name="next_action" value="${h(l.next_action)}" placeholder="Ör. teklif gönder, yeniden ara"></label><label>Ne zaman<input type="datetime-local" name="next_action_at" value="${dtVal(l.next_action_at)}"></label></div><div><button class="gold">Kaydet</button></div></form>
 ${notes.map(n => `<div class="note"><div class="note-h"><strong>${h(KINDS[n.kind] || n.kind)} · ${h(n.author || 'Sistem')}</strong><span class="muted">${h(fmtDT(n.created_at))}</span></div><p>${h(n.body)}</p></div>`).join('') || '<p class="muted">Henüz kayıt yok.</p>'}</section>
-<section class="card"><h2>Aday bilgileri</h2><form class="stack" method="post" action="/satis/${l.id}">${f(ctx)}
+`;
+    const INFO = `<section class="card"><h2>Aday bilgileri</h2><form class="stack" method="post" action="/satis/${l.id}">${f(ctx)}
 <label>Firma<input name="name" value="${h(l.name)}" required></label><div class="row"><label>Yetkili<input name="contact_name" value="${h(l.contact_name)}"></label><label>Telefon<input name="phone" type="tel" value="${h(l.phone)}"></label></div>
 <div class="row"><label>E-posta<input name="email" type="email" value="${h(l.email)}"></label><label>Sektör<input name="sector" value="${h(l.sector)}"></label></div>
 <div class="row"><label>Aşama<select name="stage">${opts(STAGES, l.stage)}</select></label><label>Kaynak<select name="lead_source">${opts(SOURCES, l.lead_source)}</select></label><label>Puan<input name="lead_score" inputmode="numeric" value="${score}"></label></div>
@@ -132,7 +149,18 @@ ${notes.map(n => `<div class="note"><div class="note-h"><strong>${h(KINDS[n.kind
 ${l.marketing_consent_at ? `<p class="muted">Onay: ${h(fmtDT(l.marketing_consent_at))}${l.marketing_consent_source ? ' · ' + h(l.marketing_consent_source) : ''}</p>` : '<p class="muted">Yalnız kişi açıkça onay verdiyse işaretleyin (İYS).</p>'}
 <label>Kaybedilme nedeni<input name="lost_reason" value="${h(l.lost_reason)}" placeholder="Yalnız kaybedildiyse"></label><div><button>Kaydet</button></div></form>
 ${open && l.status === 'lead' ? `<div class="row"><form method="post" action="/satis/${l.id}/kazanildi" data-confirm="Aday kazanıldı olarak işaretlenip aktif müşteriye çevrilsin mi?">${f(ctx)}<button class="gold">Kazanıldı · müşteriye çevir</button></form>${admin ? `<a class="btn ghost" href="/teklifler#yeni">Teklif hazırla</a>` : ''}</div>` : ''}
-<p class="muted">Puan; kaynak, iletişim bilgisi, ön görüşme ve tahmini değere göre önerilir, elle değiştirebilirsiniz.</p></section></div>`, '/satis'));
+<p class="muted">Puan; kaynak, iletişim bilgisi, ön görüşme ve tahmini değere göre önerilir, elle değiştirebilirsiniz.</p></section>`;
+    if (!splitRecord(ctx)) return send(res, 200, layout(ctx, l.name, `<nav class="crumb"><a href="/satis">Satış hattı</a>${l.status !== 'lead' ? ` › <a href="/musteriler/${l.id}">Müşteri sayfası</a>` : ''}</nav>${HEAD}<div class="two wide-first">${HIST}${INFO}</div>`, '/satis'));
+    const kv = [['Aşama', badge(STAGES[l.stage] || 'Aday', STAGE_TONE[l.stage])], ['Puan', badge(String(score), scoreTone(score))], ['Kaynak', h(SOURCES[l.lead_source] || '—')], ['Sorumlu', h(l.owner || '—')],
+      ['Yetkili', h(l.contact_name || '—')], ['Telefon', l.phone ? `<a href="tel:${h(String(l.phone).replace(/[^+\d]/g, ''))}">${h(l.phone)}</a>` : '—'], ['E-posta', l.email ? `<a href="mailto:${h(l.email)}">${h(l.email)}</a>` : '—'],
+      ['Sektör', h(l.sector || '—')], ['İlgi', h(l.interest || '—')], ...(admin && l.value_estimate ? [['Aylık değer', h(`${fmtMoney(l.value_estimate)} TL`)]] : []),
+      ['Pazarlama onayı', l.marketing_consent_at ? h(t`Var · ${fmtDT(l.marketing_consent_at)}`) : 'Yok']];
+    const SIDE = `<div class="page-head"><div><h1>${h(l.name)}</h1>${l.contact_name ? `<span class="muted">${h(l.contact_name)}</span>` : ''}</div>
+<div class="act-btns">${l.phone ? `<a class="btn" href="tel:${h(String(l.phone).replace(/[^+\d]/g, ''))}">Ara</a>` : ''}${wa ? `<a class="btn ghost" href="${h(wa)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}${l.email ? `<a class="btn ghost" href="mailto:${h(l.email)}">E-posta</a>` : ''}</div></div>
+<dl class="kv rec-kv">${kv.map(([k, v]) => `<dt class="muted">${k}</dt><dd>${v}</dd>`).join('')}</dl>
+<details class="card"><summary>Bilgileri düzenle</summary>${INFO.replace('<section class="card"><h2>Aday bilgileri</h2>', '').replace(/<\/section>$/, '')}</details>`;
+    const SUM = `<section class="summary"><h2>Özet</h2>${leadSummary(l, notes, new Date(), fmtDT).map(x => `<p>${h(x)}</p>`).join('')}</section>`;
+    send(res, 200, layout(ctx, l.name, `<nav class="crumb"><a href="/satis">Satış hattı</a>${l.status !== 'lead' ? ` › <a href="/musteriler/${l.id}">Müşteri sayfası</a>` : ''}</nav><div class="rec"><aside class="rec-side">${SIDE}</aside><div class="rec-main">${SUM}${HIST}</div></div>`, '/satis'));
   });
 
   route('POST', '/satis/:id', async (ctx, res, p) => {
