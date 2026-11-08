@@ -154,10 +154,10 @@ ${j.error ? `<div class="err">${h(j.error)}</div>` : ''}<div class="two"><sectio
     const cfg = await config(ctx.user.agency_id); if (!cfg.enabled) return '';
     const f = csrfField(ctx); const sug = await one(`SELECT id, status, result FROM ai_jobs WHERE project_id=$1 AND kind='oneri' ORDER BY id DESC LIMIT 1`, [p.id]);
     const eng = ENGINES[p.ai_engine] ? p.ai_engine : 'claude';
-    return `<section class="card"><h2>Yapay zekâ motoru</h2><p class="muted">Bu projenin yapay zekâ aşamaları için motor. Şu an yalnız Claude bağlı; diğerleri bağlandığında seçilebilir.</p>
+    return `<details class="card add"><summary>Yapay zekâ motoru · ${h(ENGINES[eng].name)}</summary><p class="muted">Bu projenin yapay zekâ aşamaları için motor. Şu an yalnız Claude bağlı; diğerleri bağlandığında seçilebilir.</p>
 <form class="row" method="post" action="/projeler/${p.id}/yapay-zeka">${f}<label>Motor<select name="engine">${Object.entries(ENGINES).map(([k, v]) => `<option value="${k}"${k === eng ? ' selected' : ''}${v.ready ? '' : ' disabled'}>${h(v.name)}${v.ready ? '' : ' (yakında)'}</option>`).join('')}</select></label><button class="ghost">Kaydet</button></form>
 <form method="post" action="/projeler/${p.id}/yapay-zeka/oneri">${f}<button class="ghost">Claude'a bu proje için motor önerisi sor</button></form>
-${sug ? `<p class="muted" style="margin:0">Son öneri: <a href="/yapay-zeka/${sug.id}">#${sug.id} · ${h(JOB_ST[sug.status])}</a></p>` : ''}</section>`;
+${sug ? `<p class="muted" style="margin:0">Son öneri: <a href="/yapay-zeka/${sug.id}">#${sug.id} · ${h(JOB_ST[sug.status])}</a></p>` : ''}</details>`;
   }
   route('POST', '/projeler/:id/yapay-zeka', async (ctx, res, p) => {
     need(ctx, ...STAFF); const e = ENGINES[ctx.body.engine]?.ready ? ctx.body.engine : 'claude';

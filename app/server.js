@@ -18,7 +18,7 @@ import { registerSuggest, migrateSuggest } from './ext-suggest.js';
 import { registerDecisions, migrateDecisions, parseMultipart, decisionForm, parseRequest, BODY_MAX } from './ext-decisions.js';
 import { THEMES } from './themes.js';
 
-const VERSION = '0.21.0';
+const VERSION = '0.22.0';
 let settingsApi = null;
 const PORT = Number(process.env.PORT || 3000);
 const SETUP_TOKEN = process.env.SETUP_TOKEN || '';
@@ -131,12 +131,12 @@ body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--paper);col
 a{color:#7A5A1E}a:hover{color:var(--ink)}h1,h2,h3{font-family:Poppins,Inter,sans-serif;font-weight:500;margin:0;letter-spacing:-.2px}
 h1{font-size:34px;line-height:1.15}h2{font-size:21px}h3{font-size:17px}
 :focus-visible{outline:3px solid var(--champ);outline-offset:2px}
-.side{position:fixed;inset:0 auto 0 0;width:248px;background:var(--night);color:#fff;display:flex;flex-direction:column;padding:24px 16px;gap:24px;z-index:20}
+.side{position:fixed;inset:0 auto 0 0;width:248px;background:var(--night);color:#fff;display:flex;flex-direction:column;padding:20px 16px 14px;gap:14px;z-index:20}
 .brand{font-family:Poppins,sans-serif;font-size:21px;font-weight:500;color:#fff;text-decoration:none;letter-spacing:.4px;padding:0 10px}.brand span{color:var(--champ);font-size:11px;letter-spacing:3px;margin-left:8px}
-.side nav{display:flex;flex-direction:column;gap:2px;overflow-y:auto}
-.side nav a{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;color:#C9CED6;text-decoration:none;font-size:15px}
+.side nav{display:flex;flex-direction:column;gap:1px;overflow-y:auto;flex:1;min-height:0;margin-right:-8px;padding-right:8px}
+.side nav a{display:flex;align-items:center;gap:10px;padding:7px 14px;border-radius:10px;color:#C9CED6;text-decoration:none;font-size:15px}
 .side nav a:hover{background:#1A1F27;color:#fff}.side nav a.on{background:var(--graphite);color:#fff;box-shadow:inset 3px 0 0 var(--champ)}
-.side .who{margin-top:auto;border-top:1px solid #1F242C;padding:16px 10px 0;display:flex;flex-direction:column;gap:10px;font-size:13px;color:#A3ABB8}
+.side .who{margin-top:auto;border-top:1px solid #1F242C;padding:10px 6px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12px;color:#A3ABB8}.side .who>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .who strong{color:#fff;font-weight:600;font-size:14px}
 .btn-out{font:inherit;font-size:13px;background:transparent;color:#C9CED6;border:1px solid var(--graphite);border-radius:10px;padding:8px 12px;cursor:pointer;min-height:36px;align-self:flex-start}
 .shell{margin-left:248px;min-height:100vh}
@@ -236,8 +236,21 @@ label.wide{flex:2 1 260px}
 .side-search{display:flex;padding:0 4px}.side-search input{width:100%;background:#1A1F27;border:1px solid #262B34;color:#fff;min-height:40px;border-radius:10px;font-size:14px}.side-search input::placeholder{color:#7C8492}
 .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;border:1px solid #DDD6C7;background:#fff;color:var(--ink)}.icon-btn svg{width:20px;height:20px}
 tr.is-late td:first-child{box-shadow:inset 3px 0 0 var(--bad)}
-.guide{background:var(--sand,#EFE9DD);border-left:3px solid var(--gold);border-radius:12px;padding:12px 16px;font-size:14px;line-height:1.5}.guide>summary{font-weight:600;cursor:pointer;min-height:28px}.guide p{margin:6px 0 0}
-.guide-toggle{margin:0;display:flex;justify-content:flex-end}.linkish{background:none;border:0;padding:10px 0;color:#6B6558;text-decoration:underline;font-size:13px;min-height:auto;cursor:pointer}
+details.add>summary{list-style:none;display:flex;align-items:center;gap:8px;min-height:40px;font-weight:600;color:var(--ink,#141A22)}details.add>summary::-webkit-details-marker{display:none}
+details.add>summary::before{content:"+";display:inline-grid;place-items:center;width:24px;height:24px;border-radius:8px;background:var(--sand,#EFE9DD);font-weight:600;flex:none}details.add[open]>summary::before{content:"−"}
+details.card.add{padding-top:12px;padding-bottom:12px}details.card.add[open]{padding-bottom:20px}details.add[open]>summary{margin-bottom:10px}
+.seg{display:inline-flex;flex-wrap:wrap;gap:4px;background:var(--sand,#EFE9DD);padding:4px;border-radius:12px;margin:0}.seg button{min-height:36px;padding:0 14px;border:0;border-radius:9px;background:transparent;color:#4A4A44;font-weight:500;font-size:14px}
+.seg button.on{background:#fff;color:var(--ink,#141A22);box-shadow:0 1px 3px rgba(20,26,34,.12);font-weight:600}
+.stack-col{display:flex;flex-direction:column;gap:16px;min-width:0}.note.sys{background:#FBF9F5;border-radius:10px;padding:10px 12px}.note.sys .note-h strong{color:#7A5A1E}details.more>summary{font-size:13px;color:#7A5A1E}
+dl.kv dt{color:#6B6558;font-size:13px}dl.kv dd{margin:0}
+.info-btn{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line,#E2DACB);background:#fff;color:var(--ink,#141A22);font-size:14px;font-weight:600;cursor:pointer}
+.info-btn span{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--sand,#EFE9DD);font:600 12px/1 Georgia,serif;font-style:italic}
+.info-on .info-btn{background:var(--ink,#141A22);color:#fff;border-color:var(--ink,#141A22)}.info-on .info-btn span{background:var(--gold);color:var(--ink,#141A22)}
+.info-bar{display:flex;justify-content:flex-end;margin-bottom:-8px}
+.guide{display:none;grid-template-columns:1fr 1fr;gap:16px 28px;background:var(--sand,#EFE9DD);border-radius:16px;padding:16px 20px;font-size:14px;line-height:1.55}.guide p{margin:0}.guide .eyebrow{margin-bottom:4px}
+.info-on .guide{display:grid}.g-hint{display:none}.info-on .g-hint{display:block}.more-info{display:none}.info-on .more-info{display:revert}
+@media (max-width:700px){.guide{grid-template-columns:1fr}}
+.nav-group{margin:10px 14px 2px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6E7682}.side nav .nav-group:first-child{margin-top:0}
 .g-hint{margin:2px 0 8px;color:#6B6558;font-size:13px;line-height:1.5}
 .flowbar{background:#fff;border:1px solid var(--champ);border-radius:18px;padding:18px 20px;display:flex;flex-direction:column;gap:8px}.flowbar h2{margin:0;font-size:20px}.flowbar p{margin:0}.flowbar.small{padding:14px 18px}
 .flowbar .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.flowbar form{margin:0}
@@ -299,16 +312,22 @@ const ICON = {
 };
 const icon = (k) => `<span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg></span>`;
 
+const GROUP_OF = (u, href) => { if (!u || u.role === 'client' || u.role === 'freelancer') return ''; const g = { '/panel': 'Günlük', '/satis': 'Satış ve müşteri', '/projeler': 'Teslimat', '/otomasyonlar': 'Yönetim' }[href]; return g ? `<p class="nav-group">${g}</p>` : ''; };
+// Ekip/Forge/Kayıtlar kenar çubuğunda değil Ayarlar'da; o sayfalarda Ayarlar seçili görünür
+const ACTIVE_ALIAS = { '/ekip': '/ayarlar', '/forge': '/ayarlar', '/kayitlar': '/ayarlar' };
 function layout(ctx, title, body, active = '') {
+  active = ACTIVE_ALIAS[active] || active;
   const u = ctx.user;
   const links = !u ? [] :
     u.role === 'client' ? [['/portal', 'Portalım'], ['/portal/siteler', 'Sitelerim'], ['/portal/teklifler', 'Tekliflerim'], ['/portal/faturalar', 'Faturalarım']] :
     u.role === 'freelancer' ? [['/paketler', 'İş paketlerim'], ['/gorevler', 'Görevlerim']] :
-    [['/panel', 'Bugün'], ['/satis', 'Satış hattı'], ['/musteriler', 'Müşteriler'], ['/gorevler', 'Görevlerim'], ['/onaylar', 'Onaylar'], ['/siteler', 'Siteler'], ['/projeler', 'Projeler'], ['/paketler', 'İş paketleri'], ['/katalog', 'Katalog'], ['/otomasyonlar', 'Otomasyonlar'], ...(u.role === 'admin' ? [['/teklifler', 'Teklifler'], ['/faturalar', 'Faturalar'], ['/odemeler', 'Freelancer ödemeleri'], ['/ekip', 'Ekip'], ['/forge', 'Forge'], ['/kayitlar', 'Kayıtlar'], ['/ayarlar', 'Ayarlar']] : [])];
+    [['/panel', 'Bugün'], ['/gorevler', 'Görevlerim'], ['/onaylar', 'Onaylar'], ['/satis', 'Satış hattı'], ['/musteriler', 'Müşteriler'], ...(u.role === 'admin' ? [['/teklifler', 'Teklifler'], ['/faturalar', 'Faturalar']] : []),
+      ['/projeler', 'Projeler'], ['/paketler', 'İş paketleri'], ['/siteler', 'Siteler'], ['/katalog', 'Katalog'], ['/otomasyonlar', 'Otomasyonlar'], ...(u.role === 'admin' ? [['/odemeler', 'Freelancer ödemeleri'], ['/ayarlar', 'Ayarlar']] : [])];
+
   const staffish = u && (u.role === 'admin' || u.role === 'staff');
   const isOn = (href) => active === href;
   const cur = (href) => isOn(href) ? ' class="on" aria-current="page"' : '';
-  const side = links.map(([href, t]) => `<a href="${href}"${cur(href)}>${t}</a>`).join('');
+  const side = links.map(([href, t]) => `${GROUP_OF(u, href)}<a href="${href}"${cur(href)}>${t}</a>`).join('');
   // mobil alt sekmeler: rol başına en sık kullanılan dördü, gerisi "Menü"de
   const TAB = u?.role === 'client' ? [['/portal', 'home'], ['/portal/siteler', 'globe'], ['/portal/teklifler', 'doc'], ['/portal/faturalar', 'check']]
     : u?.role === 'freelancer' ? [['/paketler', 'doc'], ['/gorevler', 'check']]
@@ -323,10 +342,10 @@ function layout(ctx, title, body, active = '') {
   const pageTheme = pvCss !== null && pvCss !== undefined ? { css: pvCss, banner: `<div class="preview-bar" role="status">Önizleme: ${escHtml(THEMES[pv].name)} · yalnız size görünür <a href="/ayarlar/tema?tema=${escHtml(pv)}">Ayarlara dön</a></div>` } : { css: currentThemeCss(u?.agency_id), banner: '' };
   return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#F7F4EE">
 <title>${h(title)} · Arvela OS</title>${ICON_LINKS}<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500&display=swap" rel="stylesheet"><style>${CSS}${pageTheme.css}</style></head><body>${pageTheme.banner}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500&display=swap" rel="stylesheet"><style>${CSS}${pageTheme.css}</style></head><body${parseCookies(ctx.req || { headers: {} }).ayrinti === '1' ? ' class="info-on"' : ''}>${pageTheme.banner}
 ${u ? `<aside class="side"><a class="brand" href="/">Arvela<span>OS</span></a>${staffish ? `<form class="side-search" method="get" action="/ara" role="search"><input type="search" name="q" data-cmdk placeholder="Ara…" aria-label="Ara"></form>` : ''}<nav aria-label="Ana menü">${side}</nav><div class="who"><span><strong>${h(u.name)}</strong><br>${h(ROLE[u.role])}</span><div class="who-row">${out}${langSwitch(ctx, 'dark')}</div></div></aside>` : ''}
 <div class="shell${u ? '' : ' bare'}">${u ? `<header class="mtop"><a class="brand" href="/">Arvela<span>OS</span></a><div class="who">${langSwitch(ctx)}${staffish ? `<a class="icon-btn" href="/ara" data-cmdk aria-label="Ara">${icon('search').replace('class="ti"', 'class="ti" style="width:auto;height:auto"')}</a>` : ''}${out}</div></header>` : ''}
-<main>${flash}${u ? applyGuide(body, { path: ctx.url?.pathname || '', lang: lang(), hidden: parseCookies(ctx.req || { headers: {} }).rehber === 'kapali', csrf: csrfField(ctx), M1: lang() === 'en' ? M1 : '', M2: lang() === 'en' ? M2 : '' }) : body}</main></div>${tabs}${staffish ? cmdk(u) : ''}<script src="/app.js" defer></script></body></html>`;
+<main>${flash}${u ? applyGuide(body, { path: ctx.url?.pathname || '', lang: lang(), M1: lang() === 'en' ? M1 : '', M2: lang() === 'en' ? M2 : '' }) : body}</main></div>${tabs}${staffish ? cmdk(u) : ''}<script src="/app.js" defer></script></body></html>`;
 }
 const cmdk = (u) => {
   const items = [['/satis#yeni-aday', 'Yeni aday', 'A'], ['/paketler#yeni-paket', 'Yeni iş paketi', ''], ...(u.role === 'admin' ? [['/teklifler#yeni', 'Yeni teklif', 'T']] : []),
@@ -482,7 +501,10 @@ route('POST', '/cikis', async (ctx, res) => {
 });
 
 // ----- panel -----
-route('GET', '/panel', async (ctx, res) => todayPage(ctx, res, send));
+route('GET', '/panel', async (ctx, res) => { // müşteri ve freelancer kendi ana sayfasına gider (403 yerine)
+  if (ctx.user?.role === 'client') return redirect(res, '/portal'); if (ctx.user?.role === 'freelancer') return redirect(res, '/paketler');
+  return todayPage(ctx, res, send);
+});
 
 // ----- müşteriler -----
 route('GET', '/musteriler', async (ctx, res) => {
@@ -540,24 +562,24 @@ ${svcs.length ? svcs.map(s => `<div class="svc"><div class="svc-h"><span class="
 <details><summary>Düzenle</summary><form class="stack" method="post" action="/hizmet/${s.id}">${f}<div class="row"><label>Durum<select name="status">${opts(CS_ST, s.status)}</select></label><label>Başlangıç<input type="date" name="start_date" value="${s.start_date ? new Date(s.start_date).toISOString().slice(0, 10) : ''}"></label><label>Bitiş<input type="date" name="end_date" value="${s.end_date ? new Date(s.end_date).toISOString().slice(0, 10) : ''}"></label></div>
 <label>Not<input name="notes" value="${h(s.notes)}" placeholder="Paket ayrıntısı, özel fiyat, kapsam"></label><div class="row"><button>Kaydet</button></div></form>
 ${ctx.user.role === 'admin' ? `<form method="post" action="/hizmet/${s.id}/sil" data-confirm="Bu hizmet kaydı silinsin mi?">${f}<button class="danger">Kaydı sil</button></form>` : ''}</details></div>`).join('') : '<p class="muted">Bu müşteriye henüz hizmet eklenmedi.</p>'}
-<form class="row" method="post" action="/musteriler/${c.id}/hizmet">${f}<label style="flex:1;min-width:260px">Katalogdan modül<select name="service_id" required>${catalog.map(s => `<option value="${s.id}">${h(s.cat)} — ${h(s.code)} ${h(s.name)}</option>`).join('')}</select></label>
-<label>Durum<select name="status">${opts(CS_ST, 'teklif')}</select></label><label>Başlangıç<input type="date" name="start_date"></label><button class="gold">Ekle</button></form></section>
+<details class="add"><summary>Hizmet ekle</summary><form class="row" method="post" action="/musteriler/${c.id}/hizmet">${f}<label style="flex:1;min-width:260px">Katalogdan modül<select name="service_id" required>${catalog.map(s => `<option value="${s.id}">${h(s.cat)} — ${h(s.code)} ${h(s.name)}</option>`).join('')}</select></label>
+<label>Durum<select name="status">${opts(CS_ST, 'teklif')}</select></label><label>Başlangıç<input type="date" name="start_date"></label><button class="gold">Ekle</button></form></details></section>
 
 <section class="card" id="projeler"><h2>Projeler</h2>
 ${prjs.length ? `<div class="tbl"><table><tr><th>Proje</th><th>Durum</th><th>İlerleme</th><th>Teslim</th></tr>${prjs.map(p => `<tr><td><a href="/projeler/${p.id}">${h(p.name)}</a></td><td>${badge(PR_ST[p.status])}</td><td>${p.done}/${p.total}</td><td>${fmtDate(p.due_date)}</td></tr>`).join('')}</table></div>` : '<p class="muted">Proje yok.</p>'}
-<form class="row" method="post" action="/musteriler/${c.id}/proje">${f}<label style="flex:1;min-width:240px">Proje adı<input name="name" required></label><label>Teslim<input type="date" name="due_date"></label><button class="gold">Proje aç</button></form></section>
+<details class="add"><summary>Yeni proje</summary><form class="row" method="post" action="/musteriler/${c.id}/proje">${f}<label style="flex:1;min-width:240px">Proje adı<input name="name" required></label><label>Teslim<input type="date" name="due_date"></label><button class="gold">Proje aç</button></form></details></section>
 
 <section class="card" id="onaylar"><h2>Onaylar</h2>
 ${aps.length ? `<div class="tbl"><table><tr><th>Konu</th><th>Durum</th><th>Müşteri notu</th><th>Tarih</th></tr>${aps.map(x => `<tr><td><a href="/onaylar/${x.id}">${h(x.title)}</a></td><td>${badge(AP_ST[x.status], x.status === 'onaylandi' ? 'ok' : x.status === 'reddedildi' ? 'bad' : 'warn')}</td><td>${h([x.choice, x.comment].filter(Boolean).join(' · ') || '—')}</td><td>${fmtDate(x.decided_at || x.created_at)}</td></tr>`).join('')}</table></div>` : '<p class="muted">Henüz onay istenmedi.</p>'}
-<form class="stack" method="post" action="/musteriler/${c.id}/onay">${f}<div class="row"><label style="flex:1;min-width:240px">Konu<input name="title" required placeholder="Kasım gönderi takvimi"></label>
+<details class="add"><summary>Onaya gönder</summary><form class="stack" method="post" action="/musteriler/${c.id}/onay">${f}<div class="row"><label style="flex:1;min-width:240px">Konu<input name="title" required placeholder="Kasım gönderi takvimi"></label>
 <label>Proje<select name="project_id"><option value="">—</option>${prjs.map(p => `<option value="${p.id}">${h(p.name)}</option>`).join('')}</select></label></div>
-<label>Açıklama ya da bağlantı<textarea name="body" rows="2"></textarea></label>${decisions.requestFields()}<div><button class="gold">Onaya gönder</button></div></form>
+<label>Açıklama ya da bağlantı<textarea name="body" rows="2"></textarea></label>${decisions.requestFields()}<div><button class="gold">Onaya gönder</button></div></form></details>
 <p class="muted">Müşteri portala girmek zorunda değil: <a href="/musteriler/${c.id}/karar">karar bağlantısı</a> gönderin, e-postasını doğrulayıp giriş yapmadan karar versin.</p></section>
 
 <section class="card"><h2>Portal kullanıcıları</h2>
 ${cu.length ? `<div class="tbl"><table><tr><th>Ad</th><th>E-posta</th><th>Son giriş</th></tr>${cu.map(x => `<tr><td>${h(x.name)}</td><td>${h(x.email)}</td><td>${fmtDate(x.last_login)}</td></tr>`).join('')}</table></div>` : '<p class="muted">Müşteri henüz portala davet edilmedi.</p>'}
-${ctx.user.role === 'admin' ? `<form class="row" method="post" action="/ekip">${f}<input type="hidden" name="role" value="client"><input type="hidden" name="client_id" value="${c.id}">
-<label>Ad soyad<input name="name" required></label><label>E-posta<input type="email" name="email" required></label><label>İlk şifre<input name="password" required minlength="10" autocomplete="off"></label><button class="gold">Portal hesabı aç</button></form>` : ''}</section>`;
+${ctx.user.role === 'admin' ? `<details class="add"><summary>Portal hesabı aç</summary><form class="row" method="post" action="/ekip">${f}<input type="hidden" name="role" value="client"><input type="hidden" name="client_id" value="${c.id}">
+<label>Ad soyad<input name="name" required></label><label>E-posta<input type="email" name="email" required></label><label>İlk şifre<input name="password" required minlength="10" autocomplete="off"></label><button class="gold">Portal hesabı aç</button></form></details>` : ''}</section>`;
   if (!splitRecord(ctx)) return send(res, 200, layout(ctx, c.name, `<nav class="crumb"><a href="/musteriler">Müşteriler</a></nav>${HEAD}${DET}${REST}`, '/musteriler'));
   const lastNote = await one('SELECT n.kind, n.body, n.created_at FROM client_notes n WHERE n.client_id=$1 ORDER BY n.created_at DESC LIMIT 1', [c.id]).catch(() => null);
   const activeSvc = svcs.filter(x => x.status === 'aktif').length; const openPrj = prjs.filter(x => x.status !== 'tamamlandi').length; const waitAp = aps.filter(x => x.status === 'bekliyor').length;
@@ -648,6 +670,12 @@ route('POST', '/ekip/:id/durum', async (ctx, res, p) => {
   if (!u.active) await q('DELETE FROM sessions WHERE user_id=$1', [id]);
   await audit(ctx, 'user.toggle', { id, active: u.active }); redirect(res, '/ekip');
 });
+// Bugün: acil site uyarılarını 30 gün ertele (bakım kararı sonraya bırakıldıysa)
+route('POST', '/bugun/site-ertele', async (ctx, res) => {
+  need(ctx, 'admin'); const until = new Date(Date.now() + 30 * 864e5).toISOString();
+  await q(`INSERT INTO settings (agency_id, key, value) VALUES ($1,'today.sites_snooze',$2) ON CONFLICT (agency_id, key) DO UPDATE SET value=EXCLUDED.value`, [ctx.user.agency_id, until]);
+  await audit(ctx, 'settings.update', { key: 'today.sites_snooze', until }); redirect(res, '/panel');
+});
 // sayfa rehberini kişi başına gizle/göster (çerez, 1 yıl)
 route('POST', '/rehber', async (ctx, res) => {
   if (!ctx.user) throw new HttpError(401);
@@ -717,6 +745,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     if (e instanceof HttpError && e.status === 401) return redirect(res, '/giris');
+    if (e instanceof HttpError && e.status === 403 && req.method === 'GET' && ctx.user?.role === 'client' && !url.pathname.startsWith('/portal')) return redirect(res, '/portal');
     const status = e instanceof HttpError ? e.status : 500;
     if (status === 500) console.error(e);
     const msg = status === 500 ? 'Beklenmeyen bir hata oluştu.' : (e.message || 'Hata');
@@ -742,7 +771,7 @@ const crm = registerCrm({ route, all, one, q, need, layout, h, badge, fmtMoney, 
 const freelance = registerFreelance({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, opts });
 registerRetention({ route, all, one, q, need, layout, h, csrfField, HttpError, redirect, send, audit, fmtDate });
 settingsApi = registerSettings({ route, all, q, need, layout, h, csrfField, redirect, send, audit });
-const todayPage = registerToday({ all, one, h, layout, need, STAFF, forgePending: forge.pendingCount, extraActions: async (a) => [...crmActions(await crm.openLeads(a)), ...packageActions(await freelance.awaitingReview(a)), ...(await flow.todayActions(a))] });
+const todayPage = registerToday({ all, one, h, layout, need, STAFF, csrfField, forgePending: forge.pendingCount, extraActions: async (a) => [...crmActions(await crm.openLeads(a)), ...packageActions(await freelance.awaitingReview(a)), ...(await flow.todayActions(a))] });
 registerSync({ route, one, all, q, HttpError, safeEqual, SETUP_TOKEN, onSynced: (a, before) => hooks?.onSiteSync(a, before) });
 decisions = registerDecisions({ route, all, one, q, need, layout, authPage, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, AP_ST, APP_URL: process.env.APP_URL, cookie, parseCookies,
   sendMail: (a, m) => hooks ? hooks.sendMail(a, m) : Promise.resolve(false) });

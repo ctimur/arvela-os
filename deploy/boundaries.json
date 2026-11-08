@@ -1,17 +1,17 @@
 {
  "server.js": [
   "      await q('INSERT INTO services (agency_id, category_id, code, sub, name, billing, unit, price_try, price_eur, availability) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT DO NOTHING',",
-  "button:hover,.btn:hover{background:var(--graphite);color:#fff}button:disabled{opacity:.45;cursor:not-allowed}",
-  ".pulse{position:sticky;top:24px;border:0;border-radius:24px;gap:0}.pulse h2{margin-bottom:8px}",
-  ".budget{background:#fff;border:1px solid var(--champ);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column}.budget strong{font-size:20px}.files{margin:4px 0 0;padding-left:18px}[hidden]{display:none!important}",
-  "    [['/panel', 'Bugün'], ['/satis', 'Satış hattı'], ['/musteriler', 'Müşteriler'], ['/gorevler', 'Görevlerim'], ['/onaylar', 'Onaylar'], ['/siteler', 'Siteler'], ['/projeler', 'Projeler'], ['/paketler', 'İş paketleri'], ['/katalog', 'Katalog'], ['/otomasyonlar', 'Otomasyonlar'], ...(u.role === 'admin' ? [['/teklifler', 'Teklifler'], ['/faturalar', 'Faturalar'], ['/odemeler', 'Freelancer ödemeleri'], ['/ekip', 'Ekip'], ['/forge', 'Forge'], ['/kayitlar', 'Kayıtlar'], ['/ayarlar', 'Ayarlar']] : [])];",
-  "// Dosya yüklemesi yalnız karar formlarında kabul edilir (multipart/form-data, en çok ~26 MB).",
-  "  redirect(res, '/giris?ok=1');",
-  "  const cu = await all(`SELECT id, name, email, last_login, active FROM users WHERE client_id=$1 AND role='client'`, [c.id]);",
-  "  const lastNote = await one('SELECT n.kind, n.body, n.created_at FROM client_notes n WHERE n.client_id=$1 ORDER BY n.created_at DESC LIMIT 1', [c.id]).catch(() => null);",
-  "<details class=\"card\"><summary>Ekip üyesi ekle</summary><form class=\"row\" method=\"post\" action=\"/ekip\">${f}<label>Ad soyad<input name=\"name\" required></label><label>E-posta<input type=\"email\" name=\"email\" required></label>",
-  "  if (!ap || ap.status !== 'bekliyor') throw new HttpError(404, 'Onay bulunamadı ya da zaten karar verildi.');",
-  "  taskExtra: async (ctx, tk) => (await flow.taskCard(ctx, tk)) + (await ai.taskCard(ctx, tk)) + (await suggest.taskCards(ctx, tk)), decisions });"
+  "button,.btn{font:inherit;font-weight:600;border:0;border-radius:14px;padding:11px 18px;background:var(--ink);color:#fff;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px}",
+  ".later-row{background:#fff;border-radius:18px;padding:14px 16px;border:1px solid transparent}.later-row:hover{border-color:var(--champ);color:var(--ink)}",
+  ".stack-col{display:flex;flex-direction:column;gap:16px;min-width:0}.note.sys{background:#FBF9F5;border-radius:10px;padding:10px 12px}.note.sys .note-h strong{color:#7A5A1E}details.more>summary{font-size:13px;color:#7A5A1E}",
+  ".more a{flex:none;flex-direction:row;justify-content:flex-start;font-size:15px;padding:14px;color:var(--ink);border-radius:12px}.more a:hover,.more a.on{background:var(--sand)}",
+  "    ['/panel', 'Bugün', 'G B'], ['/satis', 'Satış hattı', 'G S'], ['/musteriler', 'Müşteriler', 'G M'], ['/gorevler', 'Görevlerim', 'G G'], ['/onaylar', 'Onaylar', ''], ['/projeler', 'Projeler', ''],",
+  "const nn = (v) => (v === undefined || v === null || String(v).trim() === '') ? null : String(v).trim();",
+  "<label>Not<textarea name=\"notes\" rows=\"2\"></textarea></label><div><button class=\"gold\">Kaydet</button></div></form></details>",
+  "${prjs.length ? `<div class=\"tbl\"><table><tr><th>Proje</th><th>Durum</th><th>İlerleme</th><th>Teslim</th></tr>${prjs.map(p => `<tr><td><a href=\"/projeler/${p.id}\">${h(p.name)}</a></td><td>${badge(PR_ST[p.status])}</td><td>${p.done}/${p.total}</td><td>${fmtDate(p.due_date)}</td></tr>`).join('')}</table></div>` : '<p class=\"muted\">Proje yok.</p>'}",
+  "  let pid = int(b.project_id);",
+  "  send(res, 200, layout(ctx, 'Kayıtlar', `<div class=\"page-head\"><h1>İşlem kayıtları</h1><a class=\"btn ghost\" href=\"/veri-saklama\">Veri saklama (KVKK)</a></div><div class=\"tbl\"><table><tr><th>Zaman</th><th>Kişi</th><th>İşlem</th><th>Ayrıntı</th></tr>",
+  "import { registerWork, migrateWork } from './ext-work.js';"
  ],
  "ext-sites.js": [
   "  route('POST', '/siteler', async (ctx, res) => {"
@@ -32,15 +32,16 @@
   "    const vat = Math.min(100, Math.max(0, Number(b.vat_pct) || 0));"
  ],
  "ext-today.js": [
-  "function actionCard(x, h, size) {",
-  "  ];"
+  "  for (const s of d.sites || []) if (s.client_id) { const hl = siteHealth(s); if (hl.label === 'Acil') put(s.client_id, s.client, 4, 'bad', s.ssl_status === 'expired' ? 'SSL doldu' : s.ssl_status === 'failed' ? 'SSL yok' : 'Site sorunu'); else if (hl.label === 'Güncelleme') put(s.client_id, s.client, 2, 'warn', 'Güncelleme'); }",
+  "<aside class=\"pulse card\"><h2>Müşteri nabzı</h2>${pulse.slice(0, 8).map(p => `<a class=\"pulse-row\" href=\"/musteriler/${p.id}\"><span class=\"dot ${p.tone}\"></span><span class=\"grow\">${h(p.name)}</span><span class=\"muted\">${h(p.label)}</span></a>`).join('') || '<p class=\"muted\">Aktif müşteri yok.</p>'}"
  ],
  "ext-work.js": [
-  "    if (!p) throw new HttpError(404, 'Proje bulunamadı.'); return p;",
-  "<div class=\"row\"><label class=\"wide\">Görev<input name=\"title\" required></label><label>Sorumlu<select name=\"assignee_id\">${peopleOpts(team, null)}</select></label><label>Teslim<input type=\"date\" name=\"due_date\"></label><label>Öncelik<select name=\"priority\">${opts(PRIO, 'normal')}</select></label></div>",
-  "<div class=\"row\"><label>Durum<select name=\"status\">${opts(TK_ST, t.status)}</select></label><label>Sorumlu<select name=\"assignee_id\">${peopleOpts(team, t.assignee_id)}</select></label>",
-  "<select name=\"durum\" aria-label=\"Durum\" data-auto><option value=\"acik\"${durum === 'acik' ? ' selected' : ''}>Açık</option><option value=\"gecikti\"${durum === 'gecikti' ? ' selected' : ''}>Geciken</option>${opts(TK_ST, durum)}<option value=\"hepsi\"${durum === 'hepsi' ? ' selected' : ''}>Tümü</option></select><button class=\"ghost\">Filtrele</button></form>`;",
-  "    await q('UPDATE approvals SET title=$1, body=$2, project_id=$3, kind=$4, options=$5 WHERE id=$6', [nn(b.title) || x.title, nn(b.body), pid, rq.kind, rq.options ? JSON.stringify(rq.options) : null, x.id]);"
+  "  // Görev durumu için tek dokunuşluk düğmeler (seçili olan vurgulu)",
+  "        ORDER BY t.stage_no NULLS LAST, (t.priority='yuksek') DESC, t.due_date NULLS LAST, t.id`, [p.id]),",
+  "    await audit(ctx, 'project.delete', { id: p.id, name: p.name }); redirect(res, `/musteriler/${p.client_id}`);",
+  "    await q('UPDATE tasks SET status=$1 WHERE id=$2', [st, t.id]);",
+  "    const prjs = await all('SELECT id, name FROM projects WHERE client_id=$1 ORDER BY created_at DESC', [x.client_id]);",
+  "        all(`SELECT p.id, p.name, c.name client FROM projects p JOIN clients c ON c.id=p.client_id WHERE p.agency_id=$1 AND (p.name ILIKE $2 OR p.description ILIKE $2) ORDER BY p.id DESC LIMIT 20`, [a, L]),"
  ],
  "i18n.js": [],
  "i18n-en.json": [
@@ -145,6 +146,6 @@
  "ext-suggest.js": [
   "  await q(`CREATE TABLE IF NOT EXISTS reminders (id SERIAL PRIMARY KEY, agency_id INT NOT NULL, task_id INT REFERENCES tasks(id) ON DELETE CASCADE, project_id INT REFERENCES projects(id) ON DELETE CASCADE,",
   "    const t = await taskOf(ctx, c.task_id);",
-  "    if (staff) out.push(`<section class=\"card\" id=\"hatirlatmalar\"><h2>Hatırlatmalar</h2>${rems.map(r => `<div class=\"line\"><span class=\"grow\"><strong>${h(r.title)}</strong><span class=\"muted\">${fmtDate(r.due_at)}${r.repeat_days ? ` · her ${r.repeat_days} günde` : ''} · ${h(COND[r.cond])}</span></span><form method=\"post\" action=\"/hatirlatma/${r.id}/iptal\">${f}<button class=\"linkish\">İptal</button></form></div>`).join('') || '<p class=\"muted\">Etkin hatırlatma yok.</p>'}"
+  "    if (staff) out.push(`<${rems.length ? 'section' : 'details'} class=\"card${rems.length ? '' : ' add'}\" id=\"hatirlatmalar\">${rems.length ? '<h2>Hatırlatmalar</h2>' : '<summary>Hatırlatma ekle</summary>'}${rems.map(r => `<div class=\"line\"><span class=\"grow\"><strong>${h(r.title)}</strong><span class=\"muted\">${fmtDate(r.due_at)}${r.repeat_days ? ` · her ${r.repeat_days} günde` : ''} · ${h(COND[r.cond])}</span></span><form method=\"post\" action=\"/hatirlatma/${r.id}/iptal\">${f}<button class=\"linkish\">İptal</button></form></div>`).join('') || ''}"
  ]
 }
