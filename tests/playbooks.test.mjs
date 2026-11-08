@@ -30,7 +30,8 @@ assert.equal(pb.ai.otomasyon_orani, 100); assert.deepEqual(pb.ai.ek_motorlar, [{
 const plan = planTasks(books['WEB-04'], '2026-11-09', { ekip: 5, freelancer: 9 });
 assert.equal(plan.length, books['WEB-04'].asamalar.length);
 assert.equal(plan[0].due_date, '2026-11-10'); assert.ok(plan.at(-1).due_date > plan[0].due_date, 'tarihler birikimli');
-assert.ok(plan.some(x => x.title.startsWith('Müşteri kararı: ') && x.decision === 'onay'));
+assert.ok(plan.some(x => x.role === 'musteri' && x.title.startsWith('Müşteri') && x.decision === 'onay'));
+assert.ok(!plan.some(x => /^Müşteri kararı: Müşteri/.test(x.title)), 'çift önek yok');
 assert.ok(plan.every(x => x.assignee_id === 5), 'ekip ve yapay zekâ adımları ekip sorumlusunda');
 const pf = planTasks({ asamalar: [{ ad: 'Çeviri', rol: 'freelancer', otomasyon: 'insan', gun: 3 }] }, '2026-11-09', { ekip: 5, freelancer: 9 });
 assert.equal(pf[0].assignee_id, 9, 'freelancer adımı freelancera');

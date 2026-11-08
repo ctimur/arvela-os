@@ -39,13 +39,13 @@ export function parsePlaybook(b) {
 // Aşamalardan görev planı: başlangıç tarihinden itibaren birikimli süre.
 export function planTasks(pb, start, people = {}) {
   let day = 0; const base = new Date(start || Date.now());
-  return (pb?.asamalar || []).map((s) => {
+  return (pb?.asamalar || []).map((s, i) => {
     day += Math.max(1, s.gun || 1);
     const due = new Date(base.getTime() + day * 864e5).toISOString().slice(0, 10);
-    const prefix = s.rol === 'musteri' ? 'Müşteri kararı: ' : s.rol === 'ai' ? 'Yapay zekâ: ' : '';
+    const prefix = s.rol === 'musteri' && !/^müşteri/i.test(s.ad) ? 'Müşteri kararı: ' : s.rol === 'ai' && !/^yapay zek/i.test(s.ad) ? 'Yapay zekâ: ' : '';
     const assignee = s.rol === 'freelancer' ? (people.freelancer || people.ekip || null) : (people.ekip || null);
     const desc = [`Rol: ${ROLES[s.rol]} · ${AUTO[s.otomasyon]}${s.karar ? ' · Karar: ' + DECISIONS[s.karar] : ''}${s.akis ? ' · n8n: ' + s.akis : ''}`, s.cikti && `Çıktı: ${s.cikti}`, s.kontrol && `Kabul: ${s.kontrol}`].filter(Boolean).join('\n');
-    return { title: (prefix + s.ad).slice(0, 200), description: desc, due_date: due, assignee_id: assignee, role: s.rol, automation: s.otomasyon, decision: s.karar };
+    return { stage_no: i + 1, title: (prefix + s.ad).slice(0, 200), description: desc, due_date: due, assignee_id: assignee, role: s.rol, automation: s.otomasyon, decision: s.karar };
   });
 }
 
@@ -161,8 +161,10 @@ ${own ? `<form method="post" action="/hizmet/${r.id}/kitap/sifirla" data-confirm
     const pb = cs?.playbook || s.playbook; if (!pb) throw new HttpError(400, 'Bu hizmetin kitabı yok; önce katalogda doldurun.');
     const valid = async (v, roles) => { const id = int(v); if (!id) return null; return (await one(`SELECT 1 FROM users WHERE id=$1 AND agency_id=$2 AND active AND role = ANY($3)`, [id, a, roles])) ? id : null; };
     const plan = planTasks(pb, /^\d{4}-\d{2}-\d{2}$/.test(b.start || '') ? b.start : null, { ekip: await valid(b.ekip_id, ['admin', 'staff']), freelancer: await valid(b.freelancer_id, ['freelancer']) });
-    await q('UPDATE projects SET service_id=$1, playbook=$2, due_date=COALESCE(due_date, $3) WHERE id=$4', [s.id, JSON.stringify(pb), plan.at(-1)?.due_date || null, pr.id]);
-    for (const x of plan) await q(`INSERT INTO tasks (agency_id, project_id, title, description, due_date, assignee_id, stage_role, stage_decision) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`, [a, pr.id, x.title, x.description, x.due_date, x.assignee_id, x.role, x.decision]);
+    // teslim tarihi son aşamadan önce kalmasın
+    await q('UPDATE projects SET service_id=$1, playbook=$2, due_date=GREATEST(due_date, $3::date) WHERE id=$4', [s.id, JSON.stringify(pb), plan.at(-1)?.due_date || null, pr.id]);
+    const base = (await one('SELECT COALESCE(max(stage_no),0)::int n FROM tasks WHERE project_id=$1', [pr.id])).n;
+    for (const x of plan) await q(`INSERT INTO tasks (agency_id, project_id, title, description, due_date, assignee_id, stage_role, stage_decision, stage_no) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [a, pr.id, x.title, x.description, x.due_date, x.assignee_id, x.role, x.decision, base + x.stage_no]);
     await audit(ctx, 'project.playbook', { id: pr.id, service: s.code, tasks: plan.length }); redirect(res, `/projeler/${pr.id}`);
   });
   route('GET', '/projeler/:id/kitap', async (ctx, res, p) => {

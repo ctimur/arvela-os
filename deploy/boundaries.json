@@ -1,16 +1,16 @@
 {
  "server.js": [
-  "  const hash = crypto.scryptSync(pw, salt, 64).toString('hex');",
-  ".badge{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.4px;padding:4px 10px;border-radius:999px;background:#EEE9DF;color:#4A4538;text-transform:uppercase}",
-  ".lang{display:inline-flex;border:1px solid #DDD6C7;border-radius:10px;overflow:hidden}.lang button{min-height:34px;padding:4px 10px;font-size:12px;border-radius:0;background:transparent;color:var(--stone);font-weight:600}.lang button.on{background:var(--ink);color:#fff}.lang button:hover{background:var(--sand);color:var(--ink)}",
-  ".mtop{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px 4px;position:sticky;top:0;background:var(--paper);z-index:15}",
-  "<div class=\"shell${u ? '' : ' bare'}\">${u ? `<header class=\"mtop\"><a class=\"brand\" href=\"/\">Arvela<span>OS</span></a><div class=\"who\">${langSwitch(ctx)}${staffish ? `<a class=\"icon-btn\" href=\"/ara\" data-cmdk aria-label=\"Ara\">${icon('search').replace('class=\"ti\"', 'class=\"ti\" style=\"width:auto;height:auto\"')}</a>` : ''}${out}</div></header>` : ''}",
-  "  redirect(res, ctx.user.role === 'client' ? '/portal' : ctx.user.role === 'freelancer' ? '/paketler' : '/panel');",
-  "route('POST', '/musteriler', async (ctx, res) => {",
-  "<form class=\"stack\" method=\"post\" action=\"/musteriler/${c.id}/onay\">${f}<div class=\"row\"><label style=\"flex:1;min-width:240px\">Konu<input name=\"title\" required placeholder=\"Kasım gönderi takvimi\"></label>",
-  "${svcs.filter(s => s.category_id === c.id).map(s => `<tr><td>${h(s.code)}</td><td><a href=\"/katalog/${s.id}\">${h(s.name)}</a>${s.playbook ? ' ' + badge('Kitap', 'ok') : ''}</td><td>${h(s.sub)}</td><td>${h(s.billing)}</td>${showPrice ? `<td>${fmtMoney(s.price_try)}</td><td>${fmtMoney(s.price_eur)}</td>` : ''}<td>${h(s.availability)}</td></tr>`).join('')}</table></div></details>`).join('')}`, '/katalog'));",
-  "<section><h2 style=\"margin-bottom:12px\">Hizmetleriniz</h2><div class=\"grid\">${svcs.map(s => `<div class=\"card\"><span class=\"muted\">${h(s.cat)}</span><h3>${h(s.name)}</h3><div>${badge(CS_ST[s.status], s.status === 'aktif' ? 'ok' : 'warn')}</div></div>`).join('') || '<p class=\"muted\">Hizmet kaydı yok.</p>'}</div></section>",
-  "registerWork({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send, projectExtra: (ctx, pr) => playbooks.projectCard(ctx, pr) });"
+  "    console.log(`katalog yüklendi: ${cat.modules.length} modül`);",
+  "button.ghost,.btn.ghost,.btn.sec{background:#fff;color:var(--ink);border:1px solid #DDD6C7}button.ghost:hover,.btn.sec:hover{background:var(--sand);color:var(--ink)}",
+  ".pulse-all{margin-top:12px;font-size:14px}",
+  "table.rs,table.rs tbody,table.rs tr,table.rs td{display:block;width:100%}table.rs{border:0;background:transparent}",
+  "  const pageTheme = pvCss !== null && pvCss !== undefined ? { css: pvCss, banner: `<div class=\"preview-bar\" role=\"status\">Önizleme: ${escHtml(THEMES[pv].name)} · yalnız size görünür <a href=\"/ayarlar/tema?tema=${escHtml(pv)}\">Ayarlara dön</a></div>` } : { css: currentThemeCss(u?.agency_id), banner: '' };",
+  "  await q('INSERT INTO audit (agency_id, user_id, action, detail) VALUES ($1,$2,$3,$4)', [ctx.user.agency_id, ctx.user.id, action, detail]);",
+  "  send(res, 200, layout(ctx, 'Müşteriler', `<div class=\"page-head\"><h1>Müşteriler</h1></div>",
+  "<form class=\"row\" method=\"post\" action=\"/musteriler/${c.id}/hizmet\">${f}<label style=\"flex:1;min-width:260px\">Katalogdan modül<select name=\"service_id\" required>${catalog.map(s => `<option value=\"${s.id}\">${h(s.cat)} — ${h(s.code)} ${h(s.name)}</option>`).join('')}</select></label>",
+  "  if (!nn(b.title)) throw new HttpError(400, 'Konu gerekli.');",
+  "${rows.map(r => `<tr><td>${new Date(r.created_at).toLocaleString(locale(), { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Istanbul' })}</td><td>${h(r.name || (r.detail?.via === 'api' ? 'API (n8n)' : 'Sistem'))}</td><td>${h(EVENT_LABEL[r.action] || r.action)}<br><code class=\"muted\">${h(r.action)}</code></td><td><code>${h(JSON.stringify(r.detail))}</code></td></tr>`).join('') || '<tr><td colspan=\"4\" class=\"muted\">Kayıt yok.</td></tr>'}</table></div>`, '/kayitlar'));",
+  "import { registerWork, migrateWork } from './ext-work.js';"
  ],
  "ext-sites.js": [
   "  route('POST', '/siteler', async (ctx, res) => {"
@@ -31,15 +31,15 @@
   "    const vat = Math.min(100, Math.max(0, Number(b.vat_pct) || 0));"
  ],
  "ext-today.js": [
-  "  return `<article class=\"act ${size}${size === 'hero' ? '' : ''}\"><div class=\"act-meta\"><span class=\"badge ${x.tone}\">${h(x.tag)}</span><span class=\"muted\">${h(x.meta)}</span></div>",
-  "  return `<section class=\"later\"><p class=\"eyebrow\">Sizden beklenenler</p>${rows.map(r => `<a class=\"later-row\" href=\"${h(r.href)}\"><span class=\"dot ${r.tone}\"></span><span class=\"grow\"><strong>${h(r.title)}</strong><span class=\"muted\">${h(r.meta)}</span></span><span class=\"chev\" aria-hidden=\"true\">›</span></a>`).join('')}</section>`;"
+  "function actionCard(x, h, size) {",
+  "  ];"
  ],
  "ext-work.js": [
-  "    const rows = await all(`SELECT p.*, c.name client, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id)::int total, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id AND t.status='bitti')::int done,",
-  "<details><summary>Müşteriye onaya gönder</summary><form class=\"stack\" method=\"post\" action=\"/projeler/${p.id}/onay\">${f}<label>Konu<input name=\"title\" required></label><label>Açıklama ya da bağlantı<textarea name=\"body\" rows=\"2\"></textarea></label><div><button class=\"gold\">Onaya gönder</button></div></form></details></section>",
-  "<div class=\"page-head\"><div><h1>${h(t.title)}</h1><div class=\"chips\">${badge(TK_ST[t.status], tkTone[t.status])}${t.priority === 'yuksek' ? badge('Öncelikli', 'bad') : ''}<span class=\"muted\">${h(t.assignee || 'Atanmadı')}</span><span class=\"muted\">Teslim ${dueTxt(t)}</span></div></div></div>",
-  "      LEFT JOIN users u ON u.id=ap.requested_by LEFT JOIN users du ON du.id=ap.decided_by WHERE ap.id=$1 AND ap.agency_id=$2`, [id, ctx.user.agency_id]);",
-  "    const cs = await one('SELECT * FROM client_services WHERE id=$1 AND agency_id=$2', [id, ctx.user.agency_id]);"
+  "    if (PR_ST[durum]) { args.push(durum); where.push(`p.status=$${args.length}`); } else if (durum !== 'hepsi') where.push(`p.status<>'tamamlandi'`);",
+  "<section class=\"card\"><h2>Onaylar</h2>${aps.map(x => `<a class=\"line\" href=\"/onaylar/${x.id}\"><span class=\"grow\"><strong>${h(x.title)}</strong><span class=\"muted\">${fmtDate(x.decided_at || x.created_at)}${x.comment ? ' · ' + h(x.comment) : ''}</span></span>${badge(AP_ST[x.status], apTone(x.status))}</a>`).join('') || '<p class=\"muted\">Bu projeye bağlı onay yok.</p>'}",
+  "    send(res, 200, layout(ctx, t.title, `<nav class=\"crumb\">${staff ? `<a href=\"/projeler/${t.project_id}\">${h(t.project)}</a> › <a href=\"/musteriler/${t.client_id}\">${h(t.client)}</a>` : `<a href=\"/gorevler\">Görevlerim</a> › ${h(t.project)}`}</nav>",
+  "${rows.map(t => `<tr${isLate(t) ? ' class=\"is-late\"' : ''}><td><a href=\"/gorev/${t.id}\"><strong>${h(t.title)}</strong></a>${t.priority === 'yuksek' ? ' ' + badge('Öncelikli', 'bad') : ''}${t.ready_at && t.status !== 'bitti' ? ' ' + badge('Sırada', 'warn') : ''}</td><td>${fl ? h(t.project) : `<a href=\"/projeler/${t.project_id}\">${h(t.project)}</a>`}</td>${fl ? '' : `<td>${h(t.client)}</td><td>${h(t.assignee || '—')}</td>`}<td>${dueTxt(t)}</td><td>${statusForm(ctx, t, 'mine')}</td></tr>`).join('') || `<tr><td colspan=\"${fl ? 4 : 6}\" class=\"muted\">Bu filtreye uyan görev yok.</td></tr>`}</table></div>`, '/gorevler'));",
+  "    await audit(ctx, 'approval.decide_for_client', { id: x.id, decision: dec }); redirect(res, `/onaylar/${x.id}`);"
  ],
  "i18n.js": [],
  "i18n-en.json": [
@@ -49,7 +49,8 @@
   "\"İptal edildi\": \"Revoked\",",
   "\"Adayı ekle\": \"Add lead\",",
   "\"İş paketine süre kaydedildi\": \"Time logged on work package\",",
-  "\"Otomasyon\": \"Automation\","
+  "\"Otomasyon\": \"Automation\",",
+  "\"Önceki aşama bitti, sıra bu aşamada ama sorumlusu yok. Bir kişi atayın; atanan kişiye bildirim gider ve iş onun listesine düşer.\": \"The previous stage is done and this one is up, but it has no owner. Assign someone; they will be notified and it lands on their list.\","
  ],
  "ext-sync.js": [],
  "ext-automation.js": [
@@ -91,7 +92,7 @@
  "ext-playbooks.js": [
   "<section class=\"card\"><h2>Aşamalar</h2><div class=\"tbl\"><table><tr><th>#</th><th>Aşama</th><th>Kim</th><th>Otomasyon</th><th>Gün</th><th>Karar</th><th>Çıktı ve kabul</th></tr>",
   "    send(res, 200, layout(ctx, s.name, `<nav class=\"crumb\"><a href=\"/katalog\">Katalog</a> › ${h(s.cat)}</nav><div class=\"page-head\"><div><p class=\"eyebrow\">${h(s.code)} · ${h(s.sub || '')}</p><h1>${h(s.name)}</h1>",
-  "    if (pr.playbook) { const st = stats(pr.playbook); const s = pr.service_id ? await one('SELECT code, name FROM services WHERE id=$1', [pr.service_id]) : null;"
+  "    await audit(ctx, 'project.playbook', { id: pr.id, edited: true }); redirect(res, `/projeler/${pr.id}/kitap`);"
  ],
  "playbooks.json": [
   "    \"Site haritası çıktısı JSON (sayfa, amaç, eylem, bölümler) olarak projeye kaydedilir; WEB-02 bu dosyayla başlar.\"",
@@ -113,5 +114,17 @@
   "    \"Aylık raporu müşteri diliyle yazar; aksiyon gerektiren bir şey yoksa \\\"her şey yolunda\\\" der.\"",
   "    \"ad\": \"İyileştirmeler\",",
   "    \"Claude e-posta/WhatsApp talebini okuyup görev, kabul ölçütü ve süre tahmini taslağı çıkarır.\""
+ ],
+ "ext-flow.js": [
+  "    const st = flowState(await stagesOf(pid));",
+  "    return `<section class=\"flowbar small\"><p class=\"eyebrow\">${h(t`Hizmet kitabı · Aşama ${i + 1}/${st.total}`)} · ${h(tx(ROLE_TXT[x.stage_role] || ''))}</p>"
+ ],
+ "ext-guide.js": [
+  "    ['Müşteri portaldan karar verir. Kararı telefonda ya da WhatsApp\\'ta aldıysanız onayı açıp \"Müşteri onayladı\" ya da \"Düzeltme istedi\" ile işleyin; bağlı aşama buna göre ilerler.', 'Clients decide in the portal. If you got the decision by phone or WhatsApp, open the approval and record it; the linked stage moves on accordingly.']),",
+  "    ['\"Onayla ve yayına al\" derseniz değişiklik birleştirilir ve birkaç dakikada canlıya çıkar. Testler geçmeden düğme açılmaz.', '\"Approve and deploy\" merges the change and it goes live within minutes. The button stays off until tests pass.']),",
+  "  'Kalemler': ['Katalogdan ya da elle kalem ekleyin; toplam ve KDV kendiliğinden hesaplanır.', 'Add items from the catalogue or by hand; totals and VAT are calculated.'],"
+ ],
+ "ext-icons.js": [
+  "export const MANIFEST = JSON.stringify({ name: 'Arvela OS', short_name: 'Arvela OS', icons: [{ src: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }, { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml' }], theme_color: '#0B0D12', background_color: '#0B0D12', display: 'standalone', start_url: '/' });"
  ]
 }

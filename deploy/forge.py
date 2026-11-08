@@ -26,8 +26,20 @@ def app(method, path, payload=None):
     key = hmac.new(os.environ['SETUP_TOKEN'].encode(), b'arvela-forge', hashlib.sha256).hexdigest()
     data = urllib.parse.urlencode({'payload': json.dumps(payload)}).encode() if payload is not None else None
     req = urllib.request.Request(APP + path, data=data, method=method, headers={'Authorization': 'Bearer ' + key, 'User-Agent': UA, 'Content-Type': 'application/x-www-form-urlencoded'})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return json.loads(r.read() or b'{}')
+    # Arvela OS yayın sırasında kısa süre yanıt vermeyebilir: ağ hatası ve 5xx'te 3 kez yeniden dene (10, 30, 60 sn)
+    for i, wait in enumerate([10, 30, 60, None]):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                return json.loads(r.read() or b'{}')
+        except urllib.error.HTTPError as e:
+            if e.code < 500 or wait is None:
+                raise
+            print(f'Arvela OS {e.code}; {wait} sn sonra yeniden deneniyor ({i + 1}/3)')
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
+            if wait is None:
+                raise
+            print(f'Arvela OS erişilemedi ({e}); {wait} sn sonra yeniden deneniyor ({i + 1}/3)')
+        time.sleep(wait)
 
 
 def ci_state(sha):

@@ -25,7 +25,7 @@ services:
       - -c
       - |
         set -e
-        for f in server.js package.json seed-catalog.json ext-sites.js import-sites.json ext-quotes.js ext-invoices.js ext-today.js ext-work.js i18n.js i18n-en.json ext-sync.js ext-automation.js n8n-seed.json ext-forge.js ext-crm.js ext-freelance.js ext-retention.js themes.js ext-settings.js ext-playbooks.js playbooks.json; do cat /src/$$f.* > /app/$$f; done
+        for f in server.js package.json seed-catalog.json ext-sites.js import-sites.json ext-quotes.js ext-invoices.js ext-today.js ext-work.js i18n.js i18n-en.json ext-sync.js ext-automation.js n8n-seed.json ext-forge.js ext-crm.js ext-freelance.js ext-retention.js themes.js ext-settings.js ext-playbooks.js playbooks.json ext-flow.js ext-guide.js ext-icons.js; do cat /src/$$f.* > /app/$$f; done
         echo "cffac480a6f17d153f6cbd1abdba94d613343cc4833ffe6006b9f7dc8c89fe98  /app/server.js" | sha256sum -c
         echo "9415775f37a37a21144cb331ba8d99e182806239b031a81c74bd78e839f75c57  /app/package.json" | sha256sum -c
         echo "05c3dd45e612f4d0b15b0d3c652a7234962f413fdc706cf678497fbebe721b3e  /app/seed-catalog.json" | sha256sum -c
@@ -48,6 +48,9 @@ services:
         echo "0000000000000000000000000000000000000000000000000000000000000000  /app/ext-settings.js" | sha256sum -c
         echo "0000000000000000000000000000000000000000000000000000000000000000  /app/ext-playbooks.js" | sha256sum -c
         echo "0000000000000000000000000000000000000000000000000000000000000000  /app/playbooks.json" | sha256sum -c
+        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/ext-flow.js" | sha256sum -c
+        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/ext-guide.js" | sha256sum -c
+        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/ext-icons.js" | sha256sum -c
         npm install --omit=dev --no-audit --no-fund
         exec node server.js
     environment:
