@@ -16,7 +16,7 @@ import { registerIcons, ICON_LINKS } from './ext-icons.js';
 import { registerDecisions, migrateDecisions, parseMultipart, decisionForm, parseRequest, BODY_MAX } from './ext-decisions.js';
 import { THEMES } from './themes.js';
 
-const VERSION = '0.19.0';
+const VERSION = '0.19.1';
 let settingsApi = null;
 const PORT = Number(process.env.PORT || 3000);
 const SETUP_TOKEN = process.env.SETUP_TOKEN || '';
