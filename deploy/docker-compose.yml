@@ -1,6 +1,6 @@
 # Arvela OS — KVM 1 üzerindeki üretim projesi (Hostinger Docker Manager: "arvela-os").
 # Gizli değerler (DB_PASSWORD, SETUP_TOKEN) Hostinger projesinin ortam değişkenlerindedir; buraya yazılmaz.
-# Kaynak dosyalar şimdilik "arvela_src" diskine arvela-src-NN projeleriyle parça parça yazılıyor (bkz. README).
+# Kaynak kod açılışta GitHub'dan, onaylanan commit'in arşivinden indirilir (FORGE_GITHUB_TOKEN, yalnız okuma yeterli).
 services:
   db:
     image: postgres:16-alpine
@@ -25,10 +25,19 @@ services:
       - -c
       - |
         set -e
-        # Dosyaları parçalarından birleştir ve SHA-256 ile doğrula. Liste (ad, parça sayısı, özet) deploy.py tarafından yazılır.
-        while read n c s; do i=0; : > /app/$$n; while [ $$i -lt $$c ]; do cat /src/$$n.$$(printf %02d $$i) >> /app/$$n; i=$$((i+1)); done; echo "$$s  /app/$$n" | sha256sum -c; done <<'LISTE'
-        __LISTE__
-        LISTE
+        # Kaynak, onaylanan commit'ten GitHub'dan indirilir (commit'i deploy.py yazar). Aynı commit zaten
+        # indirilmişse (yeniden başlatma) GitHub'a gidilmez; /app kalıcı birimdedir.
+        S=__SHA__
+        if [ "$$(cat /app/.sha 2>/dev/null)" != "$$S" ]; then
+          rm -rf /tmp/k && mkdir -p /tmp/k
+          node -e 'fetch("https://api.github.com/repos/ctimur/arvela-os/tarball/"+process.argv[1],{headers:{Authorization:"Bearer "+process.env.FORGE_GITHUB_TOKEN,"User-Agent":"arvela-os"}}).then(async r=>{if(!r.ok){console.error("GitHub",r.status);process.exit(1)}require("fs").writeFileSync("/tmp/k/s.tgz",Buffer.from(await r.arrayBuffer()))}).catch(e=>{console.error(e.message);process.exit(1)})' "$$S"
+          tar -xzf /tmp/k/s.tgz -C /tmp/k
+          test -f /tmp/k/*/app/server.js
+          find /app -mindepth 1 -maxdepth 1 ! -name node_modules -exec rm -rf {} +
+          cp -a /tmp/k/*/app/. /app/
+          echo "$$S" > /app/.sha
+          rm -rf /tmp/k
+        fi
         npm install --omit=dev --no-audit --no-fund
         exec node server.js
     environment:
@@ -36,9 +45,9 @@ services:
       PORT: "3000"
       DATABASE_URL: postgres://arvela:${DB_PASSWORD}@db:5432/arvela
       SETUP_TOKEN: ${SETUP_TOKEN}
-      FORGE_GITHUB_TOKEN: ${FORGE_GITHUB_TOKEN:-}
+      FORGE_GITHUB_TOKEN: ${FORGE_GITHUB_TOKEN}
     volumes:
-      - src:/src:ro
+      - appsrc:/app
       - node_modules:/app/node_modules
     depends_on:
       db:
@@ -58,6 +67,4 @@ services:
 volumes:
   pgdata:
   node_modules:
-  src:
-    name: arvela_src
-    external: true
+  appsrc:
