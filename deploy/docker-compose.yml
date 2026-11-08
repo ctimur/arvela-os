@@ -25,33 +25,10 @@ services:
       - -c
       - |
         set -e
-        for f in server.js package.json seed-catalog.json ext-sites.js import-sites.json ext-quotes.js ext-invoices.js ext-today.js ext-work.js i18n.js i18n-en.json ext-sync.js ext-automation.js n8n-seed.json ext-forge.js ext-crm.js ext-freelance.js ext-retention.js themes.js ext-settings.js ext-playbooks.js playbooks.json ext-flow.js ext-guide.js ext-icons.js ext-decisions.js; do cat /src/$$f.* > /app/$$f; done
-        echo "cffac480a6f17d153f6cbd1abdba94d613343cc4833ffe6006b9f7dc8c89fe98  /app/server.js" | sha256sum -c
-        echo "9415775f37a37a21144cb331ba8d99e182806239b031a81c74bd78e839f75c57  /app/package.json" | sha256sum -c
-        echo "05c3dd45e612f4d0b15b0d3c652a7234962f413fdc706cf678497fbebe721b3e  /app/seed-catalog.json" | sha256sum -c
-        echo "7d357e300e4ce4bc02010484179876ba3bb9ec1a891055b18f75afa3f2c0a917  /app/ext-sites.js" | sha256sum -c
-        echo "be702a421fb446e9775ac0e282f6112c8e6c4f129b85fcdb63f84263b35b79e3  /app/import-sites.json" | sha256sum -c
-        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/ext-quotes.js" | sha256sum -c
-        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/ext-invoices.js" | sha256sum -c
-        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/ext-today.js" | sha256sum -c
-        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/ext-work.js" | sha256sum -c
-        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/i18n.js" | sha256sum -c
-        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/i18n-en.json" | sha256sum -c
-        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/ext-sync.js" | sha256sum -c
-        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/ext-automation.js" | sha256sum -c
-        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/n8n-seed.json" | sha256sum -c
-        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/ext-forge.js" | sha256sum -c
-        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/ext-crm.js" | sha256sum -c
-        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/ext-freelance.js" | sha256sum -c
-        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/ext-retention.js" | sha256sum -c
-        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/themes.js" | sha256sum -c
-        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/ext-settings.js" | sha256sum -c
-        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/ext-playbooks.js" | sha256sum -c
-        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/playbooks.json" | sha256sum -c
-        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/ext-flow.js" | sha256sum -c
-        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/ext-guide.js" | sha256sum -c
-        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/ext-icons.js" | sha256sum -c
-        echo "0000000000000000000000000000000000000000000000000000000000000000  /app/ext-decisions.js" | sha256sum -c
+        # Dosyaları parçalarından birleştir ve SHA-256 ile doğrula. Liste (ad, parça sayısı, özet) deploy.py tarafından yazılır.
+        while read n c s; do i=0; : > /app/$$n; while [ $$i -lt $$c ]; do cat /src/$$n.$$(printf %02d $$i) >> /app/$$n; i=$$((i+1)); done; echo "$$s  /app/$$n" | sha256sum -c; done <<'LISTE'
+        __LISTE__
+        LISTE
         npm install --omit=dev --no-audit --no-fund
         exec node server.js
     environment:

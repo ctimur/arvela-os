@@ -21,7 +21,7 @@ jobs:
   apply:
     runs-on: ubuntu-latest
     environment: production
-    timeout-minutes: 30
+    timeout-minutes: 90  # ilk kalıcı adlı yayın ~115 parçayı yeniden yazar
     steps:
       - uses: actions/checkout@v4
         with:

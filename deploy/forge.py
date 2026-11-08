@@ -6,7 +6,7 @@
 Ortam: GITHUB_TOKEN, GITHUB_REPOSITORY, SETUP_TOKEN; apply için ayrıca HOSTINGER_API_TOKEN, DB_PASSWORD (deploy.py).
 Onay belirli bir commit'e verilir: PR'ın başı onaylanan commit değilse birleştirilmez.
 """
-import hashlib, hmac, json, os, subprocess, sys, time, urllib.error, urllib.parse, urllib.request
+import hashlib, hmac, json, os, re, subprocess, sys, time, urllib.error, urllib.parse, urllib.request
 
 REPO = os.environ.get('GITHUB_REPOSITORY', 'ctimur/arvela-os')
 APP = os.environ.get('APP_URL', 'https://os.arveladigital.com')
@@ -80,6 +80,21 @@ def sh(*cmd):
     return r.stdout.strip()
 
 
+def live_version():
+    try:
+        with urllib.request.urlopen(urllib.request.Request(APP + '/healthz', headers={'User-Agent': UA}), timeout=20) as r:
+            return json.loads(r.read()).get('version')
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def main_version():
+    sh('git', 'fetch', 'origin', 'main')
+    src = sh('git', 'show', 'origin/main:app/server.js')
+    m = re.search(r"const VERSION = '([^']+)'", src)
+    return m.group(1) if m else None
+
+
 def verify_and_deploy():
     """main'in en son halini doğrular ve yayınlar (Yayına al ile aynı kontroller)."""
     sh('git', 'fetch', 'origin', 'main'); sh('git', 'checkout', '-q', '-B', 'main', 'origin/main')
@@ -92,7 +107,10 @@ def verify_and_deploy():
         if t.endswith('.test.mjs'):
             sh('node', 'tests/' + t)
     sh(sys.executable, 'deploy/rechunk.py'); sh(sys.executable, 'deploy/verify_chunks.py')
-    sh(sys.executable, 'deploy/deploy.py')
+    # yayın uzun sürebilir: çıktıyı canlı akıt (iş akışı zaman aşımına uğrarsa nerede kaldığı görünsün)
+    print('$ deploy/deploy.py', flush=True)
+    if subprocess.run([sys.executable, '-u', 'deploy/deploy.py']).returncode:
+        raise RuntimeError('Yayın başarısız; iş akışı kaydına bakın')
     return sh('git', 'rev-parse', 'HEAD')
 
 
@@ -106,9 +124,14 @@ def apply():
         try:
             p = gh('GET', f'/pulls/{n}')
             if p.get('merged_at') and p['head']['sha'] == want:
-                # onaylı PR başka bir onaylı değişiklikle birlikte zaten birleşti ve yayına girdi
-                app('POST', '/api/forge/result', {'pr': n, 'ok': True, 'sha': p.get('merge_commit_sha'), 'title': f"{p['title']} (#{n})"})
-                print(f'#{n} zaten birleşmiş, yayında'); continue
+                # onaylı PR zaten birleşti; yayındaki sürüm main'in gerisindeyse (ör. önceki yayın yarıda kaldı) yeniden yayınla
+                live, want_v = live_version(), main_version()
+                sha = p.get('merge_commit_sha')
+                if live != want_v:
+                    print(f'#{n} birleşmiş ama yayında {live}, main {want_v}: yeniden yayınlanıyor', flush=True)
+                    sha = verify_and_deploy()
+                app('POST', '/api/forge/result', {'pr': n, 'ok': True, 'sha': sha, 'title': f"{p['title']} (#{n})"})
+                print(f'#{n} zaten birleşmiş, yayında ({want_v})'); continue
             if p['state'] != 'open':
                 raise RuntimeError('PR açık değil')
             if p['head']['sha'] != want:
