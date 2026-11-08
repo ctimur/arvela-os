@@ -820,5 +820,17 @@
 "kayıt": "records",
 "Veri saklama uygulandı": "Data retention applied",
 "Veri saklama ayarları değişti": "Data retention settings changed",
-"Aday görevi (anonim)": "Lead task (anonymous)"
+"Aday görevi (anonim)": "Lead task (anonymous)",
+"Günün özeti": "Today at a glance",
+"iş daha": "more",
+"Ara ya da komut seç…": "Search or pick a command…",
+"Ara ya da komut seç": "Search or pick a command",
+"Enter: aç ya da ara · Esc: kapat · ⌘K / Ctrl+K: her yerden aç": "Enter: open or search · Esc: close · ⌘K / Ctrl+K: open from anywhere",
+"Komut paleti": "Command palette",
+"Pano": "Board",
+"Liste": "List",
+"Görünüm": "View",
+"Sonraki adım yok": "No next step",
+"Açık aday yok.": "No open leads.",
+"İlgi": "Interest"
 }

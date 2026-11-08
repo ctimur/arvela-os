@@ -24,6 +24,16 @@ const APP_JS = `(function(){
 document.querySelectorAll('table').forEach(function(t){var hs=[].map.call(t.querySelectorAll('tr:first-child th'),function(x){return x.textContent.trim()});if(!hs.length)return;
 t.classList.add('rs');t.querySelectorAll('tr').forEach(function(r){[].forEach.call(r.children,function(c,i){if(c.tagName==='TD'&&hs[i])c.setAttribute('data-label',hs[i]);});});});
 document.querySelectorAll('select[data-auto]').forEach(function(s){var b=s.form&&s.form.querySelector('button');if(b)b.classList.add('auto-hide');s.addEventListener('change',function(){s.form.submit();});});
+var dk=document.getElementById('cmdk');if(dk&&dk.showModal){var inp=dk.querySelector('input'),links=[].slice.call(dk.querySelectorAll('nav a')),sel=0;
+function vis(){return links.filter(function(l){return l.style.display!=='none';});}
+function mark(){var v=vis();links.forEach(function(l){l.classList.remove('on');});if(v[sel])v[sel].classList.add('on');}
+function open(){if(dk.open)return;inp.value='';links.forEach(function(l){l.style.display='';});sel=0;mark();dk.showModal();inp.focus();}
+inp.addEventListener('input',function(){var q=inp.value.toLocaleLowerCase('tr').trim();links.forEach(function(l){l.style.display=!q||l.textContent.toLocaleLowerCase('tr').indexOf(q)>-1?'':'none';});sel=0;mark();});
+inp.addEventListener('keydown',function(e){var v=vis();if(e.key==='ArrowDown'){sel=Math.min(sel+1,v.length-1);mark();e.preventDefault();}else if(e.key==='ArrowUp'){sel=Math.max(sel-1,0);mark();e.preventDefault();}else if(e.key==='Enter'&&v.length&&(inp.value.trim()===''||v.length<links.length)){e.preventDefault();location.href=v[sel].getAttribute('href');}});
+dk.addEventListener('click',function(e){if(e.target===dk)dk.close();});
+document.querySelectorAll('[data-cmdk]').forEach(function(el){el.addEventListener(el.tagName==='INPUT'?'focus':'click',function(e){e.preventDefault();if(el.blur)el.blur();open();});});
+document.addEventListener('keydown',function(e){var t=e.target,typing=t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.tagName==='SELECT'||t.isContentEditable);
+if((e.metaKey||e.ctrlKey)&&(e.key==='k'||e.key==='K')){e.preventDefault();open();}else if(e.key==='/'&&!typing){e.preventDefault();open();}});}
 document.querySelectorAll('form[data-confirm]').forEach(function(f){f.addEventListener('submit',function(e){if(!window.confirm(f.getAttribute('data-confirm')))e.preventDefault();});});
 })();`;
 

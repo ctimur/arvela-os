@@ -8,7 +8,7 @@ import { registerCrm, migrateCrm, crmActions } from './ext-crm.js';
 import { registerFreelance, migrateFreelance, packageActions } from './ext-freelance.js';
 import { registerRetention, migrateRetention } from './ext-retention.js';
 
-const VERSION = '0.13.0';
+const VERSION = '0.14.0';
 const PORT = Number(process.env.PORT || 3000);
 const SETUP_TOKEN = process.env.SETUP_TOKEN || '';
 const COOKIE_SECURE = process.env.COOKIE_SECURE !== '0';
@@ -166,7 +166,11 @@ details summary{cursor:pointer;font-weight:600}
 .today-head h1{font-size:40px;letter-spacing:-.5px}.lead{font-size:16px;margin:6px 0 0}
 .today-count{display:flex;flex-direction:column;align-items:flex-end}
 .act{background:#fff;border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:12px;box-shadow:0 1px 0 var(--line),0 10px 30px rgba(20,26,34,.06)}
-.act.hero{border:2px solid var(--champ)}.act.hero h2{font-size:28px;line-height:1.2}.act p{margin:0;color:#4A4538;font-size:16px;line-height:1.55;max-width:720px}
+.act.hero{background:var(--night);color:#fff;box-shadow:none}.act.hero h2{color:#fff}.act.hero p{color:#C9CDD4}.act.hero .muted{color:#A3ABB8}.act.hero .btn.pri{background:var(--champ);color:var(--night)}.act.hero .btn.sec{background:transparent;color:#fff;border:1px solid #3A404B}.act.hero .btn.sec:hover{background:#1A1F27;color:#fff}
+.seg{display:inline-flex;gap:0;margin-left:auto}.seg .btn{border-radius:0;min-height:40px}.seg .btn:first-child{border-radius:12px 0 0 12px}.seg .btn:last-child{border-radius:0 12px 12px 0}
+.brief{background:#FBF6EA;border:1px solid #E9D9B4;border-radius:18px;padding:14px 18px;margin:0;line-height:1.6}.brief b{color:#7A5A1E}
+.cmdk{border:0;border-radius:18px;padding:0;width:min(560px,calc(100vw - 24px));max-height:70vh;box-shadow:0 30px 80px rgba(11,13,18,.35)}.cmdk::backdrop{background:rgba(11,13,18,.45)}.cmdk form{padding:12px;border-bottom:1px solid var(--line)}.cmdk input{width:100%;min-height:48px;font-size:16px;border:0;outline:0;padding:0 8px}.cmdk nav{padding:8px;overflow:auto;max-height:50vh;display:flex;flex-direction:column}.cmdk nav a{display:flex;align-items:center;min-height:44px;padding:0 12px;border-radius:10px;color:var(--ink);text-decoration:none}.cmdk nav a:hover,.cmdk nav a.on{background:var(--sand)}.cmdk nav a span{margin-left:auto;color:var(--stone);font-size:12px}.cmdk .hint{padding:8px 14px 12px;font-size:12px;color:var(--stone);margin:0}
+.kbd{font-size:11px;border:1px solid #3A404B;border-radius:5px;padding:1px 6px;color:#A3ABB8}.act.hero h2{font-size:28px;line-height:1.2}.act p{margin:0;color:#4A4538;font-size:16px;line-height:1.55;max-width:720px}
 .act-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.act-btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}.act-btns .btn{min-height:48px}
 .act-pair{display:grid;grid-template-columns:1fr 1fr;gap:20px}.act.mid h3{font-size:20px}
 .later{display:flex;flex-direction:column;gap:10px}
@@ -281,10 +285,16 @@ function layout(ctx, title, body, active = '') {
   return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#F7F4EE">
 <title>${h(title)} · Arvela OS</title><link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500&display=swap" rel="stylesheet"><style>${CSS}</style></head><body>
-${u ? `<aside class="side"><a class="brand" href="/">Arvela<span>OS</span></a>${staffish ? `<form class="side-search" method="get" action="/ara" role="search"><input type="search" name="q" placeholder="Ara…" aria-label="Ara"></form>` : ''}<nav aria-label="Ana menü">${side}</nav><div class="who"><span><strong>${h(u.name)}</strong><br>${h(ROLE[u.role])}</span><div class="who-row">${out}${langSwitch(ctx, 'dark')}</div></div></aside>` : ''}
-<div class="shell${u ? '' : ' bare'}">${u ? `<header class="mtop"><a class="brand" href="/">Arvela<span>OS</span></a><div class="who">${langSwitch(ctx)}${staffish ? `<a class="icon-btn" href="/ara" aria-label="Ara">${icon('search').replace('class="ti"', 'class="ti" style="width:auto;height:auto"')}</a>` : ''}${out}</div></header>` : ''}
-<main>${flash}${body}</main></div>${tabs}<script src="/app.js" defer></script></body></html>`;
+${u ? `<aside class="side"><a class="brand" href="/">Arvela<span>OS</span></a>${staffish ? `<form class="side-search" method="get" action="/ara" role="search"><input type="search" name="q" data-cmdk placeholder="Ara…" aria-label="Ara"></form>` : ''}<nav aria-label="Ana menü">${side}</nav><div class="who"><span><strong>${h(u.name)}</strong><br>${h(ROLE[u.role])}</span><div class="who-row">${out}${langSwitch(ctx, 'dark')}</div></div></aside>` : ''}
+<div class="shell${u ? '' : ' bare'}">${u ? `<header class="mtop"><a class="brand" href="/">Arvela<span>OS</span></a><div class="who">${langSwitch(ctx)}${staffish ? `<a class="icon-btn" href="/ara" data-cmdk aria-label="Ara">${icon('search').replace('class="ti"', 'class="ti" style="width:auto;height:auto"')}</a>` : ''}${out}</div></header>` : ''}
+<main>${flash}${body}</main></div>${tabs}${staffish ? cmdk(u) : ''}<script src="/app.js" defer></script></body></html>`;
 }
+const cmdk = (u) => {
+  const items = [['/satis#yeni-aday', 'Yeni aday', 'A'], ['/paketler#yeni-paket', 'Yeni iş paketi', ''], ...(u.role === 'admin' ? [['/teklifler#yeni', 'Yeni teklif', 'T']] : []),
+    ['/panel', 'Bugün', 'G B'], ['/satis', 'Satış hattı', 'G S'], ['/musteriler', 'Müşteriler', 'G M'], ['/gorevler', 'Görevlerim', 'G G'], ['/onaylar', 'Onaylar', ''], ['/projeler', 'Projeler', ''],
+    ['/paketler', 'İş paketleri', ''], ['/siteler', 'Siteler', ''], ...(u.role === 'admin' ? [['/faturalar', 'Faturalar', ''], ['/odemeler', 'Freelancer ödemeleri', ''], ['/forge', 'Forge', '']] : [])];
+  return `<dialog class="cmdk" id="cmdk" aria-label="Komut paleti"><form method="get" action="/ara" role="search"><input type="search" name="q" placeholder="Ara ya da komut seç…" aria-label="Ara ya da komut seç" autocomplete="off"></form><nav>${items.map(([href, t, k]) => `<a href="${href}">${t}${k ? `<span>${k}</span>` : ''}</a>`).join('')}</nav><p class="hint">Enter: aç ya da ara · Esc: kapat · ⌘K / Ctrl+K: her yerden aç</p></dialog>`;
+};
 const langSwitch = (ctx, cls = '') => {
   const cur = lang(); const back = ctx.url ? ctx.url.pathname + ctx.url.search : '/';
   return `<form class="lang ${cls}" method="post" action="/dil"><input type="hidden" name="back" value="${escHtml(back)}">${Object.keys(LANGS).map(k => `<button name="lang" value="${k}"${k === cur ? ' aria-pressed="true" class="on"' : ''} title="${LANGS[k]}">${k.toUpperCase()}</button>`).join('')}</form>`;

@@ -30,3 +30,10 @@ const p = buildPulse(d);
 assert.deepEqual(p.map(x => x.label), ['Site sorunu', 'Ödeme gecikti', 'Onay bekliyor', 'Sağlıklı']);
 assert.equal(a.find(x => x.tag === 'Görev · gecikti').actions[0][1], '/gorev/3');
 console.log('today: ok');
+
+// günün özeti
+import { daySummary } from '../app/ext-today.js';
+assert.equal(daySummary([{ title: 'A', tag: 'x' }]), null, 'tek işte özet yok');
+const ds = daySummary([{ title: 'A', tag: 'Fatura' }, { title: 'B', tag: 'Site' }, { title: 'C', tag: 'Fatura' }, { title: 'D', tag: 'Görev' }]);
+assert.deepEqual(ds.top.map(x => x.title), ['A', 'B', 'C']); assert.equal(ds.more, 1); assert.equal(ds.counts.Fatura, 2);
+console.log('today özet: ok');

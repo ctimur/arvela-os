@@ -2,13 +2,14 @@
  "server.js": [
   "  const b = crypto.scryptSync(pw, salt, 64);",
   ".err{background:#F6E1DE;border:1px solid #E2B1A9;padding:12px 16px;border-radius:14px;color:#7A2418}",
-  "details.danger summary{color:#7A2418;font-size:14px}details.danger form{margin-top:10px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}",
-  "    : u?.role === 'freelancer' ? [['/paketler', 'doc'], ['/gorevler', 'check']]",
-  "  const keys = []; const re = new RegExp('^' + pattern.replace(/:(\\w+)/g, (_, k) => { keys.push(k); return '(\\\\d+)'; }) + '$');",
-  "<div class=\"tbl\"><table><tr><th>Firma</th><th>Sektör</th><th>Durum</th><th>Aktif hizmet</th><th>Açık proje</th><th>Yetkili</th></tr>",
-  "${aps.length ? `<div class=\"tbl\"><table><tr><th>Konu</th><th>Durum</th><th>Müşteri notu</th><th>Tarih</th></tr>${aps.map(x => `<tr><td><a href=\"/onaylar/${x.id}\">${h(x.title)}</a></td><td>${badge(AP_ST[x.status], x.status === 'onaylandi' ? 'ok' : x.status === 'reddedildi' ? 'bad' : 'warn')}</td><td>${h(x.comment || '—')}</td><td>${fmtDate(x.decided_at || x.created_at)}</td></tr>`).join('')}</table></div>` : '<p class=\"muted\">Henüz onay istenmedi.</p>'}",
-  "<label>Rol<select name=\"role\"><option value=\"staff\">Çalışan</option><option value=\"freelancer\">Freelancer</option><option value=\"admin\">Yönetici</option></select></label>",
-  "  if (!r) throw new HttpError(404, 'Onay bulunamadı ya da zaten karar verildi.');"
+  ".kcard{background:#fff;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;border:1px solid transparent}.kcard:hover{border-color:var(--champ)}.kcard.is-late{border-left:3px solid var(--bad)}",
+  "const icon = (k) => `<span class=\"ti\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">${ICON[k]}</svg></span>`;",
+  "    req.on('end', () => {",
+  "  const back = String(ctx.body.back || '/');",
+  "${svcs.length ? svcs.map(s => `<div class=\"svc\"><div class=\"svc-h\"><span class=\"grow\"><strong>${h(s.code)} · ${h(s.name)}</strong><span class=\"muted\">${h(s.billing || '')}${s.start_date ? ' · başlangıç ' + fmtDate(s.start_date) : ''}${s.end_date ? ' · bitiş ' + fmtDate(s.end_date) : ''}${s.notes ? ' · ' + h(s.notes) : ''}</span></span>",
+  "  await audit(ctx, 'approval.request', { id: r.id, client: c.id }); redirect(res, `/musteriler/${c.id}`);",
+  "  const prjs = await all(`SELECT p.*, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id)::int total, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id AND t.status='bitti')::int done FROM projects p WHERE p.client_id=$1 ORDER BY (p.status='tamamlandi'), p.created_at DESC`, [cid]);",
+  "const freelance = registerFreelance({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, opts });"
  ],
  "ext-sites.js": [
   "  route('POST', '/siteler', async (ctx, res) => {"
@@ -29,14 +30,15 @@
   "    const vat = Math.min(100, Math.max(0, Number(b.vat_pct) || 0));"
  ],
  "ext-today.js": [
-  "  return async function todayPage(ctx, res, send) {"
+  "  return `<article class=\"act ${size}${size === 'hero' ? '' : ''}\"><div class=\"act-meta\"><span class=\"badge ${x.tone}\">${h(x.tag)}</span><span class=\"muted\">${h(x.meta)}</span></div>",
+  "  return `<section class=\"later\"><p class=\"eyebrow\">Sizden beklenenler</p>${rows.map(r => `<a class=\"later-row\" href=\"${h(r.href)}\"><span class=\"dot ${r.tone}\"></span><span class=\"grow\"><strong>${h(r.title)}</strong><span class=\"muted\">${h(r.meta)}</span></span><span class=\"chev\" aria-hidden=\"true\">›</span></a>`).join('')}</section>`;"
  ],
  "ext-work.js": [
-  "<select name=\"durum\" aria-label=\"Durum\" data-auto><option value=\"\">Açık projeler</option><option value=\"hepsi\"${durum === 'hepsi' ? ' selected' : ''}>Tümü</option>${opts(PR_ST, durum)}</select><button class=\"ghost\">Filtrele</button></form>",
-  "    if (ctx.user.role === 'admin' && int(b.client_id) && int(b.client_id) !== p.client_id && await one('SELECT 1 FROM clients WHERE id=$1 AND agency_id=$2', [int(b.client_id), ctx.user.agency_id])) cid = int(b.client_id);",
-  "    await audit(ctx, 'task.update', { id: t.id }); redirect(res, `/gorev/${t.id}`);",
-  "    need(ctx, ...STAFF); const x = await approvalFor(ctx, int(prm.id)); const f = csrfField(ctx);",
-  "        all(`SELECT p.id, p.name, c.name client FROM projects p JOIN clients c ON c.id=p.client_id WHERE p.agency_id=$1 AND (p.name ILIKE $2 OR p.description ILIKE $2) ORDER BY p.id DESC LIMIT 20`, [a, L]),"
+  "    const rows = await all(`SELECT p.*, c.name client, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id)::int total, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id AND t.status='bitti')::int done,",
+  "<details><summary>Müşteriye onaya gönder</summary><form class=\"stack\" method=\"post\" action=\"/projeler/${p.id}/onay\">${f}<label>Konu<input name=\"title\" required></label><label>Açıklama ya da bağlantı<textarea name=\"body\" rows=\"2\"></textarea></label><div><button class=\"gold\">Onaya gönder</button></div></form></details></section>",
+  "<div class=\"page-head\"><div><h1>${h(t.title)}</h1><div class=\"chips\">${badge(TK_ST[t.status], tkTone[t.status])}${t.priority === 'yuksek' ? badge('Öncelikli', 'bad') : ''}<span class=\"muted\">${h(t.assignee || 'Atanmadı')}</span><span class=\"muted\">Teslim ${dueTxt(t)}</span></div></div></div>",
+  "      LEFT JOIN users u ON u.id=ap.requested_by LEFT JOIN users du ON du.id=ap.decided_by WHERE ap.id=$1 AND ap.agency_id=$2`, [id, ctx.user.agency_id]);",
+  "    const cs = await one('SELECT * FROM client_services WHERE id=$1 AND agency_id=$2', [id, ctx.user.agency_id]);"
  ],
  "i18n.js": [],
  "i18n-en.json": [
@@ -70,8 +72,8 @@
  ],
  "ext-crm.js": [
   "      return `<section class=\"kcol\" aria-label=\"${STAGES[st]}\"><h3>${STAGES[st]} <span class=\"muted\">${list.length}${admin && sum ? ' · ' + fmtMoney(sum) + ' TL' : ''}</span></h3>",
-  "<div class=\"page-head\"><div><h1>${h(l.name)}</h1><div class=\"chips\">${badge(STAGES[l.stage] || 'Aday', STAGE_TONE[l.stage])}${badge(t`Puan ${score}`, scoreTone(score))}${l.contact_name ? `<span class=\"muted\">${h(l.contact_name)}</span>` : ''}${l.lead_source ? `<span class=\"muted\">${h(SOURCES[l.lead_source])}</span>` : ''}${l.owner ? `<span class=\"muted\">Sorumlu: ${h(l.owner)}</span>` : ''}${l.marketing_consent_at ? badge('Pazarlama onayı var', 'ok') : `<span class=\"muted\">Pazarlama onayı yok</span>`}</div></div>",
-  "    const nextStage = l.stage === 'yeni' && ['arama', 'whatsapp', 'eposta', 'gorusme'].includes(b.kind) ? 'ulasildi' : l.stage;"
+  "    if (nn(b.note)) await q('INSERT INTO client_notes (client_id, user_id, kind, body) VALUES ($1,$2,$3,$4)', [r.id, ctx.user.id, 'not', nn(b.note)]);",
+  "    if (stage !== l.stage) await audit(ctx, 'lead.stage', { id: l.id, from: l.stage, to: stage }); else await audit(ctx, 'lead.update', { id: l.id });"
  ],
  "ext-freelance.js": [
   "  const payTxt = (ctx, w) => !seesMoney(ctx, w) ? PAY[w.pay_type] : w.pay_type === 'saatlik' ? (w.hour_cap ? t`${tl(w.hourly_rate)}/saat · en çok ${w.hour_cap} saat` : t`${tl(w.hourly_rate)}/saat`) : tl(w.amount);",
