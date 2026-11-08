@@ -1,5 +1,5 @@
 {
-"version": 3,
+"version": 4,
 "ids": {
 "Arvela · Olay yönlendirici": "5d628bb41d3154c2",
 "Arvela · Sabah özeti": "3f9b5075be7859c0",
@@ -8,7 +8,8 @@
 "Arvela · Yeni müşteri karşılama": "983c0a3a6e125638",
 "Arvela · Görev bildirimi": "4c35a1d111415770",
 "Arvela · Acil site uyarısı": "a61b9e9a93f550d4",
-"Arvela · Web formu → aday": "00ba2c3d2dd25d35"
+"Arvela · Web formu → aday": "00ba2c3d2dd25d35",
+"Arvela · E-posta gönderici": "887da462464558ae"
 },
 "workflows": [
 {
@@ -1533,6 +1534,124 @@
 "executionOrder": "v1",
 "timezone": "Europe/Istanbul",
 "saveManualExecutions": true
+},
+"pinData": {},
+"meta": {
+"templateCredsSetupCompleted": false
+},
+"tags": []
+},
+{
+"id": "887da462464558ae",
+"name": "Arvela · E-posta gönderici",
+"nodes": [
+{
+"id": "16fb2c48-977f-5011-b255-37681eeb2486",
+"name": "Nasıl çalışır",
+"type": "n8n-nodes-base.stickyNote",
+"typeVersion": 1,
+"position": [
+-40,
+-120
+],
+"parameters": {
+"content": "## Arvela · E-posta gönderici\nArvela OS'in müşterilere gönderdiği işlem e-postalarını (karar bağlantısı, doğrulama kodu) iletir.\nİçerik Arvela OS'te hazırlanır; burada yalnız gönderilir. Başarılı çalışmalar kayda yazılmaz (kodlar saklanmasın diye).",
+"width": 440,
+"height": 190
+}
+},
+{
+"id": "79d8ce2e-4f5c-5821-997a-9e17f236fa21",
+"name": "E-posta isteği",
+"type": "n8n-nodes-base.webhook",
+"typeVersion": 2,
+"position": [
+0,
+300
+],
+"parameters": {
+"httpMethod": "POST",
+"path": "arvela-mail",
+"authentication": "headerAuth",
+"responseMode": "onReceived",
+"options": {}
+},
+"credentials": {
+"httpHeaderAuth": {
+"id": "arvelaHookCred1",
+"name": "Arvela webhook"
+}
+},
+"webhookId": "bab552c0-471b-575f-ae44-e8801efa13d6"
+},
+{
+"id": "6480e66a-100b-5388-aaed-aeefc6cf7283",
+"name": "Denetle",
+"type": "n8n-nodes-base.code",
+"typeVersion": 2,
+"position": [
+240,
+300
+],
+"parameters": {
+"jsCode": "const b = $input.first().json.body || {};\nconst ok = typeof b.to === 'string' && /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(b.to) && b.subject && b.html && b.event === 'mail.send';\nreturn ok ? [{ json: { to: b.to, subject: String(b.subject).slice(0, 200), html: String(b.html).slice(0, 20000) } }] : [];"
+}
+},
+{
+"id": "e41d91b0-c91f-552a-8f89-8758cda3c825",
+"name": "Gönder",
+"type": "n8n-nodes-base.emailSend",
+"typeVersion": 2.1,
+"position": [
+480,
+300
+],
+"parameters": {
+"fromEmail": "Arvela OS <hello@arveladigital.com>",
+"toEmail": "={{ $json.to }}",
+"subject": "={{ $json.subject }}",
+"emailFormat": "html",
+"html": "={{ $json.html }}",
+"options": {}
+},
+"credentials": {
+"smtp": {
+"id": "arvelaSmtpCred1",
+"name": "SMTP"
+}
+}
+}
+],
+"connections": {
+"E-posta isteği": {
+"main": [
+[
+{
+"node": "Denetle",
+"type": "main",
+"index": 0
+}
+]
+]
+},
+"Denetle": {
+"main": [
+[
+{
+"node": "Gönder",
+"type": "main",
+"index": 0
+}
+]
+]
+}
+},
+"active": false,
+"settings": {
+"executionOrder": "v1",
+"timezone": "Europe/Istanbul",
+"saveManualExecutions": false,
+"saveDataSuccessExecution": "none"
 },
 "pinData": {},
 "meta": {

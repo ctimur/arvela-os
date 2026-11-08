@@ -24,7 +24,7 @@ export const EVENT_LABEL = {
   'approval.request': 'Onaya gönderildi', 'approval.update': 'Onay isteği düzenlendi', 'approval.decide': 'Müşteri onay kararı verdi', 'approval.decide_for_client': 'Onay müşteri adına işlendi', 'approval.reopen': 'Onay yeniden açıldı', 'approval.withdraw': 'Onay isteği geri çekildi',
   'quote.create': 'Teklif oluşturuldu', 'quote.send': 'Teklif gönderildi', 'quote.decide': 'Müşteri teklife karar verdi', 'quote.withdraw': 'Teklif geri çekildi', 'quote.copy': 'Teklif kopyalandı',
   'invoice.create': 'Fatura oluşturuldu', 'invoice.from_quote': 'Tekliften fatura', 'invoice.monthly': 'Aylık faturalar oluşturuldu', 'invoice.send': 'Fatura gönderildi', 'invoice.client_notified': 'Müşteri ödediğini bildirdi', 'invoice.paid': 'Fatura ödendi', 'invoice.cancel': 'Fatura iptal edildi',
-  'site.create': 'Site eklendi', 'site.alert': 'Site acil duruma düştü', 'site.sync': 'Site durumu eşitlendi', 'ping': 'Deneme',
+  'mail.send': 'İşlem e-postası', 'decision.link': 'Karar bağlantısı oluşturuldu', 'decision.verify': 'Müşteri e-postasını doğruladı', 'decision.link_revoke': 'Karar bağlantısı iptal edildi', 'site.create': 'Site eklendi', 'site.alert': 'Site acil duruma düştü', 'site.sync': 'Site durumu eşitlendi', 'ping': 'Deneme',
   'package.create': 'İş paketi teklif edildi', 'package.update': 'İş paketi güncellendi', 'package.status': 'İş paketi durumu değişti', 'package.time': 'İş paketine süre kaydedildi', 'freelancer.payment': 'Freelancer ödemesi', 'retention.run': 'Veri saklama uygulandı', 'theme.update': 'Tema değişti', 'retention.settings': 'Veri saklama ayarları değişti',
 };
 const ALL_EVENTS = Object.values(EVENTS).flat();
@@ -36,6 +36,7 @@ export const DEFAULT_HOOKS = [
   ['n8n · Yeni müşteri karşılama', 'arvela-new-client', ['client.create']],
   ['n8n · Görev bildirimi', 'arvela-task-assigned', ['task.create', 'task.update']],
   ['n8n · Acil site uyarısı', 'arvela-site-alert', ['site.alert']],
+  ['n8n · E-posta gönderici', 'arvela-mail', []], // olay değil: Arvela OS'in doğrudan gönderdiği işlem e-postaları (karar bağlantısı, doğrulama kodu)
 ];
 export const sign = (secret, body) => 'sha256=' + crypto.createHmac('sha256', secret).update(body).digest('hex');
 export const hashKey = (k) => crypto.createHash('sha256').update(k).digest('hex');
@@ -58,6 +59,10 @@ export async function migrateAutomation({ q }) {
     if (has.rows.length) continue;
     for (const [name, path, events] of DEFAULT_HOOKS) await q('INSERT INTO webhooks (agency_id, name, url, secret, events, active) VALUES ($1,$2,$3,$4,$5,false)', [a.id, name, `https://n8n.arveladigital.com/webhook/${path}`, crypto.randomBytes(24).toString('hex'), events]);
   }
+  // sonradan eklenen hazır bağlantılar (pasif gelir; "n8n bağla" açar)
+  for (const a of (await q('SELECT id FROM agencies')).rows) for (const [name, path, events] of DEFAULT_HOOKS)
+    await q(`INSERT INTO webhooks (agency_id, name, url, secret, events, active) SELECT $1::int,$2::text,$3::text,$4::text,$5::text[],false WHERE EXISTS (SELECT 1 FROM webhooks WHERE agency_id=$1::int) AND NOT EXISTS (SELECT 1 FROM webhooks WHERE agency_id=$1::int AND url=$3::text)`,
+      [a.id, name, `https://n8n.arveladigital.com/webhook/${path}`, crypto.randomBytes(24).toString('hex'), events]);
   // eski teslim kayıtlarını temizle (30 gün)
   await q(`DELETE FROM webhook_deliveries WHERE created_at < now() - interval '30 days'`);
 }
@@ -82,7 +87,7 @@ export function registerAutomation(d) {
     if (kind === 'task') return one(`SELECT t.id, t.title, t.status, t.priority, t.due_date, t.description, t.project_id, p.name project, p.client_id, c.name client, t.assignee_id, u.name assignee, u.email assignee_email,
       (SELECT body FROM task_comments k WHERE k.task_id=t.id ORDER BY k.created_at DESC LIMIT 1) last_note, '${BASE}/gorev/' || t.id url
       FROM tasks t JOIN projects p ON p.id=t.project_id JOIN clients c ON c.id=p.client_id LEFT JOIN users u ON u.id=t.assignee_id WHERE t.id=$1`, [id]);
-    if (kind === 'approval') return one(`SELECT ap.id, ap.title, ap.body, ap.status, ap.comment, ap.decided_at, ap.client_id, c.name client, c.phone client_phone, c.email client_email, ap.project_id, p.name project, '${BASE}/onaylar/' || ap.id url
+    if (kind === 'approval') return one(`SELECT ap.id, ap.title, ap.body, ap.status, ap.kind, ap.choice, ap.decided_via, ap.comment, ap.decided_at, ap.client_id, c.name client, c.phone client_phone, c.email client_email, ap.project_id, p.name project, '${BASE}/onaylar/' || ap.id url
       FROM approvals ap JOIN clients c ON c.id=ap.client_id LEFT JOIN projects p ON p.id=ap.project_id WHERE ap.id=$1`, [id]);
     if (kind === 'quote') return one(`SELECT x.id, x.title, x.status, x.currency, x.discount_pct, x.valid_until, x.comment, x.client_id, c.name client, c.phone client_phone, c.email client_email, '${BASE}/teklifler/' || x.id url FROM quotes x JOIN clients c ON c.id=x.client_id WHERE x.id=$1`, [id]);
     if (kind === 'invoice') return one(`SELECT i.id, i.number, i.status, i.period, i.currency, i.issue_date, i.due_date, i.paid_at, i.paid_amount, i.client_id, c.name client, c.phone client_phone, c.email client_email,
@@ -120,6 +125,23 @@ export function registerAutomation(d) {
     return hooks.length;
   }
 
+  // İşlem e-postası: n8n "E-posta gönderici" akışına doğrudan gönderir. İçerik (kod, bağlantı) kayda yazılmaz; yalnız tür ve maskeli alıcı.
+  async function sendMail(agencyId, { to, subject, html, kind }) {
+    const w = await one(`SELECT * FROM webhooks WHERE agency_id=$1 AND active AND url LIKE '%/webhook/arvela-mail' LIMIT 1`, [agencyId]); if (!w) return false;
+    const masked = String(to).replace(/^(.).*@/, '$1***@');
+    const r = await one('INSERT INTO webhook_deliveries (webhook_id, agency_id, event, payload) VALUES ($1,$2,$3,$4) RETURNING id', [w.id, agencyId, 'mail.send', { event: 'mail.send', kind, to: masked }]);
+    const body = JSON.stringify({ event: 'mail.send', kind, to, subject, html, delivery: r.id });
+    const token = await tokenFor(agencyId).catch(() => '');
+    let code = null, ok = false, error = null;
+    try {
+      const x = await fetch(w.url, { method: 'POST', body, signal: AbortSignal.timeout(15_000), headers: { 'Content-Type': 'application/json', 'User-Agent': 'arvela-os-webhook/1.0', 'X-Arvela-Event': 'mail.send',
+        'X-Arvela-Delivery': String(r.id), 'X-Arvela-Signature': sign(w.secret, body), ...(token ? { 'X-Arvela-Token': token } : {}) } });
+      code = x.status; ok = x.ok; if (!ok) error = (await x.text()).slice(0, 300);
+    } catch (e) { error = String(e.message || e).slice(0, 300); }
+    await q(`UPDATE webhook_deliveries SET status_code=$1, ok=$2, error=$3, attempts=1, delivered_at=CASE WHEN $2 THEN now() ELSE NULL END WHERE id=$4`, [code, ok, error, r.id]).catch(() => {});
+    return ok;
+  }
+
   // İşlem kaydı kancası: server.js audit() her kayıttan sonra çağırır.
   async function onAudit(ctx, action, detail) {
     if (!ALL_EVENTS.includes(action)) return;
@@ -127,7 +149,7 @@ export function registerAutomation(d) {
     const has = await one('SELECT 1 FROM webhooks WHERE agency_id=$1 AND active LIMIT 1', [agencyId]); if (!has) return;
     let data = (await entity(action, detail).catch(() => null)) || { ...detail };
     if (action === 'client.create' && data.status === 'lead') { action = 'lead.create'; data = (await entity(action, detail).catch(() => null)) || data; }
-    if (detail && typeof detail === 'object') for (const k of ['decision', 'status', 'amount', 'period', 'count', 'from', 'quote', 'title', 'name']) if (k in detail && !(k in data)) data[k] = detail[k];
+    if (detail && typeof detail === 'object') for (const k of ['decision', 'kind', 'via', 'status', 'amount', 'period', 'count', 'from', 'quote', 'title', 'name']) if (k in detail && !(k in data)) data[k] = detail[k];
     await emit(agencyId, action, data, { source: ctx.apiKey ? 'api' : 'arvela-os', actor: ctx.apiKey ? { api_key: ctx.apiKey.name } : ctx.user ? { id: ctx.user.id, name: ctx.user.name, role: ctx.user.role } : null });
   }
 
@@ -401,5 +423,5 @@ ${[['GET /summary', 'Günün özeti: geciken ve bugünkü görevler, bekleyen on
     await d.audit(ctx, 'automation.key_revoke', { id: int(p.id) }); redirect(res, '/otomasyonlar');
   });
 
-  return { onAudit, onSiteSync, emit };
+  return { onAudit, onSiteSync, emit, sendMail };
 }

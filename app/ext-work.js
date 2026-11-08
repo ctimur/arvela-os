@@ -1,4 +1,5 @@
 // Arvela OS — iş yönetimi: projeler, görevler (açıklama, yorum, düzenleme), onaylar, hizmet kayıtları ve arama.
+import { parseRequest, decisionForm, KINDS } from './ext-decisions.js';
 import { locale } from './i18n.js';
 // Yönetici ve çalışan tüm iş ayrıntılarını görüp düzenler; freelancer yalnız kendine atanan görevi görür,
 // durumunu değiştirir ve not yazar.
@@ -34,12 +35,13 @@ dk.addEventListener('click',function(e){if(e.target===dk)dk.close();});
 document.querySelectorAll('[data-cmdk]').forEach(function(el){el.addEventListener(el.tagName==='INPUT'?'focus':'click',function(e){e.preventDefault();if(el.blur)el.blur();open();});});
 document.addEventListener('keydown',function(e){var t=e.target,typing=t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.tagName==='SELECT'||t.isContentEditable);
 if((e.metaKey||e.ctrlKey)&&(e.key==='k'||e.key==='K')){e.preventDefault();open();}else if(e.key==='/'&&!typing){e.preventDefault();open();}});}
+document.querySelectorAll('select[data-kind]').forEach(function(sel){var f=sel.form;function up(){f.querySelectorAll('[data-for]').forEach(function(el){el.hidden=el.getAttribute('data-for')!==sel.value;});}sel.addEventListener('change',up);up();});
 if(window.matchMedia&&matchMedia('(max-width:700px)').matches)document.querySelectorAll('details.guide').forEach(function(d){d.open=false;});
 document.querySelectorAll('form[data-confirm]').forEach(function(f){f.addEventListener('submit',function(e){if(!window.confirm(f.getAttribute('data-confirm')))e.preventDefault();});});
 })();`;
 
 export function registerWork(d) {
-  const { route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send, projectExtra, flowBanner, taskExtra } = d;
+  const { route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send, projectExtra, flowBanner, taskExtra, decisions } = d;
   const WORKERS = ['admin', 'staff', 'freelancer'];
   const tkTone = { yapilacak: '', yapiliyor: 'warn', incelemede: 'warn', bitti: 'ok' };
   const prTone = { planlandi: '', surecte: 'warn', onayda: 'warn', tamamlandi: 'ok' };
@@ -117,7 +119,7 @@ ${extra}
 <label>Açıklama<textarea name="description" rows="2"></textarea></label><div><button class="gold">Görevi ekle</button></div></form></section>
 <div class="two">
 <section class="card"><h2>Onaylar</h2>${aps.map(x => `<a class="line" href="/onaylar/${x.id}"><span class="grow"><strong>${h(x.title)}</strong><span class="muted">${fmtDate(x.decided_at || x.created_at)}${x.comment ? ' · ' + h(x.comment) : ''}</span></span>${badge(AP_ST[x.status], apTone(x.status))}</a>`).join('') || '<p class="muted">Bu projeye bağlı onay yok.</p>'}
-<details><summary>Müşteriye onaya gönder</summary><form class="stack" method="post" action="/projeler/${p.id}/onay">${f}<label>Konu<input name="title" required></label><label>Açıklama ya da bağlantı<textarea name="body" rows="2"></textarea></label><div><button class="gold">Onaya gönder</button></div></form></details></section>
+<details><summary>Müşteriye onaya gönder</summary><form class="stack" method="post" action="/projeler/${p.id}/onay">${f}<label>Konu<input name="title" required></label><label>Açıklama ya da bağlantı<textarea name="body" rows="2"></textarea></label>${decisions ? decisions.requestFields() : ''}<div><button class="gold">Onaya gönder</button></div></form></details></section>
 <section class="card"><h2>Proje bilgileri</h2><form class="stack" method="post" action="/projeler/${p.id}">${f}
 <label>Proje adı<input name="name" value="${h(p.name)}" required></label>
 <div class="row"><label>Durum<select name="status">${opts(PR_ST, p.status)}</select></label><label>Teslim<input type="date" name="due_date" value="${dateVal(p.due_date)}"></label>
@@ -156,8 +158,9 @@ ${ctx.user.role === 'admin' ? `<details class="danger"><summary>Projeyi sil</sum
   route('POST', '/projeler/:id/onay', async (ctx, res, prm) => {
     need(ctx, ...STAFF); const p = await projectFor(ctx, int(prm.id));
     if (!nn(ctx.body.title)) throw new HttpError(400, 'Konu gerekli.');
-    const r = await one('INSERT INTO approvals (agency_id, client_id, project_id, title, body, requested_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id',
-      [ctx.user.agency_id, p.client_id, p.id, nn(ctx.body.title), nn(ctx.body.body), ctx.user.id]);
+    const rq = parseRequest(ctx.body); if (rq.error) throw new HttpError(400, rq.error);
+    const r = await one('INSERT INTO approvals (agency_id, client_id, project_id, title, body, requested_by, kind, options) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id',
+      [ctx.user.agency_id, p.client_id, p.id, nn(ctx.body.title), nn(ctx.body.body), ctx.user.id, rq.kind, rq.options ? JSON.stringify(rq.options) : null]);
     await audit(ctx, 'approval.request', { id: r.id, client: p.client_id }); redirect(res, `/projeler/${p.id}`);
   });
 
@@ -258,7 +261,7 @@ ${rows.map(t => `<tr${isLate(t) ? ' class="is-late"' : ''}><td><a href="/gorev/$
     send(res, 200, layout(ctx, 'Onaylar', `<div class="page-head"><h1>Onaylar</h1></div><p class="muted">Yeni onay isteği proje ya da müşteri sayfasından gönderilir.</p>
 <form class="filters" method="get" action="/onaylar"><select name="durum" aria-label="Durum" data-auto>${opts(AP_ST, durum)}<option value="hepsi"${durum === 'hepsi' ? ' selected' : ''}>Tümü</option></select><button class="ghost">Filtrele</button></form>
 <div class="tbl"><table><tr><th>Konu</th><th>Müşteri</th><th>Proje</th><th>Durum</th><th>Tarih</th></tr>
-${rows.map(x => `<tr><td><a href="/onaylar/${x.id}"><strong>${h(x.title)}</strong></a>${x.comment ? `<br><span class="muted">${h(x.comment)}</span>` : ''}</td><td><a href="/musteriler/${x.client_id}">${h(x.client)}</a></td><td>${x.project_id ? `<a href="/projeler/${x.project_id}">${h(x.project)}</a>` : '—'}</td><td>${badge(AP_ST[x.status], apTone(x.status))}</td><td>${fmtDate(x.decided_at || x.created_at)}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">Bu filtreye uyan onay yok.</td></tr>'}</table></div>`, '/onaylar'));
+${rows.map(x => `<tr><td><a href="/onaylar/${x.id}"><strong>${h(x.title)}</strong></a>${x.kind && x.kind !== 'onay' ? ` <span class="muted">· ${h(KINDS[x.kind] || '')}</span>` : ''}${x.choice ? `<br><span>${h(x.choice)}</span>` : ''}${x.comment ? `<br><span class="muted">${h(x.comment)}</span>` : ''}</td><td><a href="/musteriler/${x.client_id}">${h(x.client)}</a></td><td>${x.project_id ? `<a href="/projeler/${x.project_id}">${h(x.project)}</a>` : '—'}</td><td>${badge(AP_ST[x.status], apTone(x.status))}</td><td>${fmtDate(x.decided_at || x.created_at)}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">Bu filtreye uyan onay yok.</td></tr>'}</table></div>`, '/onaylar'));
   });
 
   route('GET', '/onaylar/:id', async (ctx, res, prm) => {
@@ -270,9 +273,10 @@ ${rows.map(x => `<tr><td><a href="/onaylar/${x.id}"><strong>${h(x.title)}</stron
 ${x.comment ? `<div class="flash"><strong>Müşteri notu:</strong> ${h(x.comment)}</div>` : ''}
 <div class="two wide-first"><section class="card"><h2>İstek</h2>${open ? `<form class="stack" method="post" action="/onaylar/${x.id}">${f}<label>Konu<input name="title" value="${h(x.title)}" required></label>
 <label>Proje<select name="project_id"><option value="">—</option>${prjs.map(p => `<option value="${p.id}"${p.id === x.project_id ? ' selected' : ''}>${h(p.name)}</option>`).join('')}</select></label>
-<label>Açıklama ya da bağlantı<textarea name="body" rows="5">${h(x.body)}</textarea></label><div><button>Kaydet</button></div></form>` : `${x.body ? `<p class="desc">${h(x.body)}</p>` : '<p class="muted">Açıklama yok.</p>'}`}</section>
-<section class="card"><h2>Karar</h2>${open ? `<p class="muted">Müşteri portaldan karar verir. Onayı telefonda ya da WhatsApp'ta aldıysanız buradan işleyin.</p>
-<form class="stack" method="post" action="/onaylar/${x.id}/karar">${f}<label>Not<textarea name="comment" rows="2" placeholder="Ör. WhatsApp'tan onay verdi"></textarea></label><div class="row"><button class="gold" name="decision" value="onaylandi">Müşteri onayladı</button><button class="ghost" name="decision" value="reddedildi">Düzeltme istedi</button></div></form>
+<label>Açıklama ya da bağlantı<textarea name="body" rows="5">${h(x.body)}</textarea></label>${decisions ? decisions.requestFields(x) : ''}<div><button>Kaydet</button></div></form>` : `<p class="muted" style="margin:0">${h(KINDS[x.kind] || KINDS.onay)}</p>${x.body ? `<p class="desc">${h(x.body)}</p>` : '<p class="muted">Açıklama yok.</p>'}`}${decisions ? await decisions.summary(x) : ''}</section>
+<section class="card"><h2>Karar</h2>${open ? `<p class="muted">Müşteri portaldan ya da karar bağlantısından karar verir. Kararı telefonda ya da WhatsApp'ta aldıysanız aşağıdaki formla müşteri adına işleyin; kayıtta "Ekip işledi" olarak görünür.</p>
+<p><a class="btn ghost" href="/musteriler/${x.client_id}/karar">Müşteriye karar bağlantısı gönder</a></p>
+${decisionForm(x, `/onaylar/${x.id}/karar`, f, h)}
 <details class="danger"><summary>İsteği geri çek</summary><form method="post" action="/onaylar/${x.id}/sil" data-confirm="Onay isteği silinsin mi?">${f}<p class="muted">Müşterinin portalından da kalkar.</p><button class="danger">Geri çek ve sil</button></form></details>`
       : `<form method="post" action="/onaylar/${x.id}/yeniden">${f}<p class="muted">Karar verildi. Gerekirse yeniden onaya açabilirsiniz.</p><button class="ghost">Yeniden onaya aç</button></form>`}</section></div>`, '/onaylar'));
   });
@@ -281,21 +285,20 @@ ${x.comment ? `<div class="flash"><strong>Müşteri notu:</strong> ${h(x.comment
     need(ctx, ...STAFF); const x = await approvalFor(ctx, int(prm.id)); const b = ctx.body;
     if (x.status !== 'bekliyor') throw new HttpError(400, 'Karar verilmiş onay düzenlenemez.');
     let pid = int(b.project_id); if (pid && !(await one('SELECT 1 FROM projects WHERE id=$1 AND client_id=$2', [pid, x.client_id]))) pid = null;
-    await q('UPDATE approvals SET title=$1, body=$2, project_id=$3 WHERE id=$4', [nn(b.title) || x.title, nn(b.body), pid, x.id]);
+    const rq = parseRequest(b); if (rq.error) throw new HttpError(400, rq.error);
+    await q('UPDATE approvals SET title=$1, body=$2, project_id=$3, kind=$4, options=$5 WHERE id=$6', [nn(b.title) || x.title, nn(b.body), pid, rq.kind, rq.options ? JSON.stringify(rq.options) : null, x.id]);
     await audit(ctx, 'approval.update', { id: x.id }); redirect(res, `/onaylar/${x.id}`);
   });
 
   route('POST', '/onaylar/:id/karar', async (ctx, res, prm) => {
     need(ctx, ...STAFF); const x = await approvalFor(ctx, int(prm.id));
     if (x.status !== 'bekliyor') throw new HttpError(400, 'Bu onay için karar zaten verilmiş.');
-    const dec = ['onaylandi', 'reddedildi'].includes(ctx.body.decision) ? ctx.body.decision : null; if (!dec) throw new HttpError(400, 'Karar seçin.');
-    await q('UPDATE approvals SET status=$1, comment=$2, decided_by=$3, decided_at=now() WHERE id=$4', [dec, nn(ctx.body.comment), ctx.user.id, x.id]);
-    await audit(ctx, 'approval.decide_for_client', { id: x.id, decision: dec }); redirect(res, `/onaylar/${x.id}`);
+    await decisions.decide(ctx, x, ctx.body, ctx.files, 'ekip', ctx.user.name); redirect(res, `/onaylar/${x.id}`);
   });
 
   route('POST', '/onaylar/:id/yeniden', async (ctx, res, prm) => {
     need(ctx, ...STAFF); const x = await approvalFor(ctx, int(prm.id));
-    await q(`UPDATE approvals SET status='bekliyor', decided_at=NULL, decided_by=NULL, comment=NULL, created_at=now() WHERE id=$1`, [x.id]);
+    await q(`UPDATE approvals SET status='bekliyor', decided_at=NULL, decided_by=NULL, comment=NULL, choice=NULL, decided_via=NULL, decided_name=NULL, created_at=now() WHERE id=$1`, [x.id]);
     await audit(ctx, 'approval.reopen', { id: x.id }); redirect(res, `/onaylar/${x.id}`);
   });
 

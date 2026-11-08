@@ -41,7 +41,9 @@ registerWork({
   TK_ST: { yapilacak: 'Yapılacak', yapiliyor: 'Yapılıyor', incelemede: 'İncelemede', bitti: 'Bitti' }, AP_ST: { bekliyor: 'Onay bekliyor', onaylandi: 'Onaylandı', reddedildi: 'Düzeltme istendi' },
   CS_ST: { teklif: 'Teklifte', aktif: 'Aktif' }, STAFF: ['admin', 'staff'],
   redirect: (res, to) => { out = { redirect: to }; }, send: (res, s, html) => { out = { html }; },
+  decisions: { decide: async (...a) => { decided = a; }, summary: async () => '<p>özet</p>', requestFields: () => '<select name="kind" data-kind></select>' },
 });
+let decided = null;
 const ctx = (role, id = 1, extra = {}) => ({ user: { id, agency_id: 1, role, name: 'X' }, url: new URL('http://x/?' + (extra.qs || '')), body: extra.body || {} });
 const run = async (key, c, p = {}) => { out = null; await routes[key](c, {}, p); return out; };
 
@@ -62,5 +64,7 @@ assert.equal(r.redirect, '/gorev/5'); const upd = writes.find(w => w[0].startsWi
 assert.deepEqual(upd[1], ['Yeni ad', 'yapiliyor', 9, '2026-11-20', 'd', 'yuksek', 5]);
 r = await run('POST /gorev/:id/durum', ctx('freelancer', 7, { body: { status: 'bitti' } }), { id: '5' }); assert.equal(r.redirect, '/gorev/5');
 r = await run('POST /onaylar/:id/karar', ctx('staff', 1, { body: { decision: 'onaylandi', comment: 'WhatsApp' } }), { id: '4' }); assert.equal(r.redirect, '/onaylar/4');
+assert.equal(decided[3], undefined); assert.equal(decided[4], 'ekip'); assert.equal(decided[2].comment, 'WhatsApp');
+r = await run('GET /onaylar/:id', ctx('admin'), { id: '4' }); assert.ok(r.html.includes('karar bağlantısı') || r.html.includes('Karar'));
 r = await run('GET /ara', ctx('admin', 1, { qs: 'q=ce' })); assert.ok(r.html.includes('Müşteriler'));
 console.log('work: ok');

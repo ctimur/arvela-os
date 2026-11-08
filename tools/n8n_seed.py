@@ -211,7 +211,20 @@ for a, b in [('İletişim formu', 'Aday müşteri'), ('Aday müşteri', 'İlk g�
     link(c, a, b)
 flows.append(wf('lead-form', 'Arvela · Web formu → aday', nodes, c))
 
+# 9 · E-posta gönderici (işlem e-postaları: karar bağlantısı, doğrulama kodu)
+c = {}
+js = """const b = $input.first().json.body || {};
+const ok = typeof b.to === 'string' && /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(b.to) && b.subject && b.html && b.event === 'mail.send';
+return ok ? [{ json: { to: b.to, subject: String(b.subject).slice(0, 200), html: String(b.html).slice(0, 20000) } }] : [];"""
+nodes = [note('Nasıl çalışır', '## Arvela · E-posta gönderici\nArvela OS\'in müşterilere gönderdiği işlem e-postalarını (karar bağlantısı, doğrulama kodu) iletir.\nİçerik Arvela OS\'te hazırlanır; burada yalnız gönderilir. Başarılı çalışmalar kayda yazılmaz (kodlar saklanmasın diye).', [-40, -120], 440, 190),
+         webhook('E-posta isteği', [0, 300], 'arvela-mail'), code('Denetle', [240, 300], js),
+         email('Gönder', [480, 300], '={{ $json.subject }}', '={{ $json.html }}', '={{ $json.to }}')]
+link(c, 'E-posta isteği', 'Denetle'); link(c, 'Denetle', 'Gönder')
+mail_wf = wf('mail', 'Arvela · E-posta gönderici', nodes, c)
+mail_wf['settings'].update({'saveDataSuccessExecution': 'none', 'saveManualExecutions': False})
+flows.append(mail_wf)
+
 out = pathlib.Path(__file__).resolve().parent.parent / 'app' / 'n8n-seed.json'
 IDS = {f['name']: f['id'] for f in flows}
-out.write_text(json.dumps({'version': 3, 'ids': IDS, 'workflows': flows}, ensure_ascii=False, indent=0) + '\n')
+out.write_text(json.dumps({'version': 4, 'ids': IDS, 'workflows': flows}, ensure_ascii=False, indent=0) + '\n')
 print(len(flows), 'akış', out.stat().st_size, 'bayt')

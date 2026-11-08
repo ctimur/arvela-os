@@ -6,7 +6,7 @@ import { splitRecord } from './ext-settings.js';
 export const STAGES = { yeni: 'Yeni', ulasildi: 'Ulaşıldı', gorusme: 'Ön görüşme', teklif: 'Teklif', kazanildi: 'Kazanıldı', kaybedildi: 'Kaybedildi' };
 export const OPEN_STAGES = ['yeni', 'ulasildi', 'gorusme', 'teklif'];
 export const SOURCES = { web: 'Web formu', whatsapp: 'WhatsApp', referans: 'Referans', sosyal: 'Sosyal medya', outbound: 'Kişisel ulaşım', etkinlik: 'Etkinlik', diger: 'Diğer' };
-export const KINDS = { not: 'Not', arama: 'Arama', whatsapp: 'WhatsApp', eposta: 'E-posta', gorusme: 'Görüşme' };
+export const KINDS = { not: 'Not', arama: 'Arama', whatsapp: 'WhatsApp', eposta: 'E-posta', gorusme: 'Görüşme', karar: 'Müşteri kararı' };
 const STAGE_TONE = { yeni: 'warn', ulasildi: '', gorusme: 'warn', teklif: 'warn', kazanildi: 'ok', kaybedildi: '' };
 
 // Basit ve açıklanabilir aday puanı (0–100): kaynak, ilgi ve iletişim bilgisi.

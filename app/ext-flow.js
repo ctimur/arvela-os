@@ -32,6 +32,18 @@ export function lateEnd(projectDue, tasks) {
   const max = Math.max(...ends); return max > new Date(projectDue).getTime() ? new Date(max).toISOString().slice(0, 10) : null;
 }
 const tx = (s) => t([s]);
+// Müşteriye giden onay metni: iç bilgiler (rol, otomasyon, n8n) çıkarılır; çıktı ve kabul ölçütü müşteri diliyle yazılır.
+export function clientBody(desc, prevTitle) {
+  const out = [];
+  for (const l of String(desc || '').split(/\r?\n/)) {
+    if (/^Rol:/.test(l)) continue;
+    if (/^Çıktı:/.test(l)) out.push('Onayınıza sunulan: ' + l.replace(/^Çıktı:\s*/, ''));
+    else if (/^Kabul:/.test(l)) out.push('Kontrol etmeniz gereken: ' + l.replace(/^Kabul:\s*/, ''));
+    else if (l.trim()) out.push(l.trim());
+  }
+  if (prevTitle) out.push(`Tamamlanan önceki adım: ${prevTitle}`);
+  return out.join('\n') || null;
+}
 const ROLE_TXT = { ai: 'Yapay zekâ', ekip: 'Ekip', freelancer: 'Freelancer', musteri: 'Müşteri' };
 // Aşama için "ne yapılır / bitince ne olur" açıklaması.
 export function stageHelp(cur, next) {
@@ -54,9 +66,10 @@ export function registerFlow(d) {
     const r = await one('UPDATE tasks SET ready_at=now() WHERE id=$1 AND ready_at IS NULL RETURNING id', [x.id]); if (!r) return;
     if (x.stage_role === 'musteri' && !x.approval_id) {
       const p = await one('SELECT client_id FROM projects WHERE id=$1', [x.project_id]);
-      const body = [x.description, prev ? `Önceki aşama: ${tidy(prev.title)} (tamamlandı)` : ''].filter(Boolean).join('\n\n');
-      const ap = await one('INSERT INTO approvals (agency_id, client_id, project_id, title, body, requested_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id',
-        [x.agency_id, p.client_id, x.project_id, tidy(x.title), body, ctx.user?.role === 'client' ? null : ctx.user?.id || null]);
+      const body = clientBody(x.description, prev ? tidy(prev.title) : null);
+      const kind = ['onay', 'secim', 'butce', 'bilgi'].includes(x.stage_decision) ? x.stage_decision : 'onay';
+      const ap = await one('INSERT INTO approvals (agency_id, client_id, project_id, title, body, requested_by, kind) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id',
+        [x.agency_id, p.client_id, x.project_id, tidy(x.title), body, ctx.user?.role === 'client' ? null : ctx.user?.id || null, kind]);
       await q(`UPDATE tasks SET approval_id=$1, status='incelemede' WHERE id=$2`, [ap.id, x.id]);
       await note(ctx, x.id, `Müşteriye onay isteği gönderildi (#${ap.id}). Müşteri portaldan karar verir; karar gelince bu aşama kendiliğinden ilerler.`);
       await audit(ctx, 'approval.request', { id: ap.id, client: p.client_id, task: x.id, via: 'flow' });
@@ -90,17 +103,18 @@ export function registerFlow(d) {
       await advance(ctx, int(detail.id), null);
     } else if (action === 'approval.decide' || action === 'approval.decide_for_client') {
       const x = await one('SELECT * FROM tasks WHERE approval_id=$1 AND agency_id=$2', [int(detail.id), a]); if (!x) return;
-      const ap = await one('SELECT comment FROM approvals WHERE id=$1', [int(detail.id)]); const c = ap?.comment ? `: "${ap.comment}"` : '.';
+      const ap = await one('SELECT comment, choice FROM approvals WHERE id=$1', [int(detail.id)]);
+      const c = [ap?.choice, ap?.comment ? `"${ap.comment}"` : ''].filter(Boolean).join(' · '); const cx = c ? `: ${c}.` : '.';
       if (detail.decision === 'onaylandi') {
-        await q(`UPDATE tasks SET status='bitti' WHERE id=$1`, [x.id]); await note(ctx, x.id, `Müşteri onayladı${c} Sıradaki aşama açılıyor.`);
+        await q(`UPDATE tasks SET status='bitti' WHERE id=$1`, [x.id]); await note(ctx, x.id, `Müşteri karar verdi${cx} Sıradaki aşama açılıyor.`);
         await audit(ctx, 'task.status', { id: x.id, status: 'bitti', via: 'flow' });
       } else {
         const prev = reworkStage(await stagesOf(x.project_id), x);
         await q(`UPDATE tasks SET status='yapilacak', approval_id=NULL, ready_at=NULL WHERE id=$1`, [x.id]);
-        await note(ctx, x.id, `Müşteri düzeltme istedi${c}${prev ? ` "${tidy(prev.title)}" yeniden açıldı; o aşama bitince yeni onay isteği kendiliğinden gönderilir.` : ''}`);
+        await note(ctx, x.id, `Müşteri düzeltme istedi${cx}${prev ? ` "${tidy(prev.title)}" yeniden açıldı; o aşama bitince yeni onay isteği kendiliğinden gönderilir.` : ''}`);
         if (prev) {
           await q(`UPDATE tasks SET status='yapiliyor', ready_at=now() WHERE id=$1`, [prev.id]);
-          await note(ctx, prev.id, `Müşteri düzeltme istedi (${tidy(x.title)})${c} Düzeltmeyi yapıp görevi "Bitti" yapın; sistem müşteriye yeniden onay gönderir.`);
+          await note(ctx, prev.id, `Müşteri düzeltme istedi (${tidy(x.title)})${cx} Düzeltmeyi yapıp görevi "Bitti" yapın; sistem müşteriye yeniden onay gönderir.`);
           await audit(ctx, 'task.update', { id: prev.id, stage: 'revision', via: 'flow' });
         }
       }
