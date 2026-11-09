@@ -67,7 +67,7 @@ th{text-transform:none;letter-spacing:0;font-size:12.5px}.badge{text-transform:n
       if (o.menu === 'acik') css += lightOnly(`.side{background:#FBFAF7;color:var(--ink);border-right:1px solid var(--line)}.side .brand{color:var(--ink)}.side .brand span{color:${a.text}}
 .side .side-nav a{color:#3C3A33}.side .side-nav a:hover{background:#F1EEE7;color:var(--ink)}.side .side-nav a.on{background:#fff;color:var(--ink);box-shadow:0 0 0 1px var(--line),inset 3px 0 0 ${a.fill}}.side .side-nav a.on svg{color:${a.fill}}
 .ng-h{color:#5E5849}.ng-h:hover{background:#F1EEE7;color:var(--ink)}.side .who{border-top-color:var(--line);color:var(--stone)}.side .who strong{color:var(--ink)}
-.side .btn-out{color:var(--ink);border-color:var(--line)}.side .lang.dark{border-color:var(--line)}.side .lang.dark button{color:#5E5849}.side .side-x{border-color:var(--line);color:var(--ink)}.side .side-nav{scrollbar-color:#D8D1C3 transparent}`);
+.side .btn-out{color:var(--ink);border-color:var(--line)}.side .lang.dark{border-color:var(--line)}.side .lang.dark button{color:#5E5849}.side .lang.dark button.on{color:#0B0D12}.side .side-x{border-color:var(--line);color:var(--ink)}.side .side-nav{scrollbar-color:#D8D1C3 transparent}`);
       if (o.menu === 'serit') css += `@media (min-width:901px){.side{width:76px;padding:16px 10px}.shell{margin-left:76px}.side .brand{font-size:0;padding:0;display:grid;place-items:center;height:40px}
 .side .brand::before{content:"A";font:600 18px Poppins,sans-serif;width:40px;height:40px;border-radius:10px;background:var(--champ);color:#0B0D12;display:grid;place-items:center}.side .brand span{display:none}
 .ng-h{display:none}.side .side-nav{margin-right:0;padding-right:0;gap:6px}.ng{border-top:1px solid #1F242C;padding-top:6px}.ng:first-child{border-top:0;padding-top:0}.ng.shut .ng-b{grid-template-rows:1fr;opacity:1}.ng.shut .ng-i a{visibility:visible}
@@ -117,7 +117,7 @@ input:focus,select:focus,textarea:focus{border-color:${a.fill};box-shadow:0 0 0 
 .side .side-nav a{color:#3C3A33;font-size:14px;font-weight:500;border-radius:8px}.side .side-nav a:hover{background:#fff;color:var(--ink)}
 .side .side-nav a.on{background:#fff;color:var(--ink);box-shadow:0 0 0 1px var(--line),inset 3px 0 0 ${a.fill}}
 .side .who{border-top-color:var(--line);color:var(--stone)}.who strong{color:var(--ink)}.side .btn-out{color:var(--ink);border-color:var(--line)}
-.ng-h{color:#5E5849}.ng-h:hover{background:#fff;color:var(--ink)}.side .side-x{border-color:var(--line);color:var(--ink)}.side .side-nav{scrollbar-color:#D8D1C3 transparent}.side .lang.dark{border-color:var(--line)}.side .lang.dark button{color:#5E5849}`;
+.ng-h{color:#5E5849}.ng-h:hover{background:#fff;color:var(--ink)}.side .side-x{border-color:var(--line);color:var(--ink)}.side .side-nav{scrollbar-color:#D8D1C3 transparent}.side .lang.dark{border-color:var(--line)}.side .lang.dark button{color:#5E5849}.side .lang.dark button.on{color:#0B0D12}`;
       if (o.yogunluk === 'sik') css += `
 .page-main{gap:16px;padding-top:24px}.card{padding:16px;gap:8px}th,td{padding:8px 12px}.act{padding:18px;gap:8px}.side .side-nav a{padding:8px 12px}`;
       return css;

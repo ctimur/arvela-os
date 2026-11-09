@@ -1,14 +1,14 @@
 // Arvela OS — görünüm katmanı (0.23 Atlas): gruplu akordiyon menü, üst çubuk, mobil çekmece, açık/koyu mod.
 // Renkler server.js'teki CSS değişkenleriyle tanımlı; koyu mod yalnız değişkenleri ve birkaç ters renkli bileşeni değiştirir.
 
-export const NAV_ICON = { '/panel': 'home', '/gorevler': 'check', '/onaylar': 'bell', '/satis': 'flow', '/musteriler': 'users', '/teklifler': 'doc', '/faturalar': 'receipt', '/projeler': 'folder', '/paketler': 'box', '/siteler': 'globe', '/katalog': 'book', '/otomasyonlar': 'bolt', '/odemeler': 'wallet', '/ayarlar': 'gear', '/portal': 'home', '/portal/siteler': 'globe', '/portal/teklifler': 'doc', '/portal/faturalar': 'receipt' };
+export const NAV_ICON = { '/panel': 'home', '/gorevler': 'check', '/onaylar': 'decide', '/satis': 'flow', '/musteriler': 'users', '/teklifler': 'doc', '/faturalar': 'receipt', '/projeler': 'folder', '/paketler': 'box', '/siteler': 'globe', '/katalog': 'book', '/otomasyonlar': 'bolt', '/odemeler': 'wallet', '/ayarlar': 'gear', '/portal': 'home', '/portal/siteler': 'globe', '/portal/teklifler': 'doc', '/portal/faturalar': 'receipt' };
 export function navGroups(u) {
   if (!u) return [];
   if (u.role === 'client') return [{ key: '', items: [['/portal', 'Portalım'], ['/portal/siteler', 'Sitelerim'], ['/portal/teklifler', 'Tekliflerim'], ['/portal/faturalar', 'Faturalarım']] }];
   if (u.role === 'freelancer') return [{ key: '', items: [['/paketler', 'İş paketlerim'], ['/gorevler', 'Görevlerim']] }];
   const admin = u.role === 'admin';
   return [
-    { key: 'gunluk', label: 'Günlük', items: [['/panel', 'Bugün'], ['/gorevler', 'Görevlerim'], ['/onaylar', 'Onaylar']] },
+    { key: 'gunluk', label: 'Günlük', items: [['/panel', 'Bugün'], ['/gorevler', 'Görevlerim'], ['/onaylar', 'Kararlar']] },
     { key: 'satis', label: 'Satış ve müşteri', items: [['/satis', 'Satış hattı'], ['/musteriler', 'Müşteriler'], ...(admin ? [['/teklifler', 'Teklifler'], ['/faturalar', 'Faturalar']] : [])] },
     { key: 'teslimat', label: 'Teslimat', items: [['/projeler', 'Projeler'], ['/paketler', 'İş paketleri'], ['/siteler', 'Siteler'], ['/katalog', 'Katalog']] },
     { key: 'yonetim', label: 'Yönetim', items: [['/otomasyonlar', 'Otomasyonlar'], ...(admin ? [['/odemeler', 'Freelancer ödemeleri'], ['/ayarlar', 'Ayarlar']] : [])] },
@@ -33,12 +33,14 @@ export const NAV_CSS = `
 .menu-btn,.tb-brand,.tb-s2,.scrim{display:none}
 .tb-search{display:inline-flex;align-items:center;gap:10px;height:40px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--surf);color:var(--stone);text-decoration:none;font-size:14px;width:min(360px,40vw)}
 .tb-search:hover{border-color:var(--champ);color:var(--ink)}.tb-search svg{width:16px;height:16px;flex:none}.tb-search kbd{margin-left:auto;font:12px Inter,sans-serif;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--stone)}
-.tb-sp{flex:1}.mode-f{margin:0;display:inline-flex}.icon-btn{padding:0;min-height:0;flex:none}.icon-btn:hover{background:var(--sand);color:var(--ink)}
+.tb-sp{flex:1}.mode-f{margin:0;display:inline-flex}.who .mode-f{display:none}
+.bell{position:relative}.bell .bdg{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#B3261E;color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;line-height:1}
+.r.nt{text-decoration:none;color:var(--ink)}.r.nt:hover{background:var(--soft)}.r.nt.unread b{color:var(--ink)}.r.nt:not(.unread) b{font-weight:500;color:var(--ink2)}.icon-btn{padding:0;min-height:0;flex:none}.icon-btn:hover{background:var(--sand);color:var(--ink)}
 .mode-btn svg+svg{display:none}
 @media (max-width:900px){
 .shell{margin-left:0}
 .topbar{gap:6px;padding:0 10px 0 8px;padding-top:env(safe-area-inset-top);height:calc(60px + env(safe-area-inset-top))}
-.menu-btn,.tb-s2{display:inline-flex}.tb-search{display:none}
+.menu-btn,.tb-s2{display:inline-flex}.tb-search{display:none}.topbar .mode-f{display:none}.who .mode-f{display:inline-flex}.who .mode-btn{width:40px;height:40px;background:transparent;border-color:#2A303A;color:#C9CED6}
 .tb-brand{display:inline-block;color:var(--ink);font-size:19px;padding:0 4px}.tb-brand span{color:var(--acc-t)}
 .icon-btn{width:44px;height:44px}
 .side{width:min(86vw,320px);transform:translateX(-102%);visibility:hidden;z-index:40;padding-top:max(16px,env(safe-area-inset-top));transition:transform .34s cubic-bezier(.2,.8,.2,1),visibility 0s .34s}
@@ -106,7 +108,7 @@ main.has-insp{display:grid;grid-template-columns:minmax(0,1fr) var(--insp-w,360p
 @media (prefers-reduced-motion:reduce){.ng-b,.side,.scrim,.ng-h svg,.ng-i a{transition:none!important}}
 .tbar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin-bottom:10px}.tbar input[type=search]{flex:1 1 220px;min-height:40px}.tbar select{min-height:40px;padding:6px 10px;font-size:14px}.tbar .muted{margin-left:auto}
 th button.sort{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:4px}th button.sort:focus-visible{outline:2px solid var(--champ);outline-offset:2px}th button.sort::after{content:"↕";opacity:.35;font-size:11px}th[aria-sort=ascending] button.sort::after{content:"↑";opacity:1}th[aria-sort=descending] button.sort::after{content:"↓";opacity:1}
-.viewseg{display:inline-flex;gap:4px;background:var(--sand);padding:4px;border-radius:12px}.viewseg a{display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border-radius:9px;color:var(--ink2);text-decoration:none;font-size:14px;font-weight:500}.viewseg a.on{background:var(--surf);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(20,26,34,.12)}
+.viewseg{display:inline-flex;gap:4px;background:var(--sand);padding:4px;border-radius:12px;max-width:100%;overflow-x:auto;scrollbar-width:none}.viewseg a{flex:none}.viewseg a{display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border-radius:9px;color:var(--ink2);text-decoration:none;font-size:14px;font-weight:500}.viewseg a.on{background:var(--surf);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(20,26,34,.12)}
 .ptbl-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 `;
 

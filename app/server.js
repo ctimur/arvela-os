@@ -16,12 +16,14 @@ import { registerIcons, ICON_LINKS } from './ext-icons.js';
 import { registerAi, migrateAi } from './ext-ai.js';
 import { registerSuggest, migrateSuggest } from './ext-suggest.js';
 import { registerOps, migrateOps } from './ext-ops.js';
+import { registerNotify, migrateNotify } from './ext-notify.js';
 import { registerDecisions, migrateDecisions, parseMultipart, decisionForm, parseRequest, BODY_MAX } from './ext-decisions.js';
 import { THEMES } from './themes.js';
 import { NAV_CSS, DARK_CSS, NAV_ICON, navGroups } from './ext-look.js';
 
-const VERSION = '0.25.0';
+const VERSION = '0.26.0';
 let settingsApi = null;
+let notify = null;
 const PORT = Number(process.env.PORT || 3000);
 const SETUP_TOKEN = process.env.SETUP_TOKEN || '';
 const COOKIE_SECURE = process.env.COOKIE_SECURE !== '0';
@@ -125,7 +127,7 @@ const CLIENT_ST = { lead: 'Aday', active: 'Aktif', paused: 'Duraklatıldı', chu
 const CS_ST = { teklif: 'Teklifte', kurulum: 'Kurulumda', aktif: 'Aktif', durduruldu: 'Durduruldu' };
 const PR_ST = { planlandi: 'Planlandı', surecte: 'Süreçte', onayda: 'Onayda', tamamlandi: 'Tamamlandı' };
 const TK_ST = { yapilacak: 'Yapılacak', yapiliyor: 'Yapılıyor', incelemede: 'İncelemede', bitti: 'Bitti' };
-const AP_ST = { bekliyor: 'Onay bekliyor', onaylandi: 'Onaylandı', reddedildi: 'Düzeltme istendi' };
+const AP_ST = { bekliyor: 'Karar bekliyor', onaylandi: 'Onaylandı', reddedildi: 'Düzeltme istendi' };
 const opts = (map, sel) => Object.entries(map).map(([k, v]) => `<option value="${k}"${k === sel ? ' selected' : ''}>${h(v)}</option>`).join('');
 const badge = (txt, tone = '') => `<span class="badge ${tone}">${h(txt)}</span>`;
 
@@ -312,6 +314,7 @@ const ICON = {
   bolt: '<path d="M13 2.5L4.5 13.5H11l-1 8 8.5-11H12z"/>',
   wallet: '<rect x="3" y="6" width="18" height="14" rx="2.5"/><path d="M3 10h18M16 15h2"/>',
   gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
+  decide: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/>',
   chev: '<path d="M7 10l5 5 5-5"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
   moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
@@ -364,9 +367,9 @@ function layout(ctx, title, body, active = '') {
   const newMenu = NEW.length ? `<details class="tb-new"><summary class="btn">+ <span>Yeni</span></summary><div class="tb-menu" role="menu">${NEW.map(([href, t]) => `<a role="menuitem" href="${href}">${t}</a>`).join('')}</div></details>` : '';
   const infoBtn = guided ? `<button type="button" class="info-btn" data-info aria-pressed="false" aria-controls="sayfa-bilgi"><span aria-hidden="true">i</span><b>Ayrıntılar</b></button>` : '';
   const top = u ? `<header class="topbar"><button type="button" class="icon-btn menu-btn" data-menu aria-controls="menu" aria-expanded="false" aria-label="Menüyü aç">${svg('menu')}</button><a class="brand tb-brand" href="/">Arvela<span>OS</span></a>
-<nav class="tb-crumb" aria-label="Sayfa yolu">${crumbHtml}</nav><span class="tb-sp"></span>${staffish ? `<a class="tb-search" href="/ara" data-cmdk>${svg('search')}<span>Ara ya da komut yaz…</span><kbd>⌘K</kbd></a><a class="icon-btn tb-s2" href="/ara" data-cmdk aria-label="Ara">${svg('search')}</a>` : ''}${infoBtn}${darkOk ? modeBtn : ''}${newMenu}</header>` : '';
+<nav class="tb-crumb" aria-label="Sayfa yolu">${crumbHtml}</nav><span class="tb-sp"></span>${staffish ? `<a class="tb-search" href="/ara" data-cmdk>${svg('search')}<span>Ara ya da komut yaz…</span><kbd>⌘K</kbd></a><a class="icon-btn tb-s2" href="/ara" data-cmdk aria-label="Ara">${svg('search')}</a>` : ''}${u.role !== 'client' ? `<a class="icon-btn bell" href="/bildirimler" aria-label="Bildirimler${ctx.unread ? ` (${ctx.unread} okunmamış)` : ''}">${svg('bell')}${ctx.unread ? `<span class="bdg">${ctx.unread > 99 ? '99+' : ctx.unread}</span>` : ''}</a>` : ''}${infoBtn}${darkOk ? modeBtn : ''}${newMenu}</header>` : '';
   const side = u ? `<aside class="side" id="menu" aria-label="Ana menü"><div class="side-top"><a class="brand" href="/">Arvela<span>OS</span></a><button type="button" class="icon-btn side-x" data-menu-close aria-label="Menüyü kapat">${svg('close')}</button></div>
-<nav aria-label="Ana menü" class="side-nav">${renderNav(u, active, closed)}</nav><div class="who"><span><strong>${h(u.name)}</strong><br>${h(ROLE[u.role])}</span><div class="who-row">${out}${langSwitch(ctx, 'dark')}</div></div></aside><div class="scrim" data-menu-close aria-hidden="true"></div>` : '';
+<nav aria-label="Ana menü" class="side-nav">${renderNav(u, active, closed)}</nav><div class="who"><span><strong>${h(u.name)}</strong><br>${h(ROLE[u.role])}</span><div class="who-row">${out}${langSwitch(ctx, 'dark')}${darkOk ? modeBtn : ''}</div></div></aside><div class="scrim" data-menu-close aria-hidden="true"></div>` : '';
   return `<!doctype html><html lang="tr" data-mode="${mode}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#F6F5F2" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#0E1116" media="(prefers-color-scheme: dark)">
 <title>${h(title)} · Arvela OS</title>${ICON_LINKS}<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500&display=swap" rel="stylesheet"><style>${CSS}${pageTheme.css}${darkOk ? DARK_CSS : ''}</style></head><body${cookies.ayrinti === '1' ? ' class="info-on"' : ''}><a class="skip" href="#icerik">İçeriğe geç</a>${pageTheme.banner}
@@ -375,7 +378,7 @@ ${side}<div class="shell${u ? '' : ' bare'}">${top}
 }
 const cmdk = (u) => {
   const items = [['/satis#yeni-aday', 'Yeni aday', 'A'], ['/paketler#yeni-paket', 'Yeni iş paketi', ''], ...(u.role === 'admin' ? [['/teklifler#yeni', 'Yeni teklif', 'T']] : []),
-    ['/panel', 'Bugün', 'G B'], ['/satis', 'Satış hattı', 'G S'], ['/musteriler', 'Müşteriler', 'G M'], ['/gorevler', 'Görevlerim', 'G G'], ['/onaylar', 'Onaylar', ''], ['/projeler', 'Projeler', ''],
+    ['/panel', 'Bugün', 'G B'], ['/satis', 'Satış hattı', 'G S'], ['/musteriler', 'Müşteriler', 'G M'], ['/gorevler', 'Görevlerim', 'G G'], ['/onaylar', 'Müşteri kararları', ''], ['/projeler', 'Projeler', ''],
     ['/paketler', 'İş paketleri', ''], ['/siteler', 'Siteler', ''], ...(u.role === 'admin' ? [['/faturalar', 'Faturalar', ''], ['/odemeler', 'Freelancer ödemeleri', ''], ['/forge', 'Forge', '']] : [])];
   return `<dialog class="cmdk" id="cmdk" aria-label="Komut paleti"><form method="get" action="/ara" role="search"><input type="search" name="q" placeholder="Ara ya da komut seç…" aria-label="Ara ya da komut seç" autocomplete="off"></form><nav>${items.map(([href, t, k]) => `<a href="${href}">${t}${k ? `<span>${k}</span>` : ''}</a>`).join('')}</nav><p class="hint">Enter: aç ya da ara · Esc: kapat · ⌘K / Ctrl+K: her yerden aç</p></dialog>`;
 };
@@ -456,6 +459,7 @@ async function audit(ctx, action, detail = {}) {
   if (decisions) decisions.onAudit(ctx, action, detail).catch((e) => console.error('karar e-postası:', e.message));
   if (ai) ai.onAudit(ctx, action, detail).catch((e) => console.error('yapay zekâ:', e.message)); // beklemez: n8n'e gönderim isteği yavaşlatmasın
   if (hooks) hooks.onAudit(ctx, action, detail).catch((e) => console.error('otomasyon:', e.message));
+  if (notify) notify.onAudit(ctx, action, detail).catch((e) => console.error('bildirim:', e.message)); // akıştan sonra: açılan aşamayı görür
 }
 class HttpError extends Error { constructor(status, msg) { super(msg); this.status = status; } }
 const need = (ctx, ...roles) => { if (!ctx.user) throw new HttpError(401); if (!roles.includes(ctx.user.role)) throw new HttpError(403, 'Bu sayfaya erişim yetkiniz yok.'); };
@@ -580,7 +584,7 @@ route('GET', '/musteriler/:id', async (ctx, res, p) => {
   const f = csrfField(ctx);
   const HEAD = `
 <div class="page-head"><div><h1>${h(c.name)}</h1><div class="chips">${badge(CLIENT_ST[c.status])}${c.contact_name ? `<span class="muted">${h(c.contact_name)}</span>` : ''}${c.phone ? `<a href="tel:${h(c.phone.replace(/[^+\d]/g, ''))}">${h(c.phone)}</a>` : ''}${c.email ? `<a href="mailto:${h(c.email)}">${h(c.email)}</a>` : ''}</div></div>
-<nav class="jump" aria-label="Sayfa içi"><a href="#hizmetler">Hizmetler</a><a href="#projeler">Projeler</a><a href="#onaylar">Onaylar</a><a href="/musteriler/${c.id}/siteler">Siteler</a><a href="/satis/${c.id}">Satış geçmişi</a><a href="/musteriler/${c.id}/karar">Karar bağlantısı</a></nav></div>
+<nav class="jump" aria-label="Sayfa içi"><a href="#hizmetler">Hizmetler</a><a href="#projeler">Projeler</a><a href="#onaylar">Kararlar</a><a href="/musteriler/${c.id}/siteler">Siteler</a><a href="/satis/${c.id}">Satış geçmişi</a><a href="/musteriler/${c.id}/karar">Karar bağlantısı</a></nav></div>
 `;
   const DET = `<details class="card"><summary>Firma bilgileri</summary><form class="stack" method="post" action="/musteriler/${c.id}">${f}
 <div class="row"><label>Firma adı<input name="name" value="${h(c.name)}" required></label><label>Sektör<input name="sector" value="${h(c.sector)}"></label><label>Durum<select name="status">${opts(CLIENT_ST, c.status)}</select></label></div>
@@ -601,11 +605,11 @@ ${ctx.user.role === 'admin' ? `<form method="post" action="/hizmet/${s.id}/sil" 
 ${prjs.length ? `<div class="tbl"><table><tr><th>Proje</th><th>Durum</th><th>İlerleme</th><th>Teslim</th></tr>${prjs.map(p => `<tr><td><a href="/projeler/${p.id}">${h(p.name)}</a></td><td>${badge(PR_ST[p.status])}</td><td>${p.done}/${p.total}</td><td>${fmtDate(p.due_date)}</td></tr>`).join('')}</table></div>` : '<p class="muted">Proje yok.</p>'}
 <details class="add"><summary>Yeni proje</summary><form class="row" method="post" action="/musteriler/${c.id}/proje">${f}<label style="flex:1;min-width:240px">Proje adı<input name="name" required></label><label>Teslim<input type="date" name="due_date"></label><button class="gold">Proje aç</button></form></details></section>
 
-<section class="card" id="onaylar"><h2>Onaylar</h2>
+<section class="card" id="onaylar"><h2>Müşteri kararları</h2>
 ${aps.length ? `<div class="tbl"><table><tr><th>Konu</th><th>Durum</th><th>Müşteri notu</th><th>Tarih</th></tr>${aps.map(x => `<tr><td><a href="/onaylar/${x.id}">${h(x.title)}</a></td><td>${badge(AP_ST[x.status], x.status === 'onaylandi' ? 'ok' : x.status === 'reddedildi' ? 'bad' : 'warn')}</td><td>${h([x.choice, x.comment].filter(Boolean).join(' · ') || '—')}</td><td>${fmtDate(x.decided_at || x.created_at)}</td></tr>`).join('')}</table></div>` : '<p class="muted">Henüz onay istenmedi.</p>'}
-<details class="add"><summary>Onaya gönder</summary><form class="stack" method="post" action="/musteriler/${c.id}/onay">${f}<div class="row"><label style="flex:1;min-width:240px">Konu<input name="title" required placeholder="Kasım gönderi takvimi"></label>
+<details class="add"><summary>Müşteriden karar iste</summary><form class="stack" method="post" action="/musteriler/${c.id}/onay">${f}<div class="row"><label style="flex:1;min-width:240px">Konu<input name="title" required placeholder="Kasım gönderi takvimi"></label>
 <label>Proje<select name="project_id"><option value="">—</option>${prjs.map(p => `<option value="${p.id}">${h(p.name)}</option>`).join('')}</select></label></div>
-<label>Açıklama ya da bağlantı<textarea name="body" rows="2"></textarea></label>${decisions.requestFields()}<div><button class="gold">Onaya gönder</button></div></form></details>
+<label>Açıklama ya da bağlantı<textarea name="body" rows="2"></textarea></label>${decisions.requestFields()}<div><button class="gold">Karar iste</button></div></form></details>
 <p class="muted">Müşteri portala girmek zorunda değil: <a href="/musteriler/${c.id}/karar">karar bağlantısı</a> gönderin, e-postasını doğrulayıp giriş yapmadan karar versin.</p></section>
 
 <section class="card"><h2>Portal kullanıcıları</h2>
@@ -618,7 +622,7 @@ ${ctx.user.role === 'admin' ? `<details class="add"><summary>Portal hesabı aç<
   const sum = [t`${activeSvc} aktif hizmet · ${openPrj} açık proje · ${waitAp} bekleyen onay`, lastNote ? t`Son temas: ${fmtDate(lastNote.created_at)} — ${String(lastNote.body || '').slice(0, 140)}` : 'Henüz temas kaydı yok.', ...(cu.length ? [] : ['Müşteri portalı hesabı yok.'])];
   const kv = [['Durum', badge(CLIENT_ST[c.status])], ['Yetkili', h(c.contact_name || '—')], ['Telefon', c.phone ? `<a href="tel:${h(c.phone.replace(/[^+\d]/g, ''))}">${h(c.phone)}</a>` : '—'],
     ['E-posta', c.email ? `<a href="mailto:${h(c.email)}">${h(c.email)}</a>` : '—'], ['Sektör', h(c.sector || '—')], ['Portal', h(t`${cu.length} hesap`)]];
-  const SIDE_HEAD = `<div class="page-head"><div><h1>${h(c.name)}</h1></div><nav class="jump" aria-label="Sayfa içi"><a href="#hizmetler">Hizmetler</a><a href="#projeler">Projeler</a><a href="#onaylar">Onaylar</a><a href="/musteriler/${c.id}/siteler">Siteler</a><a href="/satis/${c.id}">Satış geçmişi</a><a href="/musteriler/${c.id}/karar">Karar bağlantısı</a></nav></div>`;
+  const SIDE_HEAD = `<div class="page-head"><div><h1>${h(c.name)}</h1></div><nav class="jump" aria-label="Sayfa içi"><a href="#hizmetler">Hizmetler</a><a href="#projeler">Projeler</a><a href="#onaylar">Kararlar</a><a href="/musteriler/${c.id}/siteler">Siteler</a><a href="/satis/${c.id}">Satış geçmişi</a><a href="/musteriler/${c.id}/karar">Karar bağlantısı</a></nav></div>`;
   const SIDE_INFO = `<dl class="kv rec-kv">${kv.map(([k, v]) => `<dt class="muted">${k}</dt><dd>${v}</dd>`).join('')}</dl>${DET}`;
   const SIDE = SIDE_HEAD + '\n' + SIDE_INFO;
   if (themeOpts(ctx).id === 'atlas') return send(res, 200, layout(ctx, c.name, `<nav class="crumb"><a href="/musteriler">Müşteriler</a></nav>${SIDE_HEAD}<section class="summary"><h2>Özet</h2>${sum.map(x => `<p>${h(x)}</p>`).join('')}</section>${REST}<aside class="insp"><section><h2>Müşteri bilgileri</h2>${SIDE_INFO}</section></aside>`, '/musteriler'));
@@ -753,6 +757,7 @@ const server = http.createServer(async (req, res) => {
   const ctx = { req, url }; const store = { lang: 'tr' };
   return als.run(store, async () => { try {
     Object.assign(ctx, await loadSession(req));
+    if (ctx.user && notify && ctx.user.role !== 'client' && req.method === 'GET') ctx.unread = await notify.unread(ctx.user.id);
     store.lang = ctx.lang = pickLang(ctx.user, parseCookies(req), req.headers['accept-language']);
     if (req.method === 'POST') {
       ctx.body = await readBody(req, url.pathname); ctx.files = ctx.body.__files || []; delete ctx.body.__files;
@@ -806,6 +811,7 @@ const freelance = registerFreelance({ route, all, one, q, need, layout, h, badge
 registerRetention({ route, all, one, q, need, layout, h, csrfField, HttpError, redirect, send, audit, fmtDate });
 settingsApi = registerSettings({ route, all, q, need, layout, h, csrfField, redirect, send, audit });
 const ops = registerOps({ route, all, need, layout, h, send });
+notify = registerNotify({ route, all, one, q, need, layout, h, csrfField, redirect, send });
 const todayPage = registerToday({ all, one, h, layout, need, STAFF, csrfField, forgePending: forge.pendingCount, extraActions: async (a) => [...crmActions(await crm.openLeads(a)), ...packageActions(await freelance.awaitingReview(a)), ...(await flow.todayActions(a)), ...(await ops.todayActions().catch(() => []))] });
 registerSync({ route, one, all, q, HttpError, safeEqual, SETUP_TOKEN, onSynced: (a, before) => hooks?.onSiteSync(a, before) });
 decisions = registerDecisions({ route, all, one, q, need, layout, authPage, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, AP_ST, APP_URL: process.env.APP_URL, cookie, parseCookies,
@@ -818,4 +824,4 @@ const playbooks = registerPlaybooks({ route, all, one, q, need, layout, h, badge
 registerWork({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send, projectExtra: async (ctx, pr) => (await playbooks.projectCard(ctx, pr)) + (await ai.projectCard(ctx, pr)), flowBanner: (ctx, pr, tasks) => flow.projectBanner(ctx, pr, tasks),
   taskExtra: async (ctx, tk) => (await flow.taskCard(ctx, tk)) + (await ai.taskCard(ctx, tk)) + (await suggest.taskCards(ctx, tk)), decisions });
 
-migrate().then(() => migrateOps({ q })).then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => migrateFreelance({ q })).then(() => migrateRetention({ q })).then(() => migratePlaybooks({ q, all })).then((n) => n && console.log(`hizmet kitabı yazıldı: ${n}`)).then(() => migrateDecisions({ q })).then(() => migrateFlow({ q })).then(() => migrateAi({ q })).then(() => migrateSuggest({ q })).then(() => loadThemes(all)).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
+migrate().then(() => migrateOps({ q })).then(() => migrateNotify({ q })).then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => migrateFreelance({ q })).then(() => migrateRetention({ q })).then(() => migratePlaybooks({ q, all })).then((n) => n && console.log(`hizmet kitabı yazıldı: ${n}`)).then(() => migrateDecisions({ q })).then(() => migrateFlow({ q })).then(() => migrateAi({ q })).then(() => migrateSuggest({ q })).then(() => loadThemes(all)).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });

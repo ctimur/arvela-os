@@ -155,8 +155,8 @@ ${p.description ? `<p class="desc">${h(p.description)}</p>` : ''}
 ${clients.length ? `<label>Müşteri<select name="client_id">${clients.map(c => `<option value="${c.id}"${c.id === p.client_id ? ' selected' : ''}>${h(c.name)}</option>`).join('')}</select></label>` : ''}
 <label>Açıklama<textarea name="description" rows="4">${h(p.description)}</textarea></label><div><button>Kaydet</button></div></form>
 ${ctx.user.role === 'admin' ? `<details class="danger"><summary>Projeyi sil</summary><form method="post" action="/projeler/${p.id}/sil" data-confirm="Proje ve ${cnt.n} görevi kalıcı olarak silinsin mi?">${f}<p class="muted">Projenin ${cnt.n} görevi ve notları da silinir; bağlı onaylar müşteride kalır.</p><button class="danger">Kalıcı olarak sil</button></form></details>` : ''}</details></section>
-<section><h2>Onaylar</h2>${aps.map(x => `<a class="line" href="/onaylar/${x.id}"><span class="grow"><strong>${h(x.title)}</strong><span class="muted">${fmtDate(x.decided_at || x.created_at)}${x.comment ? ' · ' + h(x.comment) : ''}</span></span>${badge(AP_ST[x.status], apTone(x.status))}</a>`).join('') || '<p class="muted">Bu projeye bağlı onay yok.</p>'}
-<details class="add"><summary>Müşteriye onaya gönder</summary><form class="stack" method="post" action="/projeler/${p.id}/onay">${f}<label>Konu<input name="title" required></label><label>Açıklama ya da bağlantı<textarea name="body" rows="2"></textarea></label>${decisions ? decisions.requestFields() : ''}<div><button class="gold">Onaya gönder</button></div></form></details></section></aside>`, '/projeler'));
+<section><h2>Müşteri kararları</h2>${aps.map(x => `<a class="line" href="/onaylar/${x.id}"><span class="grow"><strong>${h(x.title)}</strong><span class="muted">${fmtDate(x.decided_at || x.created_at)}${x.comment ? ' · ' + h(x.comment) : ''}</span></span>${badge(AP_ST[x.status], apTone(x.status))}</a>`).join('') || '<p class="muted">Bu projeye bağlı onay yok.</p>'}
+<details class="add"><summary>Müşteriden karar iste</summary><form class="stack" method="post" action="/projeler/${p.id}/onay">${f}<label>Konu<input name="title" required></label><label>Açıklama ya da bağlantı<textarea name="body" rows="2"></textarea></label>${decisions ? decisions.requestFields() : ''}<div><button class="gold">Karar iste</button></div></form></details></section></aside>`, '/projeler'));
   });
 
   route('POST', '/projeler/:id', async (ctx, res, prm) => {
@@ -292,7 +292,7 @@ ${rows.map(t => `<tr${isLate(t) ? ' class="is-late"' : ''}><td><a href="/gorev/$
     if (AP_ST[durum]) { args.push(durum); w = ` AND ap.status=$2`; }
     const rows = await all(`SELECT ap.*, c.name client, p.name project FROM approvals ap JOIN clients c ON c.id=ap.client_id LEFT JOIN projects p ON p.id=ap.project_id
       WHERE ap.agency_id=$1${w} ORDER BY ap.created_at DESC LIMIT 200`, args);
-    send(res, 200, layout(ctx, 'Onaylar', `<div class="page-head"><h1>Onaylar</h1></div><p class="muted">Yeni onay isteği proje ya da müşteri sayfasından gönderilir.</p>
+    send(res, 200, layout(ctx, 'Müşteri kararları', `<div class="page-head"><h1>Müşteri kararları</h1></div><p class="muted">Yeni onay isteği proje ya da müşteri sayfasından gönderilir.</p>
 <form class="filters" method="get" action="/onaylar"><select name="durum" aria-label="Durum" data-auto>${opts(AP_ST, durum)}<option value="hepsi"${durum === 'hepsi' ? ' selected' : ''}>Tümü</option></select><button class="ghost">Filtrele</button></form>
 <div class="tbl"><table><tr><th>Konu</th><th>Müşteri</th><th>Proje</th><th>Durum</th><th>Tarih</th></tr>
 ${rows.map(x => `<tr><td><a href="/onaylar/${x.id}"><strong>${h(x.title)}</strong></a>${x.kind && x.kind !== 'onay' ? ` <span class="muted">· ${h(KINDS[x.kind] || '')}</span>` : ''}${x.choice ? `<br><span>${h(x.choice)}</span>` : ''}${x.comment ? `<br><span class="muted">${h(x.comment)}</span>` : ''}</td><td><a href="/musteriler/${x.client_id}">${h(x.client)}</a></td><td>${x.project_id ? `<a href="/projeler/${x.project_id}">${h(x.project)}</a>` : '—'}</td><td>${badge(AP_ST[x.status], apTone(x.status))}</td><td>${fmtDate(x.decided_at || x.created_at)}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">Bu filtreye uyan onay yok.</td></tr>'}</table></div>`, '/onaylar'));
@@ -302,7 +302,7 @@ ${rows.map(x => `<tr><td><a href="/onaylar/${x.id}"><strong>${h(x.title)}</stron
     need(ctx, ...STAFF); const x = await approvalFor(ctx, int(prm.id)); const f = csrfField(ctx);
     const prjs = await all('SELECT id, name FROM projects WHERE client_id=$1 ORDER BY created_at DESC', [x.client_id]);
     const open = x.status === 'bekliyor';
-    send(res, 200, layout(ctx, x.title, `<nav class="crumb"><a href="/onaylar">Onaylar</a> › <a href="/musteriler/${x.client_id}">${h(x.client)}</a>${x.project_id ? ` › <a href="/projeler/${x.project_id}">${h(x.project)}</a>` : ''}</nav>
+    send(res, 200, layout(ctx, x.title, `<nav class="crumb"><a href="/onaylar">Kararlar</a> › <a href="/musteriler/${x.client_id}">${h(x.client)}</a>${x.project_id ? ` › <a href="/projeler/${x.project_id}">${h(x.project)}</a>` : ''}</nav>
 <div class="page-head"><div><h1>${h(x.title)}</h1><div class="chips">${badge(AP_ST[x.status], apTone(x.status))}<span class="muted">${h(x.requester || '—')} · ${fmtDate(x.created_at)}</span>${x.decided_at ? `<span class="muted">Karar ${fmtDate(x.decided_at)}${x.decider ? ' · ' + h(x.decider) : ''}</span>` : ''}</div></div></div>
 ${x.comment ? `<div class="flash"><strong>Müşteri notu:</strong> ${h(x.comment)}</div>` : ''}
 <div class="two wide-first"><section class="card"><h2>İstek</h2>${open ? `<form class="stack" method="post" action="/onaylar/${x.id}">${f}<label>Konu<input name="title" value="${h(x.title)}" required></label>
@@ -378,7 +378,7 @@ ${decisionForm(x, `/onaylar/${x.id}/karar`, f, h)}
         admin ? all(`SELECT i.id, i.number, c.name client FROM invoices i JOIN clients c ON c.id=i.client_id WHERE i.agency_id=$1 AND (i.number ILIKE $2 OR i.official_no ILIKE $2) ORDER BY i.id DESC LIMIT 20`, [a, L]) : [],
       ]);
       groups = [['Müşteriler', cl.map(x => [`/musteriler/${x.id}`, x.name, x.sector])], ['Projeler', pr.map(x => [`/projeler/${x.id}`, x.name, x.client])], ['Görevler', tk.map(x => [`/gorev/${x.id}`, x.title, x.project])],
-        ['Siteler', st.map(x => [x.client_id ? `/musteriler/${x.client_id}/siteler` : '/siteler', x.domain, x.client])], ['Onaylar', ap.map(x => [`/onaylar/${x.id}`, x.title, x.client])],
+        ['Siteler', st.map(x => [x.client_id ? `/musteriler/${x.client_id}/siteler` : '/siteler', x.domain, x.client])], ['Kararlar', ap.map(x => [`/onaylar/${x.id}`, x.title, x.client])],
         ['Teklifler', qu.map(x => [`/teklifler/${x.id}`, `#${x.id} · ${x.title}`, x.client])], ['Faturalar', iv.map(x => [`/faturalar/${x.id}`, x.number, x.client])]].filter(g => g[1].length);
     }
     send(res, 200, layout(ctx, 'Ara', `<div class="page-head"><h1>Ara</h1></div>
