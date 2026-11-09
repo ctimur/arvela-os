@@ -9,7 +9,22 @@ import { PLATFORMS } from './plans.mjs';
 const BRIDGE = () => String(process.env.SOCIAL_BRIDGE_URL || 'http://app:3000').replace(/\/$/, '');
 const KEY = () => process.env.SOCIAL_BRIDGE_KEY || '';
 export const base = () => String(process.env.SOCIAL_URL || 'https://social.arveladigital.com').replace(/\/$/, '');
-export const outbox = []; // test ve yerel geliştirme için son e-postalar (içerik değil, özet)
+export const outbox = [];
+const OS_URL = () => String(process.env.ARVELA_OS_URL || 'https://os.arveladigital.com').replace(/\/$/, '');
+export const osClientUrl = (id) => id ? `${OS_URL()}/musteriler/${id}` : null;
+
+// Arvela OS'e hesap bilgisi: paket isteği satış hattına, etkinleştirme aylık hizmetlere düşer. Sonuç müşteri numarası.
+export async function syncAccount(ws, action, user) {
+  if (!KEY()) return null;
+  const owner = user || await one(`SELECT name, email FROM users WHERE workspace_id=$1 AND role='owner' ORDER BY id LIMIT 1`, [ws.id]);
+  try {
+    const r = await fetch(BRIDGE() + '/api/social/client', { method: 'POST', signal: AbortSignal.timeout(20_000), headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + KEY(), 'User-Agent': 'arvela-social/1.0' },
+      body: JSON.stringify({ workspace_id: ws.id, action, plan: action === 'talep' ? (ws.requested_plan || ws.plan) : ws.plan, name: ws.name, contact_name: owner?.name, email: owner?.email, billing: ws.billing || {}, extra_brands: ws.extra_brands, editor_service: !!ws.editor_service }) });
+    const j = await r.json().catch(() => ({})); if (!r.ok) { console.error('Arvela OS aktarımı başarısız', r.status, j.error); return null; }
+    if (j.client_id && j.client_id !== ws.arvela_client_id) await q('UPDATE workspaces SET arvela_client_id=$1 WHERE id=$2', [j.client_id, ws.id]);
+    return j.client_id || null;
+  } catch (e) { console.error('Arvela OS aktarımı:', e.message); return null; }
+} // test ve yerel geliştirme için son e-postalar (içerik değil, özet)
 
 // Markalı, sade e-posta gövdesi. lines: düz metin satırları; link: [etiket, yol]
 export function mailHtml(title, lines, link) {
@@ -74,7 +89,12 @@ export async function remindDue(now = new Date()) {
 
 let timer = null;
 export function startReminders(everyMs = 5 * 60_000) {
-  if (timer) return; const tick = () => remindDue().catch(e => console.error('hatırlatma:', e.message));
+  if (timer) return;
+  const tick = async () => {
+    await remindDue().catch(e => console.error('hatırlatma:', e.message));
+    const ist = new Date(Date.now() + 3 * 3600e3); // ayın 1'i, 09:00'dan sonra: önceki ayın raporları (her marka için bir kez)
+    if (ist.getUTCDate() === 1 && ist.getUTCHours() >= 9) await (await import('./report.mjs')).sendMonthlyReports().catch(e => console.error('aylık rapor:', e.message));
+  };
   timer = setInterval(tick, everyMs); timer.unref?.(); setTimeout(tick, 30_000).unref?.();
 }
 

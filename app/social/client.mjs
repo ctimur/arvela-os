@@ -9,7 +9,7 @@ document.addEventListener('click',function(e){
   var c=e.target.closest('[data-copy]'); if(c){var t=$(c.getAttribute('data-copy'));var v=t?(t.value||t.textContent):'';
     (navigator.clipboard?navigator.clipboard.writeText(v):Promise.reject()).then(function(){var o=c.textContent;c.textContent='Kopyalandı';setTimeout(function(){c.textContent=o},1500)},function(){if(t&&t.select){t.select();document.execCommand('copy')}});e.preventDefault()}
 });
-document.addEventListener('submit',function(e){var f=e.target;var q=f.getAttribute('data-confirm');if(q&&!confirm(q))e.preventDefault()});
+document.addEventListener('submit',function(e){var f=e.target;var q=f.getAttribute('data-confirm')||(e.submitter&&e.submitter.getAttribute('data-confirm'));if(q&&!confirm(q))e.preventDefault()});
 $$('[data-autosubmit]').forEach(function(s){s.addEventListener('change',function(){s.form.submit()})});
 // karakter sayacı: data-count="#hedef" data-max="2200"
 $$('[data-count]').forEach(function(el){var out=$(el.getAttribute('data-count'));var max=+el.getAttribute('data-max')||0;
@@ -32,5 +32,6 @@ if(pv){var form=pv.closest('form')||document;var timer;
           if(j.redirect)location.href=j.redirect;else{save.disabled=false;save.textContent='Görseli kaydet';alert(j.error||'Kaydedilemedi')}})},'image/png')};
     img.onerror=function(){save.disabled=false;save.textContent='Görseli kaydet';alert('Görsel oluşturulamadı')};
     img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(xml)})}
+  document.addEventListener('click',function(e){var b=e.target.closest('[data-print]');if(b){e.preventDefault();window.print()}});
 })();
 `;

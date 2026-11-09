@@ -118,8 +118,8 @@ ${unscheduled.length ? `<section class="card"><h2>Tarihsiz gönderiler ve fikirl
     const lastRev = p.status === 'duzeltme' ? await one(`SELECT author, body, created_at FROM post_notes WHERE post_id=$1 AND kind IN ('duzeltme','musteri') ORDER BY id DESC LIMIT 1`, [p.id]) : null;
     const panel = await aiPanel(ctx, p, ctx.url.searchParams.get('yz'));
     send(res, 200, layout(ctx, p.title || 'Gönderi', `<div class="page-head"><div><p class="muted" style="margin:0"><a href="/takvim">Takvim</a> · ${esc(p.brand)}</p><h1>${esc(p.title || 'Yeni gönderi')}</h1>
-<p>${badge(POST_ST[p.status], POST_TONE[p.status])} ${p.scheduled_at ? fmtDateTime(p.scheduled_at) : 'Tarihsiz'} ${p.ai ? badge('Yapay zekâ taslağı', 'gold') : ''}</p></div>
-<div class="row">${p.status !== 'iptal' ? `<a class="btn ${p.status === 'onaylandi' ? 'gold' : 'ghost'}" href="/gonderi/${p.id}/paylas">Paylaşım sayfası</a>` : ''}${acts.map(([a, l, t]) => `<form method="post" action="/gonderi/${p.id}/durum">${f}<input type="hidden" name="action" value="${a}"><button class="${t}">${l}</button></form>`).join('')}</div></div>
+<p>${badge(POST_ST[p.status], POST_TONE[p.status])} ${p.scheduled_at ? fmtDateTime(p.scheduled_at) : 'Tarihsiz'} ${p.ai ? badge('Yapay zekâ taslağı', 'gold') : ''} ${p.editor_status === 'bekliyor' ? badge('Editör kontrolünde', 'warn') : p.editor_status === 'kontrol_edildi' ? badge('Editör kontrol etti', 'ok') : ''}</p></div>
+<div class="row">${ctx.ws.editor_service && edit && p.caption && p.editor_status !== 'bekliyor' ? `<form method="post" action="/gonderi/${p.id}/editore">${f}<button class="ghost">Editör kontrolüne gönder</button></form>` : ''}${p.status !== 'iptal' ? `<a class="btn ${p.status === 'onaylandi' ? 'gold' : 'ghost'}" href="/gonderi/${p.id}/paylas">Paylaşım sayfası</a>` : ''}${acts.map(([a, l, t]) => `<form method="post" action="/gonderi/${p.id}/durum">${f}<input type="hidden" name="action" value="${a}"><button class="${t}">${l}</button></form>`).join('')}</div></div>
 ${lastRev ? `<div class="err"><strong>Düzeltme istendi</strong> · ${esc(lastRev.author || '')} · ${fmtDateTime(lastRev.created_at)}<br><span style="white-space:pre-wrap">${esc(lastRev.body)}</span></div>` : ''}
 ${canRevise ? `<details class="card"${p.status === 'onay' && ctx.user.role === 'approver' ? ' open' : ''}><summary style="cursor:pointer;font-weight:600">Düzeltme iste</summary><form class="stack" method="post" action="/gonderi/${p.id}/durum" style="margin-top:12px">${f}<input type="hidden" name="action" value="duzeltme"><label>Neyin değişmesini istiyorsunuz?<textarea name="comment" rows="2" maxlength="1000" required placeholder="Metin biraz uzun, fiyatı çıkaralım; görselde logo daha görünür olsun."></textarea></label><div><button class="ghost">Düzeltme iste</button></div></form></details>` : ''}
 <div class="grid2" style="align-items:start"><form class="card stack" method="post" action="/gonderi/${p.id}">${f}
@@ -136,7 +136,7 @@ ${edit ? '<div><button class="gold">Kaydet</button></div>' : ''}</form>
 ${edit ? `<div class="row"><a class="btn" href="/gonderi/${p.id}/sablon">Şablondan görsel üret</a><a class="btn ghost" href="/gonderi/${p.id}/kutuphane">Kütüphaneden seç</a></div>
 <form class="row" method="post" action="/medya" enctype="multipart/form-data">${f}<input type="hidden" name="back" value="/gonderi/${p.id}"><label>Fotoğraf yükle<input type="file" name="files" accept="image/*" multiple required></label><button class="ghost">Yükle</button></form>` : ''}</section>
 <section class="card"><h2>Notlar</h2><form class="stack" method="post" action="/gonderi/${p.id}/not">${f}<textarea name="body" rows="2" maxlength="2000" required placeholder="Ekibe not ya da düzeltme isteği"></textarea><div><button class="ghost">Not ekle</button></div></form>
-${notes.map(n => `<div style="border-top:1px solid #ECE6DA;padding-top:8px"><strong>${esc(n.author || '')}</strong> <span class="muted">${fmtDateTime(n.created_at)}${n.kind !== 'not' ? ' · ' + esc({ durum: 'durum', duzeltme: 'düzeltme isteği', musteri: 'müşteri' }[n.kind] || n.kind) : ''}</span><p style="margin:4px 0;white-space:pre-wrap">${esc(n.body)}</p></div>`).join('')}</section></div></div>`, '/takvim'));
+${notes.map(n => `<div style="border-top:1px solid #ECE6DA;padding-top:8px"><strong>${esc(n.author || '')}</strong> <span class="muted">${fmtDateTime(n.created_at)}${n.kind !== 'not' ? ' · ' + esc({ durum: 'durum', duzeltme: 'düzeltme isteği', musteri: 'müşteri', editor: 'Arvela editör' }[n.kind] || n.kind) : ''}</span><p style="margin:4px 0;white-space:pre-wrap">${esc(n.body)}</p></div>`).join('')}</section></div></div>`, '/takvim'));
   });
   route('POST', '/gonderi/:id', async (ctx, res, pr) => {
     need(ctx, 'owner', 'editor'); needUsable(ctx); const p = await postFor(ctx, pr.id); const b = ctx.body;
@@ -158,8 +158,17 @@ ${notes.map(n => `<div style="border-top:1px solid #ECE6DA;padding-top:8px"><str
     const comment = clip(nn(ctx.body.comment), 1000); if (t.to === 'duzeltme' && !comment) throw new HttpError(400, 'Neyin düzeltilmesini istediğinizi yazın.');
     await q(`UPDATE posts SET status=$1, updated_at=now()${t.to === 'paylasildi' ? ', published_at=now(), published_by=$3' : ''} WHERE id=$2`, t.to === 'paylasildi' ? [t.to, p.id, ctx.user.id] : [t.to, p.id]);
     await q(`INSERT INTO post_notes (post_id, user_id, author, kind, body) VALUES ($1,$2,$3,$4,$5)`, [p.id, ctx.user.id, ctx.user.name, t.to === 'duzeltme' ? 'duzeltme' : 'durum', t.to === 'duzeltme' ? comment : `${POST_ST[p.status]} → ${POST_ST[t.to]}${comment ? ': ' + comment : ''}`]);
+    if (t.to === 'onay' && ctx.ws.editor_service) await q(`UPDATE posts SET editor_status='bekliyor' WHERE id=$1 AND editor_status IS DISTINCT FROM 'bekliyor'`, [p.id]);
     await onStatus({ ...ctx.ws, lim: ctx.lim }, p, t.to, { actorId: ctx.user.id, actorName: ctx.user.name, comment });
     await audit(ctx, 'post.status', { id: p.id, from: p.status, to: t.to }); redirect(res, ctx.body.back === 'paylas' ? `/gonderi/${p.id}/paylas` : `/gonderi/${p.id}`);
+  });
+  route('POST', '/gonderi/:id/editore', async (ctx, res, pr) => {
+    need(ctx, 'owner', 'editor'); needUsable(ctx); const p = await postFor(ctx, pr.id);
+    if (!ctx.ws.editor_service) throw new HttpError(402, 'İnsan editör kontrolü bir eklentidir; Paket sayfasından isteyebilirsiniz.');
+    if (!p.caption) throw new HttpError(400, 'Önce metni yazın.'); if (p.status === 'paylasildi') throw new HttpError(400, 'Paylaşılmış gönderi.');
+    await q(`UPDATE posts SET editor_status='bekliyor' WHERE id=$1`, [p.id]);
+    await q(`INSERT INTO post_notes (post_id, user_id, author, kind, body) VALUES ($1,$2,$3,'durum','Editör kontrolüne gönderildi.')`, [p.id, ctx.user.id, ctx.user.name]);
+    await audit(ctx, 'post.editor', { id: p.id }); redirect(res, `/gonderi/${p.id}`);
   });
   route('POST', '/gonderi/:id/not', async (ctx, res, pr) => {
     const p = await postFor(ctx, pr.id); if (!nn(ctx.body.body)) throw new HttpError(400, 'Not boş olamaz.');

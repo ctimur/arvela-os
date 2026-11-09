@@ -64,5 +64,9 @@ export async function migrate() {
   await q(`CREATE TABLE IF NOT EXISTS approval_links (id SERIAL PRIMARY KEY, workspace_id INT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, brand_id INT NOT NULL REFERENCES brands(id) ON DELETE CASCADE,
     token_hash TEXT NOT NULL UNIQUE, label TEXT NOT NULL, email TEXT, created_by INT REFERENCES users(id) ON DELETE SET NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), revoked_at TIMESTAMPTZ, last_used_at TIMESTAMPTZ)`);
   await q(`UPDATE ai_jobs SET status='hata', error='Sunucu yeniden başladı; lütfen tekrar deneyin.', done_at=now() WHERE status='calisiyor'`); // işler süreç içinde koşar; yeniden başlamada yarım kalanlar kapanır
+  // Faz 3 (0.33): insan editör kontrolü (SAAS-06), aylık rapor e-postası
+  await q(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS editor_status TEXT CHECK (editor_status IN ('bekliyor','kontrol_edildi'))`);
+  await q(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS editor_checked_at TIMESTAMPTZ`);
+  await q(`CREATE INDEX IF NOT EXISTS posts_editor_queue ON posts(editor_status) WHERE editor_status='bekliyor'`);
   await q(`DELETE FROM sessions WHERE expires_at < now()`);
 }

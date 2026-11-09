@@ -7,13 +7,14 @@ import { CSS, authPage } from './ui.mjs';
 import { CLIENT_JS } from './client.mjs';
 import { limits } from './plans.mjs';
 
-export const VERSION = '0.2.0';
+export const VERSION = '0.3.0';
 const PORT = Number(process.env.PORT || 3100);
 const SECURE = process.env.NODE_ENV === 'production';
 const SESSION_DAYS = 14;
-const ADMINS = String(process.env.SOCIAL_ADMIN_EMAILS || '').toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
+export const ADMINS = String(process.env.SOCIAL_ADMIN_EMAILS || '').toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
 
 const routes = [];
+let anonHome = null; export const setAnonHome = (fn) => { anonHome = fn; }; // giriş yapmamış ziyaretçiye "/" (tanıtım)
 export const route = (method, pattern, fn, { open = false } = {}) => {
   const keys = []; const re = new RegExp('^' + pattern.replace(/:(\w+)/g, (_, k) => { keys.push(k); return k === 'token' ? '([A-Za-z0-9_-]{20,80})' : '(\\d+)'; }) + '$');
   routes.push({ method, re, keys, fn, open });
@@ -66,6 +67,7 @@ export const server = http.createServer(async (req, res) => {
       if (r?.open) { const o = req.headers.origin; const host = req.headers['x-forwarded-host'] || req.headers.host; if (o && host && new URL(o).host !== host) throw new HttpError(403, 'Geçersiz istek kaynağı.'); }
       else if (!ctx.session || !safeEqual(ctx.body.csrf || req.headers['x-csrf'] || '', ctx.session.csrf)) throw new HttpError(403, 'Oturum doğrulanamadı. Sayfayı yenileyip tekrar deneyin.');
     }
+    if (req.method === 'GET' && url.pathname === '/' && !ctx.user && anonHome) return send(res, 200, await anonHome(), 'text/html; charset=utf-8', { 'Cache-Control': 'no-store' });
     for (const r of routes) {
       if (r.method !== req.method) continue; const m = url.pathname.match(r.re); if (!m) continue;
       if (!r.open && !ctx.user) return redirect(res, '/giris');
@@ -81,7 +83,7 @@ export const server = http.createServer(async (req, res) => {
 });
 
 // Rotaları yükle ve başlat
-const mods = ['./auth.mjs', './brands.mjs', './posts.mjs', './media.mjs', './team.mjs', './billing.mjs', './admin.mjs', './ai.mjs', './approve.mjs', './notify.mjs'];
+const mods = ['./auth.mjs', './brands.mjs', './posts.mjs', './media.mjs', './team.mjs', './billing.mjs', './admin.mjs', './ai.mjs', './approve.mjs', './notify.mjs', './report.mjs', './landing.mjs'];
 export async function start() {
   await ensureDatabase(); await migrate();
   for (const m of mods) (await import(m)).register();
