@@ -1,0 +1,37 @@
+name: n8n yedek
+
+# n8n veritabanı için gece yedeğini kurar (install) ya da kaldırır (remove). Arvela OS yedeğiyle aynı özel depo ve parola kullanılır.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "install (kur) ya da remove (kaldır)"
+        required: true
+        default: install
+        type: choice
+        options: [install, remove]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: n8n
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Uygula
+        env:
+          HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+          BACKUP_GITHUB_TOKEN: ${{ secrets.BACKUP_GITHUB_TOKEN }}
+          BACKUP_REPO: ${{ vars.BACKUP_REPO }}
+          MODE: ${{ inputs.mode }}
+          SHA: ${{ github.sha }}
+          VPS_ID: ${{ vars.VPS_ID || '1249062' }}
+        run: python3 deploy/n8n_backup.py

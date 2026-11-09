@@ -21,7 +21,7 @@ import { registerDecisions, migrateDecisions, parseMultipart, decisionForm, pars
 import { THEMES } from './themes.js';
 import { NAV_CSS, DARK_CSS, NAV_ICON, navGroups } from './ext-look.js';
 
-const VERSION = '0.30.0';
+const VERSION = '0.30.1';
 let settingsApi = null;
 let notify = null;
 const PORT = Number(process.env.PORT || 3000);

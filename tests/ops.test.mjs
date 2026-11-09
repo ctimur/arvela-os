@@ -20,3 +20,8 @@ assert.ok(sh.includes('-pass env:BACKUP_PASSPHRASE') && sh.includes('.private'),
 const compose = fs.readFileSync('deploy/docker-compose.yml', 'utf8');
 assert.ok(compose.includes('appsrc:/src:ro') && compose.includes('BACKUP_PASSPHRASE: ${BACKUP_PASSPHRASE}'));
 console.log('ops: ok');
+// n8n yedeği: son kayıt başarısızsa uyarı; başarılıysa sağlıklı kalır
+const okBase = [{ kind: 'yedek', ok: true, at: ago(2) }, { kind: 'geri_yukleme', ok: true, at: ago(2) }];
+assert.equal(backupState([{ kind: 'n8n_yedek', ok: false, detail: 'Son n8n yedeği 40 saat önce', at: ago(1) }, ...okBase], now).level, 'warn', 'n8n yedeği eski');
+assert.equal(backupState([{ kind: 'n8n_yedek', ok: true, detail: 'n8n-x', at: ago(1) }, ...okBase], now).level, 'ok');
+assert.equal(backupState(okBase, now).level, 'ok', 'n8n yedeği kurulmamışsa uyarı yok');

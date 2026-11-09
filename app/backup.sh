@@ -80,6 +80,14 @@ restore_test() {
   if [ "$ok" = true ]; then event geri_yukleme true "$tag geri yüklendi: $t1 tablo, $u1 kullanıcı, $c1 müşteri"; else event geri_yukleme false "$tag: $why"; fi
 }
 
+n8n_check() { # n8n yedeği ayrı serviste alınır (deploy/n8n_backup.sh); burada yalnız son "n8n-" sürümünün yaşı denetlenir
+  rel=$(gh "$API/repos/$REPO/releases?per_page=50" | jq -c '[.[] | select(.tag_name|startswith("n8n-"))][0] // empty') || return 0
+  [ -n "$rel" ] || return 0 # henüz kurulmadı: sessiz
+  tag=$(echo "$rel" | jq -r .tag_name); at=$(echo "$rel" | jq -r '.created_at|fromdateiso8601'); kb=$(( $(echo "$rel" | jq -r '.assets[0].size // 0') / 1024 ))
+  age=$(( ( $(date -u +%s) - at ) / 3600 ))
+  if [ "$age" -le 30 ] && [ "$kb" -gt 0 ]; then event n8n_yedek true "$tag · $kb KB · $age saat önce"; else event n8n_yedek false "Son n8n yedeği $age saat önce ($tag); n8n projesindeki n8nyedek servisini kontrol edin."; fi
+}
+
 since() { psqlp -c "SELECT COALESCE(EXTRACT(EPOCH FROM now() - max(at))::int, 999999999) FROM ops_events WHERE kind='$1' AND ok" 2>/dev/null || echo 999999999; }
 
 log "yedek servisi başladı · depo $REPO"
@@ -87,6 +95,7 @@ while true; do
   if ready; then
     [ "$(since yedek)" -gt 72000 ] && backup_once           # son başarılı yedek 20 saatten eskiyse
     [ "$(since geri_yukleme)" -gt 600000 ] && restore_test  # haftada bir (≈7 gün)
+    n8n_check
     now=$(( $(date -u +%s) % 86400 )); wait=$(( (RUN_AT - now + 86400) % 86400 )); [ "$wait" -lt 600 ] && wait=$((wait + 86400))
   else
     wait=21600 # ayarlar eksikse 6 saatte bir yeniden dener
