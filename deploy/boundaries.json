@@ -66,6 +66,7 @@
  "ext-automation.js": [
   "  for (const a of (await q('SELECT id FROM agencies')).rows) await q(`INSERT INTO settings (agency_id, key, value) VALUES ($1, 'webhook_token', $2) ON CONFLICT DO NOTHING`, [a.id, crypto.randomBytes(24).toString('hex')]);",
   "    if (!ok && attempt + 1 < RETRY.length) setTimeout(() => deliver(hook, deliveryId, body, attempt + 1).catch(() => {}), RETRY[attempt + 1]).unref?.();",
+  "    if (await isDemo(action, data, detail)) return; // demo kayıtlar n8n'e (e-posta, WhatsApp) gitmez",
   "      all('SELECT cs.id, cs.status, cs.start_date, cs.end_date, cs.notes, s.code, s.name, s.billing FROM client_services cs JOIN services s ON s.id=cs.service_id WHERE cs.client_id=$1', [c.id]),",
   "      all(`SELECT s.*, c.name client FROM sites s LEFT JOIN clients c ON c.id=s.client_id WHERE s.agency_id=$1`, [a])]);",
   "    const r = await one('INSERT INTO approvals (agency_id, client_id, project_id, title, body) VALUES ($1,$2,$3,$4,$5) RETURNING id', [a, c.id, pid, nn(b.title), nn(b.body)]);",

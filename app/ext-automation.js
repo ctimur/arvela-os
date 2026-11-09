@@ -146,6 +146,14 @@ export function registerAutomation(d) {
   const sendMail = (agencyId, { to, subject, html, kind }) => postHook(agencyId, 'arvela-mail', 'mail.send', { kind, to, subject, html }, { kind, to: String(to).replace(/^(.).*@/, '$1***@') });
 
   // İşlem kaydı kancası: server.js audit() her kayıttan sonra çağırır.
+  // Olay bir demo müşteriye ya da demo kullanıcıya mı ait?
+  async function isDemo(action, data, detail) {
+    if (action.startsWith('demo.')) return true;
+    const kind = action.split('.')[0]; const cid = data?.client_id ?? ((kind === 'client' || kind === 'lead') ? data?.id ?? detail?.id : null);
+    if (cid && (await one('SELECT is_demo FROM clients WHERE id=$1', [int(cid)]).catch(() => null))?.is_demo) return true;
+    const uid = data?.freelancer_id ?? (kind === 'user' ? data?.id ?? detail?.id : null);
+    return !!(uid && (await one('SELECT is_demo FROM users WHERE id=$1', [int(uid)]).catch(() => null))?.is_demo);
+  }
   async function onAudit(ctx, action, detail) {
     if (!ALL_EVENTS.includes(action)) return;
     const agencyId = ctx.user?.agency_id; if (!agencyId) return;
@@ -153,6 +161,7 @@ export function registerAutomation(d) {
     let data = (await entity(action, detail).catch(() => null)) || { ...detail };
     if (action === 'client.create' && data.status === 'lead') { action = 'lead.create'; data = (await entity(action, detail).catch(() => null)) || data; }
     if (detail && typeof detail === 'object') for (const k of ['decision', 'kind', 'via', 'status', 'amount', 'period', 'count', 'from', 'quote', 'title', 'name']) if (k in detail && !(k in data)) data[k] = detail[k];
+    if (await isDemo(action, data, detail)) return; // demo kayıtlar n8n'e (e-posta, WhatsApp) gitmez
     await emit(agencyId, action, data, { source: ctx.apiKey ? 'api' : 'arvela-os', actor: ctx.apiKey ? { api_key: ctx.apiKey.name } : ctx.user ? { id: ctx.user.id, name: ctx.user.name, role: ctx.user.role } : null });
   }
 
@@ -181,7 +190,18 @@ export function registerAutomation(d) {
   const json = (res, status, obj) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(obj)); };
   const qp = (ctx, k) => ctx.url.searchParams.get(k) || '';
   const lim = (ctx) => Math.min(Math.max(int(qp(ctx, 'limit')) || 100, 1), 500);
-  const api = (method, path, scope, fn) => route(method, '/api/v1' + path, async (ctx, res, p) => { const k = await apiAuth(ctx, scope); return json(res, 200, await fn(ctx, k.agency_id, p, res)); });
+  // n8n'in okuduğu listelerden demo kayıtlar çıkarılır (hatırlatma ve özet akışları demo firmaya yazmasın).
+  async function noDemo(out, a, p) {
+    if (!out || typeof out !== 'object') return out;
+    const [cs, us] = await Promise.all([all('SELECT id, name FROM clients WHERE agency_id=$1 AND is_demo', [a]).catch(() => []), all('SELECT id FROM users WHERE agency_id=$1 AND is_demo', [a]).catch(() => [])]);
+    if (!cs.length && !us.length) return out;
+    const cid = new Set(cs.map(c => c.id)), cname = new Set(cs.map(c => c.name)), uid = new Set(us.map(u => u.id));
+    const own = ['/clients', '/leads'].includes(p) ? 'client' : p === '/team' ? 'user' : null;
+    const bad = (r) => r && typeof r === 'object' && (cid.has(r.client_id) || (typeof r.client === 'string' && cname.has(r.client)) || uid.has(r.freelancer_id) || (own === 'client' && cid.has(r.id)) || (own === 'user' && uid.has(r.id)));
+    const walk = (v) => Array.isArray(v) ? v.filter(x => !bad(x)).map(walk) : v && typeof v === 'object' && !(v instanceof Date) ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x)])) : v;
+    return walk(out);
+  }
+  const api = (method, path, scope, fn) => route(method, '/api/v1' + path, async (ctx, res, p) => { const k = await apiAuth(ctx, scope); const out = await fn(ctx, k.agency_id, p, res); return json(res, 200, method === 'GET' ? await noDemo(out, k.agency_id, path) : out); });
 
   api('GET', '/me', 'is', async (ctx) => ({ key: ctx.apiKey.name, scopes: ctx.apiKey.scopes, agency_id: ctx.apiKey.agency_id, app: BASE, events: ALL_EVENTS }));
   api('GET', '/clients', 'is', async (ctx, a) => ({ data: await all(`SELECT id, name, sector, contact_name, phone, email, status, created_at FROM clients WHERE agency_id=$1 AND ($2='' OR status=$2) ORDER BY name LIMIT $3`, [a, qp(ctx, 'status'), lim(ctx)]) }));

@@ -281,7 +281,7 @@ ${fresh ? `<section class="card" style="border-color:var(--champ)"><h2>BaÄŸlantÄ
     if (action !== 'approval.request' || !ctx.user?.agency_id) return;
     if ((await setting(ctx.user.agency_id, 'decisions.auto_mail')) !== '1') return;
     const ap = await one('SELECT a.client_id, c.* FROM approvals a JOIN clients c ON c.id=a.client_id WHERE a.id=$1', [int(detail.id)]);
-    if (!ap || !validEmail(ap.email)) return;
+    if (!ap || ap.is_demo || !validEmail(ap.email)) return;
     const c = { ...ap, id: ap.client_id };
     const url = await createLink({ user: { id: null } }, c, ap.email.toLowerCase(), 'otomatik');
     const n = (await one(`SELECT count(*)::int n FROM approvals WHERE client_id=$1 AND status='bekliyor'`, [c.id])).n;
