@@ -13,6 +13,7 @@ Eski yol (aşağıdaki 1–3) yalnız kayıt için:
 Ortam değişkenleri: HOSTINGER_API_TOKEN, VPS_ID, DB_PASSWORD, SETUP_TOKEN
 """
 import functools, hashlib, json, os, pathlib, re, subprocess, sys, time, urllib.request, urllib.error
+import hmac
 
 print = functools.partial(print, flush=True)  # noqa: A001 — iş akışı kesilse de kayıt görünsün
 
@@ -100,7 +101,9 @@ def main():
     compose = build_compose(sha)
     env = f"DB_PASSWORD={os.environ['DB_PASSWORD']}\nSETUP_TOKEN={os.environ['SETUP_TOKEN']}\nFORGE_GITHUB_TOKEN={os.environ['FORGE_GITHUB_TOKEN']}\n"
     # Yedek (0.25): tanımlı değilse boş geçer; yedek servisi eksik ayarı Ayarlar → Yedek ve izleme'de bildirir
-    for k in ('BACKUP_PASSPHRASE', 'BACKUP_GITHUB_TOKEN', 'BACKUP_REPO', 'SOCIAL_ADMIN_EMAILS'):
+    # Arvela Social (0.32): Arvela OS köprü anahtarı SETUP_TOKEN'dan türetilir (ext-social.js bridgeKey ile aynı)
+    env += 'SOCIAL_BRIDGE_KEY=' + hmac.new(os.environ['SETUP_TOKEN'].encode(), b'arvela-social-bridge', hashlib.sha256).hexdigest() + '\n'
+    for k in ('BACKUP_PASSPHRASE', 'BACKUP_GITHUB_TOKEN', 'BACKUP_REPO', 'SOCIAL_ADMIN_EMAILS', 'ANTHROPIC_API_KEY', 'OPENAI_API_KEY'):
         v = os.environ.get(k, '').strip()
         if '\n' in v: raise SystemExit(f'{k} tek satır olmalı')
         env += f"{k}={v}\n"

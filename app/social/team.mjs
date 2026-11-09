@@ -4,6 +4,7 @@ import { one, all, q } from './db.mjs';
 import { layout, csrf, opts, badge } from './ui.mjs';
 import { esc, nn, int, clip, HttpError, token, sha, validEmail, hashPassword, fmtDate } from './lib.mjs';
 import { ROLES } from './plans.mjs';
+import { sendMail, mailHtml } from './notify.mjs';
 
 const ROLE_HELP = { owner: 'Her şey: marka, ekip, paket', editor: 'Gönderi ve marka hazırlar, onaya gönderir', approver: 'Gönderileri okur, onaylar ya da düzeltme ister' };
 const shown = new Map(); // davet bağlantısı yalnız bir kez gösterilir (adres çubuğuna yazılmaz)
@@ -34,6 +35,7 @@ ${active < ctx.lim.users ? `<form class="card row" method="post" action="/ekip">
     const tok = token(24); const role = ROLES[b.role] ? b.role : 'editor';
     if (ex) await q(`UPDATE users SET name=$1, role=$2, invite_hash=$3, invite_expires=now() + interval '7 days', active=true WHERE id=$4`, [clip(nn(b.name), 80), role, sha(tok), ex.id]);
     else await q(`INSERT INTO users (workspace_id, email, name, role, pass_hash, invite_hash, invite_expires) VALUES ($1,$2,$3,$4,$5,$6, now() + interval '7 days')`, [ctx.ws.id, email, clip(nn(b.name), 80), role, hashPassword(token(24)), sha(tok)]);
+    sendMail(email, `${ctx.user.name} sizi Arvela Social'a davet etti`, mailHtml(`${ctx.ws.name} ekibine davetlisiniz`, [`${ctx.user.name} sizi ${ROLES[role].toLowerCase()} olarak ekibe ekledi.`, 'Aşağıdaki bağlantıdan şifrenizi belirleyip giriş yapabilirsiniz. Bağlantı 7 gün geçerli ve tek kullanımlıktır.'], ['Daveti kabul et', `/davet/${tok}`]), 'davet').catch(() => {});
     await audit(ctx, 'user.invite', { email, role }); const key = token(9); shown.set(key, { tok, user: ctx.user.id, at: Date.now() }); redirect(res, `/ekip?davet=${key}`);
   });
   route('POST', '/ekip/:id/rol', async (ctx, res, p) => {

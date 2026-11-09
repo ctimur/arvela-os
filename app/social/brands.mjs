@@ -5,6 +5,7 @@ import { layout, csrf, opts, badge } from './ui.mjs';
 import { esc, nn, int, clip, HttpError, imageType } from './lib.mjs';
 import { PLATFORMS } from './plans.mjs';
 import { FONTS, brandColors } from './templates.mjs';
+import { linksSection } from './approve.mjs';
 
 export const brandFor = async (ctx, id) => { const b = await one('SELECT * FROM brands WHERE id=$1 AND workspace_id=$2', [int(id), ctx.ws.id]); if (!b) throw new HttpError(404, 'Marka bulunamadı.'); return b; };
 const TONES = { samimi: 'Samimi ve sıcak', profesyonel: 'Profesyonel ve güven veren', eglenceli: 'Eğlenceli ve enerjik', sade: 'Sade ve bilgilendirici', premium: 'Premium ve zarif' };
@@ -77,7 +78,7 @@ ${editable ? brandForm(ctx, b, `/markalar/${b.id}`) : `<div class="note">Marka a
 ${acc.length ? `<div class="tbl"><table><tr><th>Platform</th><th>Hesap</th><th>Tercih edilen saatler</th><th></th></tr>${acc.map(a => `<tr><td>${esc(PLATFORMS[a.platform]?.name || a.platform)}</td><td>${esc(a.handle)}</td><td>${esc(a.best_times || '—')}</td>
 <td>${editable ? `<form method="post" action="/hesaplar/${a.id}/sil" data-confirm="Hesap kaldırılsın mı?">${csrf(ctx)}<button class="danger">Kaldır</button></form>` : ''}</td></tr>`).join('')}</table></div>` : '<p class="muted">Henüz hesap eklenmedi.</p>'}
 ${editable && accCount < ctx.lim.accounts ? `<form class="row" method="post" action="/markalar/${b.id}/hesap">${csrf(ctx)}<label>Platform<select name="platform">${opts(Object.fromEntries(Object.entries(PLATFORMS).map(([k, v]) => [k, v.name])), 'instagram')}</select></label>
-<label>Kullanıcı adı<input name="handle" required maxlength="80" placeholder="@markaniz"></label><label>Tercih edilen saatler<input name="best_times" maxlength="80" placeholder="09:00, 19:30"></label><button>Ekle</button></form>` : ''}</section>`, '/markalar'));
+<label>Kullanıcı adı<input name="handle" required maxlength="80" placeholder="@markaniz"></label><label>Tercih edilen saatler<input name="best_times" maxlength="80" placeholder="09:00, 19:30"></label><button>Ekle</button></form>` : ''}</section>${await linksSection(ctx, b.id)}`, '/markalar'));
   });
   route('POST', '/markalar/:id', async (ctx, res, p) => {
     need(ctx, 'owner', 'editor'); needUsable(ctx); const b = await brandFor(ctx, p.id);

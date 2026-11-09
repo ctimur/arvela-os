@@ -66,3 +66,38 @@ const mp = parseMultipart(body, 'multipart/form-data; boundary=B');
 assert.equal(mp.ad, 'Deniz'); assert.deepEqual([mp.__files[0].field, mp.__files[0].name, mp.__files[0].data.toString()], ['f', 'a.png', 'PNG']);
 
 console.log('social testleri tamam');
+
+// --- Faz 2: yapay zekâ yardımcıları ---
+const { maskPII, extractJson, normalizePlan, normalizeOptions, planPrompt, textPrompt, brandBrief } = await import('../app/social/ai-core.mjs');
+const { formObject } = await import('../app/social/lib.mjs');
+assert.equal(maskPII('Yaz: deniz@kuzey.com, 0532 111 22 33 ya da +90 532 111 2233'), 'Yaz: [e-posta], [telefon] ya da [telefon]');
+assert.deepEqual(extractJson('Elbette:\n```json\n{"a":[1]}\n```'), { a: [1] }); assert.equal(extractJson('yok'), null); assert.equal(extractJson('{bozuk'), null);
+const items = [
+  { tarih: '2026-12-05', saat: '09:30', platformlar: ['instagram', 'x'], metin: 'A', sutun: 'Ürün', sablon: { tur: 'liste', baslik: 'B' } },
+  { tarih: '2026-12-05', saat: '25:00', platformlar: ['linkedin'], metin: 'B' }, // aynı gün → kaydırılır; geçersiz saat ve platform düzeltilir
+  { tarih: '2027-01-02', metin: 'C' }, // ay dışı
+  { tarih: '2026-12-10', metin: '' }, // boş metin atlanır
+  { tarih: '2026-12-11', metin: 'x'.repeat(5000), platformlar: ['instagram'] }];
+const plan = normalizePlan(items, { month: '2026-12', platforms: ['instagram', 'tiktok'], pillars: ['Ürün'], now: new Date('2026-11-09T10:00:00Z') });
+assert.equal(plan.length, 4); assert.equal(new Set(plan.map(x => x.day)).size, 4, 'her gün bir gönderi');
+assert.ok(plan.every(x => x.day.startsWith('2026-12-')));
+assert.deepEqual(plan.find(x => x.caption === 'A').platforms, ['instagram']); assert.equal(plan.find(x => x.caption === 'A').template, 'liste');
+assert.equal(plan.find(x => x.caption === 'B').time, '19:00'); assert.deepEqual(plan.find(x => x.caption === 'B').platforms, ['instagram']);
+assert.equal(plan.find(x => x.caption.startsWith('xxx')).caption.length, 2200, 'platform sınırına kırpılır');
+const cur = normalizePlan([{ metin: 'D' }], { month: '2026-11', platforms: ['instagram'], now: new Date('2026-11-29T10:00:00Z') });
+assert.equal(cur[0].day, '2026-11-30', 'bu ayda yalnız yarından sonrası');
+assert.equal(normalizePlan([{ metin: 'E' }], { month: '2026-11', platforms: ['instagram'], now: new Date('2026-11-30T12:00:00Z') }).length, 0, 'ayda gün kalmadı');
+assert.equal(normalizeOptions({ secenekler: [{ metin: 'a' }, { metin: '' }, { metin: 'b', etiketler: '#x' }, { metin: 'c' }, { metin: 'd' }] }, 280).length, 3);
+assert.equal(normalizeOptions(null, 280).length, 0);
+const br = { name: 'Kuzey', offer: 'Kahve, sipariş: 0532 111 22 33', pillars: ['Ürün'], emoji: true, language: 'tr' };
+const pp = planPrompt({ brand: br, accounts: [{ platform: 'instagram' }], month: '2026-12', count: 5, platforms: ['instagram'], focus: 'mail: a@b.co', today: '2026-11-09' });
+assert.ok(pp.prompt.includes('Aralık 2026') && pp.prompt.includes('5 gönderilik') && !pp.prompt.includes('0532') && !pp.prompt.includes('a@b.co'));
+assert.ok(textPrompt({ brand: br, accounts: [], post: { caption: 'Bize yazın: x@y.com', platforms: ['x'] }, op: 'kisalt', max: 280 }).prompt.includes('[e-posta]'));
+assert.ok(brandBrief(br).includes('[telefon]'));
+assert.deepEqual(formObject(new URLSearchParams('p=a&p=b&t=1&__proto__=x')), { p: ['a', 'b'], t: '1' });
+assert.deepEqual(parseMultipart(Buffer.from('--B\r\nContent-Disposition: form-data; name="p"\r\n\r\na\r\n--B\r\nContent-Disposition: form-data; name="p"\r\n\r\nb\r\n--B--\r\n'), 'multipart/form-data; boundary=B').p, ['a', 'b']);
+const { limits: lim2 } = await import('../app/social/plans.mjs');
+assert.equal(lim2({ status: 'deneme', trial_ends: '2030-01-01' }).aiPerMonth, 40, 'deneme YZ sınırı');
+assert.equal(lim2({ status: 'aktif', plan: 'agency' }).aiImagesPerMonth, 60);
+assert.equal(lim2({ status: 'aktif', plan: 'business' }).aiImagesPerMonth, 0);
+console.log('social faz 2 testleri tamam');

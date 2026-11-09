@@ -52,5 +52,17 @@ export async function migrate() {
     author TEXT, kind TEXT NOT NULL DEFAULT 'not', body TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`);
   await q(`CREATE TABLE IF NOT EXISTS audit (id SERIAL PRIMARY KEY, workspace_id INT, user_id INT, action TEXT NOT NULL, detail JSONB, at TIMESTAMPTZ NOT NULL DEFAULT now())`);
   await q(`CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)`);
+  // Faz 2 (0.32): yapay zekâ işleri, KVKK açık rızası, müşteri onay bağlantıları, e-posta tercihi
+  await q(`CREATE TABLE IF NOT EXISTS ai_jobs (id SERIAL PRIMARY KEY, workspace_id INT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, brand_id INT REFERENCES brands(id) ON DELETE CASCADE,
+    post_id INT REFERENCES posts(id) ON DELETE CASCADE, kind TEXT NOT NULL CHECK (kind IN ('plan','metin','gorsel')), status TEXT NOT NULL DEFAULT 'calisiyor' CHECK (status IN ('calisiyor','bitti','hata')),
+    input JSONB NOT NULL DEFAULT '{}', output JSONB, error TEXT, model TEXT, in_tokens INT, out_tokens INT, created_by INT REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(), done_at TIMESTAMPTZ)`);
+  await q(`CREATE INDEX IF NOT EXISTS ai_jobs_ws_time ON ai_jobs(workspace_id, created_at)`);
+  await q(`ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS ai_consent_at TIMESTAMPTZ`);
+  await q(`ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS ai_consent_by INT`);
+  await q(`ALTER TABLE users ADD COLUMN IF NOT EXISTS mail_off BOOLEAN NOT NULL DEFAULT false`);
+  await q(`CREATE TABLE IF NOT EXISTS approval_links (id SERIAL PRIMARY KEY, workspace_id INT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, brand_id INT NOT NULL REFERENCES brands(id) ON DELETE CASCADE,
+    token_hash TEXT NOT NULL UNIQUE, label TEXT NOT NULL, email TEXT, created_by INT REFERENCES users(id) ON DELETE SET NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), revoked_at TIMESTAMPTZ, last_used_at TIMESTAMPTZ)`);
+  await q(`UPDATE ai_jobs SET status='hata', error='Sunucu yeniden başladı; lütfen tekrar deneyin.', done_at=now() WHERE status='calisiyor'`); // işler süreç içinde koşar; yeniden başlamada yarım kalanlar kapanır
   await q(`DELETE FROM sessions WHERE expires_at < now()`);
 }
