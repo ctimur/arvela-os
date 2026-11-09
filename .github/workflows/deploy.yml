@@ -45,7 +45,7 @@ jobs:
           BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
           BACKUP_GITHUB_TOKEN: ${{ secrets.BACKUP_GITHUB_TOKEN }}
           BACKUP_REPO: ${{ vars.BACKUP_REPO }}
-          SOCIAL_ADMIN_EMAILS: ${{ vars.SOCIAL_ADMIN_EMAILS }}
+          SOCIAL_ADMIN_EMAILS: ${{ vars.SOCIAL_ADMIN_EMAILS || secrets.SOCIAL_ADMIN_EMAILS }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: python3 -u deploy/deploy.py
