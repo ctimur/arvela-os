@@ -70,6 +70,8 @@ export function register() {
 
   route('GET', '/gizlilik', async (ctx, res) => send(res, 200, authPage('Aydınlatma metni', `<h1>Aydınlatma metni</h1>
 <p>Arvela Social'ı Arvela Digital &amp; AI işletir. Hesabınız için adınızı, e-posta adresinizi ve işletme adınızı; hizmetin sunulması için marka bilgilerinizi, gönderi metinlerinizi ve yüklediğiniz görselleri işleriz.</p>
-<p>Gönderi metni üretirken marka bilgileriniz ve gönderi içeriği yapay zekâ sağlayıcısına (Anthropic, ABD) iletilir; kişisel verileriniz (ad, e-posta) bu isteklere eklenmez. Verileriniz sunucularımızda tutulur ve her gece şifreli olarak yedeklenir.</p>
+<p>Yapay zekâ özellikleri yalnız hesap sahibinin açık rızasıyla açılır. Açıldığında marka bilgileriniz ve gönderi içeriği metin üretimi için Anthropic PBC'ye (ABD), Agency paketinde görsel üretimi için OpenAI'ye (ABD) iletilir; e-posta adresleri ve telefon numaraları gönderilmeden gizlenir. Rıza, Yapay zekâ sayfasından her zaman geri çekilebilir.</p>
+<p>Onay istekleri, düzeltmeler ve paylaşım hatırlatmaları için e-posta adresinize bildirim gönderilir; Hesabım sayfasından kapatabilirsiniz. Müşteri onay bağlantısıyla karar veren kişilerin yalnız yazdıkları ad ve not saklanır.</p>
+<p>Verileriniz sunucularımızda tutulur ve her gece şifreli olarak yedeklenir.</p>
 <p>Hesabınızı kapattığınızda verileriniz 30 gün içinde silinir. Haklarınız (KVKK m.11) için bize yazabilirsiniz.</p><p class="muted">Bu metin taslaktır; hukuki gözden geçirme sonrası güncellenecektir.</p><a class="btn ghost" href="/kayit">Geri</a>`)), { open: true });
 }

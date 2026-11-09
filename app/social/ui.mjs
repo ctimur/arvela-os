@@ -15,6 +15,7 @@ const ICON = {
   yonetim: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
   bugun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
   menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+  yz: '<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
 };
 export const icon = (n) => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n] || ''}</svg>`;
 
@@ -77,6 +78,7 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px 12p
 .preview{background:#E9E4D8;border-radius:16px;padding:16px;display:flex;justify-content:center}.preview img{max-width:100%;max-height:560px}.preview svg{height:auto;max-width:100%}.preview img,.preview svg{border-radius:8px;box-shadow:0 1px 0 #0001}
 .count{font-size:12px;color:var(--stone)}.count.over{color:var(--bad);font-weight:600}
 .swatch{display:inline-block;width:18px;height:18px;border-radius:5px;border:1px solid #0002;vertical-align:middle}
+.pub-top{background:var(--night);color:#fff;padding:16px 24px;font-family:Poppins,sans-serif;font-size:20px}.pub-top small{font-size:11px;letter-spacing:2px;color:var(--champ)}.pub{max-width:760px;margin:0 auto;padding:28px 18px}
 .auth{min-height:100vh;display:grid;grid-template-columns:1fr 1fr}.auth .art{background:var(--night);color:#fff;padding:56px;display:flex;flex-direction:column;justify-content:space-between}
 .auth .art h1{font-size:44px;line-height:1.1;max-width:520px}.auth .art p{color:var(--muted-d);font-size:17px;max-width:480px}.auth .art .gold{color:var(--champ)}
 .auth .form{display:flex;align-items:center;justify-content:center;padding:40px}.auth .form>div{width:100%;max-width:400px;display:flex;flex-direction:column;gap:16px}
@@ -90,7 +92,7 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px 12p
 
 export function layout(ctx, title, body, active = '') {
   const u = ctx.user; const ws = ctx.ws;
-  const nav = [['/', 'bugun', 'Bugün'], ['/takvim', 'takvim', 'Takvim'], ['/gonderiler', 'gonderi', 'Gönderiler'], ['/markalar', 'marka', 'Markalar'], ['/medya', 'medya', 'Medya'],
+  const nav = [['/', 'bugun', 'Bugün'], ['/takvim', 'takvim', 'Takvim'], ['/gonderiler', 'gonderi', 'Gönderiler'], ['/markalar', 'marka', 'Markalar'], ['/medya', 'medya', 'Medya'], ['/yapay-zeka', 'yz', 'Yapay zekâ'],
     ...(u.role === 'owner' ? [['/ekip', 'ekip', 'Ekip'], ['/paket', 'paket', 'Paket']] : []), ...(ctx.admin ? [['/yonetim', 'yonetim', 'Yönetim']] : [])];
   const brands = ctx.brands || [];
   const sw = brands.length > 1 ? `<form method="post" action="/marka-sec" class="row" style="align-items:center">${csrf(ctx)}<select name="brand_id" aria-label="Marka" data-autosubmit>${brands.map(b => `<option value="${b.id}"${b.id === ctx.brand?.id ? ' selected' : ''}>${esc(b.name)}</option>`).join('')}</select><noscript><button class="ghost">Seç</button></noscript></form>`
@@ -101,11 +103,17 @@ export function layout(ctx, title, body, active = '') {
 <link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/app.css"><script src="/app.js" defer></script></head><body>
 <div class="app"><nav class="side" id="side" aria-label="Ana menü"><a class="logo" href="/">Arvela <span>SOCIAL</span></a>
 ${nav.map(([href, ic, label]) => `<a class="nav${active === href ? ' on' : ''}" href="${href}">${icon(ic)}${label}</a>`).join('')}
-<div class="grow"></div><div class="me">${esc(u.name)}<br>${esc(ws?.name || '')} · <form method="post" action="/cikis">${csrf(ctx)}<button>Çıkış</button></form></div></nav>
+<div class="grow"></div><div class="me"><a href="/hesabim" style="color:inherit">${esc(u.name)}</a><br>${esc(ws?.name || '')} · <form method="post" action="/cikis">${csrf(ctx)}<button>Çıkış</button></form></div></nav>
 <div class="main"><header class="top"><button class="menu-btn" data-menu aria-label="Menüyü aç">${icon('menu')}</button>${sw}<span class="grow"></span>
-<a class="btn gold" href="/gonderi/yeni">+ Gönderi</a></header><main class="wrap">${banner}${body}</main></div></div></body></html>`;
+${u.role !== 'approver' ? '<a class="btn gold" href="/gonderi/yeni">+ Gönderi</a>' : ''}</header><main class="wrap">${banner}${body}</main></div></div></body></html>`;
 }
 
+// Oturumsuz geniş sayfa (müşteri onay bağlantısı)
+export function publicPage(title, body) {
+  return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)} · Arvela Social</title>
+<link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/app.css"><script src="/app.js" defer></script></head><body><header class="pub-top"><span>Arvela <small>SOCIAL</small></span></header><main class="pub stack">${body}</main>
+<p class="muted" style="text-align:center;font-size:12px;padding:24px">Arvela Digital &amp; AI · Ek. Büyüt. Yelken aç.</p></body></html>`;
+}
 export function authPage(title, body, side = '') {
   return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} · Arvela Social</title>
 <link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/app.css"><script src="/app.js" defer></script></head><body><div class="auth">

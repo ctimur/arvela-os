@@ -1,12 +1,13 @@
 // Arvela Social — paketler, sınırlar ve sabit sözlükler. Katalogdaki SAAS-01…06 ile aynı.
 export const TRIAL_DAYS = 14;
 export const PLANS = {
-  solo: { code: 'SAAS-01', name: 'Solo', brands: 1, users: 1, accounts: 2, postsPerMonth: 30, approvals: false, clientLinks: false, aiImages: false },
-  business: { code: 'SAAS-02', name: 'Business', brands: 1, users: 3, accounts: 5, postsPerMonth: 60, approvals: true, clientLinks: false, aiImages: false },
-  agency: { code: 'SAAS-03', name: 'Agency', brands: 5, users: 10, accounts: 25, postsPerMonth: 200, approvals: true, clientLinks: true, aiImages: true },
+  solo: { code: 'SAAS-01', name: 'Solo', brands: 1, users: 1, accounts: 2, postsPerMonth: 30, approvals: false, clientLinks: false, aiImages: false, aiPerMonth: 40, aiImagesPerMonth: 0 },
+  business: { code: 'SAAS-02', name: 'Business', brands: 1, users: 3, accounts: 5, postsPerMonth: 60, approvals: true, clientLinks: false, aiImages: false, aiPerMonth: 150, aiImagesPerMonth: 0 },
+  agency: { code: 'SAAS-03', name: 'Agency', brands: 5, users: 10, accounts: 25, postsPerMonth: 200, approvals: true, clientLinks: true, aiImages: true, aiPerMonth: 500, aiImagesPerMonth: 60 },
 };
 // Deneme süresinde Business özellikleri açıktır.
 export const TRIAL_PLAN = 'business';
+export const TRIAL_AI = 40;
 export const EXTRAS = { extra_brand: { code: 'SAAS-04', name: 'Ek marka' }, setup: { code: 'SAAS-05', name: 'Kurulum ve marka eğitimi' }, editor: { code: 'SAAS-06', name: 'İnsan editör kontrolü' } };
 
 export const WS_ST = { deneme: 'Deneme', aktif: 'Aktif', odeme: 'Ödeme bekleniyor', askida: 'Askıda' };
@@ -24,7 +25,8 @@ export function limits(ws, now = new Date()) {
   const trial = ws.status === 'deneme' && ws.trial_ends && new Date(ws.trial_ends) >= new Date(now.toDateString());
   const p = PLANS[ws.plan] || (trial ? PLANS[TRIAL_PLAN] : null);
   const base = p || PLANS[TRIAL_PLAN];
-  return { ...base, brands: base.brands + Number(ws.extra_brands || 0), trial, usable: canUse(ws, now) };
+  // Denemede yapay zekâ kullanımı sınırlı (maliyet): 40 istek
+  return { ...base, brands: base.brands + Number(ws.extra_brands || 0), trial, usable: canUse(ws, now), ...(ws.status === 'deneme' ? { aiPerMonth: TRIAL_AI, aiImagesPerMonth: 0 } : {}) };
 }
 // Kullanılabilir mi: deneme sürüyor ya da aktif (ödeme tarihi geçmemiş). Askıdaysa salt okunur.
 export function canUse(ws, now = new Date()) {

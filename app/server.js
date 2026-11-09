@@ -21,7 +21,7 @@ import { registerDecisions, migrateDecisions, parseMultipart, decisionForm, pars
 import { THEMES } from './themes.js';
 import { NAV_CSS, DARK_CSS, NAV_ICON, navGroups } from './ext-look.js';
 
-const VERSION = '0.31.0';
+const VERSION = '0.32.0';
 let settingsApi = null;
 let notify = null;
 const PORT = Number(process.env.PORT || 3000);
@@ -810,6 +810,7 @@ import { registerWork, migrateWork } from './ext-work.js';
 import { registerSync, migrateSync } from './ext-sync.js';
 import { registerAutomation, migrateAutomation, EVENT_LABEL } from './ext-automation.js';
 import { registerForge, migrateForge } from './ext-forge.js';
+import { registerSocial } from './ext-social.js';
 registerSites({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, STAFF });
 registerQuotes({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, audit, HttpError, int, nn });
 registerInvoices({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, audit, HttpError, int, nn });
@@ -826,6 +827,7 @@ const ops = registerOps({ route, all, need, layout, h, send });
 notify = registerNotify({ route, all, one, q, need, layout, h, csrfField, redirect, send });
 const todayPage = registerToday({ all, one, h, layout, need, STAFF, csrfField, forgePending: forge.pendingCount, extraActions: async (a) => [...crmActions(await crm.openLeads(a)), ...packageActions(await freelance.awaitingReview(a)), ...(await flow.todayActions(a)), ...(await ops.todayActions().catch(() => []))] });
 registerSync({ route, one, all, q, HttpError, safeEqual, SETUP_TOKEN, onSynced: (a, before) => hooks?.onSiteSync(a, before) });
+registerSocial({ route, one, HttpError, safeEqual, SETUP_TOKEN, send, sendMail: (a, m) => hooks ? hooks.sendMail(a, m) : Promise.resolve(false) });
 decisions = registerDecisions({ route, all, one, q, need, layout, authPage, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, AP_ST, APP_URL: process.env.APP_URL, cookie, parseCookies,
   sendMail: (a, m) => hooks ? hooks.sendMail(a, m) : Promise.resolve(false) });
 ai = registerAi({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, postHook: hooks.postHook, api: hooks.api, apiBody: hooks.body, onResult: (...a) => suggest.onResult(...a) });

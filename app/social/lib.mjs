@@ -40,6 +40,11 @@ export const cookie = (name, val, maxAge, secure) => `${name}=${encodeURICompone
 export const clientIp = (req) => { const x = String(req.headers['x-forwarded-for'] || '').split(',').map(s => s.trim()).filter(Boolean); return x.at(-1) || req.socket.remoteAddress; };
 
 // Gövde: urlencoded, JSON ya da multipart (dosyalar ctx.files). Sınır 12 MB.
+// Aynı adla gelen alanlar (onay kutuları) diziye toplanır
+export function formObject(pairs) {
+  const o = {}; for (const [k, v] of pairs) { if (k === '__proto__' || k === 'constructor' || k === 'prototype') continue; if (k in o) o[k] = [].concat(o[k], v); else o[k] = v; }
+  return o;
+}
 export function readBody(req, max = 12 * 1024 * 1024) {
   return new Promise((resolve, reject) => {
     const chunks = []; let size = 0;
@@ -49,7 +54,7 @@ export function readBody(req, max = 12 * 1024 * 1024) {
       try {
         if (ct.startsWith('application/json')) return resolve(buf.length ? JSON.parse(buf.toString('utf8')) : {});
         if (ct.startsWith('multipart/form-data')) return resolve(parseMultipart(buf, ct));
-        resolve(Object.fromEntries(new URLSearchParams(buf.toString('utf8'))));
+        resolve(formObject(new URLSearchParams(buf.toString('utf8'))));
       } catch { reject(new HttpError(400, 'İstek okunamadı.')); }
     });
     req.on('error', reject);
@@ -65,7 +70,7 @@ export function parseMultipart(buf, ct) {
     const head = part.slice(0, he).toString('utf8'); const body = part.slice(he + 4);
     const name = /name="([^"]*)"/.exec(head)?.[1]; const fn = /filename="([^"]*)"/.exec(head)?.[1];
     const type = /content-type:\s*([^\r\n]+)/i.exec(head)?.[1]?.trim() || 'application/octet-stream';
-    if (name != null) { if (fn != null) { if (body.length) out.__files.push({ field: name, name: fn, type, data: body }); } else out[name] = body.toString('utf8'); }
+    if (name != null && !['__proto__', 'constructor', 'prototype', '__files'].includes(name)) { if (fn != null) { if (body.length) out.__files.push({ field: name, name: fn, type, data: body }); } else { const v = body.toString('utf8'); out[name] = name in out ? [].concat(out[name], v) : v; } }
     pos = next;
   }
   return out;

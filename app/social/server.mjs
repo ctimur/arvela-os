@@ -7,7 +7,7 @@ import { CSS, authPage } from './ui.mjs';
 import { CLIENT_JS } from './client.mjs';
 import { limits } from './plans.mjs';
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.2.0';
 const PORT = Number(process.env.PORT || 3100);
 const SECURE = process.env.NODE_ENV === 'production';
 const SESSION_DAYS = 14;
@@ -81,10 +81,11 @@ export const server = http.createServer(async (req, res) => {
 });
 
 // Rotaları yükle ve başlat
-const mods = ['./auth.mjs', './brands.mjs', './posts.mjs', './media.mjs', './team.mjs', './billing.mjs', './admin.mjs'];
+const mods = ['./auth.mjs', './brands.mjs', './posts.mjs', './media.mjs', './team.mjs', './billing.mjs', './admin.mjs', './ai.mjs', './approve.mjs', './notify.mjs'];
 export async function start() {
   await ensureDatabase(); await migrate();
   for (const m of mods) (await import(m)).register();
+  if (process.env.SOCIAL_REMINDERS !== '0') (await import('./notify.mjs')).startReminders();
   server.listen(PORT, () => console.log(`Arvela Social ${VERSION} :${PORT}`));
 }
 if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split('/').pop())) start().catch(e => { console.error('başlatılamadı', e); process.exit(1); });

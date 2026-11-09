@@ -7,6 +7,8 @@ import { PLATFORMS, POST_ST, POST_TONE, FORMATS, transition } from './plans.mjs'
 export { transition };
 import { TEMPLATES, renderSvg } from './templates.mjs';
 import { saveImage, mediaDataUri } from './media.mjs';
+import { aiPanel, aiReady } from './ai.mjs';
+import { onStatus } from './notify.mjs';
 
 const MONTHS = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
 const DOW = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
@@ -32,7 +34,7 @@ export function register() {
     const late = await all(`SELECT * FROM posts WHERE brand_id=$1 AND status NOT IN ('iptal','paylasildi','fikir') AND scheduled_at < now() ORDER BY scheduled_at LIMIT 8`, [b]);
     const row = (p, act) => `<div class="row" style="align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #ECE6DA">${thumb(p)}<div style="flex:1;min-width:200px"><a href="/gonderi/${p.id}"><strong>${esc(p.title || (p.caption || 'Başlıksız').slice(0, 60))}</strong></a><br><span class="muted">${fmtDateTime(p.scheduled_at)} · ${plats(p)}</span></div>${badge(POST_ST[p.status], POST_TONE[p.status])}${act || ''}</div>`;
     const sec = (title, list, empty, act) => `<section class="card"><h2>${title}</h2>${list.length ? list.map(p => row(p, act?.(p))).join('') : `<p class="muted">${empty}</p>`}</section>`;
-    send(res, 200, layout(ctx, 'Bugün', `<div class="page-head"><div><h1>Merhaba ${esc(ctx.user.name.split(' ')[0])}</h1><p>${esc(ctx.brand.name)} için bugünün işleri</p></div><a class="btn ghost" href="/takvim">Takvimi aç</a></div>
+    send(res, 200, layout(ctx, 'Bugün', `<div class="page-head"><div><h1>Merhaba ${esc(ctx.user.name.split(' ')[0])}</h1><p>${esc(ctx.brand.name)} için bugünün işleri</p></div><div class="row">${aiReady() && ctx.ws.ai_consent_at && ctx.user.role !== 'approver' ? '<a class="btn gold" href="/planla">Aylık plan oluştur</a>' : ''}<a class="btn ghost" href="/takvim">Takvimi aç</a></div></div>
 <div class="kpi"><div><b>${cnt.planned}</b><span>planlanmış gönderi</span></div><div><b>${cnt.pub}</b><span>bu ay paylaşıldı</span></div><div><b>${waiting.length}</b><span>onay bekliyor</span></div><div><b>${ideas.n}</b><span>fikir havuzunda</span></div></div>
 ${late.length ? sec('Zamanı geçti, paylaşılmadı', late, '', p => p.status === 'onaylandi' || !ctx.lim.approvals ? `<a class="btn gold" href="/gonderi/${p.id}/paylas">Paylaş</a>` : '') : ''}
 ${sec('Bugün paylaşılacaklar', today, 'Bugün için planlanmış gönderi yok.', p => `<a class="btn ${p.status === 'onaylandi' ? 'gold' : 'ghost'}" href="/gonderi/${p.id}/paylas">Paylaş</a>`)}
@@ -110,11 +112,16 @@ ${unscheduled.length ? `<section class="card"><h2>Tarihsiz gönderiler ve fikirl
     const p = await postFor(ctx, pr.id); const f = csrf(ctx); const edit = ctx.user.role !== 'approver' && !['paylasildi'].includes(p.status) && ctx.lim.usable;
     const brand = await one('SELECT pillars FROM brands WHERE id=$1', [p.brand_id]); const notes = await all('SELECT * FROM post_notes WHERE post_id=$1 ORDER BY id DESC LIMIT 30', [p.id]);
     const max = Math.min(...(p.platforms?.length ? p.platforms : ['instagram']).map(k => PLATFORMS[k]?.max || 2200));
-    const acts = [['onaya', 'Onaya gönder', 'gold'], ['onayla', 'Onayla', 'gold'], ['duzeltme', 'Düzeltme iste', 'ghost'], ['taslak', 'Taslağa al', 'ghost'], ['iptal', 'İptal et', 'danger']]
+    const acts = [['onaya', 'Onaya gönder', 'gold'], ['onayla', 'Onayla', 'gold'], ['taslak', 'Taslağa al', 'ghost'], ['iptal', 'İptal et', 'danger']]
       .filter(([a]) => !transition(a, p, ctx.user.role, ctx.lim).error);
+    const canRevise = !transition('duzeltme', p, ctx.user.role, ctx.lim).error;
+    const lastRev = p.status === 'duzeltme' ? await one(`SELECT author, body, created_at FROM post_notes WHERE post_id=$1 AND kind IN ('duzeltme','musteri') ORDER BY id DESC LIMIT 1`, [p.id]) : null;
+    const panel = await aiPanel(ctx, p, ctx.url.searchParams.get('yz'));
     send(res, 200, layout(ctx, p.title || 'Gönderi', `<div class="page-head"><div><p class="muted" style="margin:0"><a href="/takvim">Takvim</a> · ${esc(p.brand)}</p><h1>${esc(p.title || 'Yeni gönderi')}</h1>
 <p>${badge(POST_ST[p.status], POST_TONE[p.status])} ${p.scheduled_at ? fmtDateTime(p.scheduled_at) : 'Tarihsiz'} ${p.ai ? badge('Yapay zekâ taslağı', 'gold') : ''}</p></div>
 <div class="row">${p.status !== 'iptal' ? `<a class="btn ${p.status === 'onaylandi' ? 'gold' : 'ghost'}" href="/gonderi/${p.id}/paylas">Paylaşım sayfası</a>` : ''}${acts.map(([a, l, t]) => `<form method="post" action="/gonderi/${p.id}/durum">${f}<input type="hidden" name="action" value="${a}"><button class="${t}">${l}</button></form>`).join('')}</div></div>
+${lastRev ? `<div class="err"><strong>Düzeltme istendi</strong> · ${esc(lastRev.author || '')} · ${fmtDateTime(lastRev.created_at)}<br><span style="white-space:pre-wrap">${esc(lastRev.body)}</span></div>` : ''}
+${canRevise ? `<details class="card"${p.status === 'onay' && ctx.user.role === 'approver' ? ' open' : ''}><summary style="cursor:pointer;font-weight:600">Düzeltme iste</summary><form class="stack" method="post" action="/gonderi/${p.id}/durum" style="margin-top:12px">${f}<input type="hidden" name="action" value="duzeltme"><label>Neyin değişmesini istiyorsunuz?<textarea name="comment" rows="2" maxlength="1000" required placeholder="Metin biraz uzun, fiyatı çıkaralım; görselde logo daha görünür olsun."></textarea></label><div><button class="ghost">Düzeltme iste</button></div></form></details>` : ''}
 <div class="grid2" style="align-items:start"><form class="card stack" method="post" action="/gonderi/${p.id}">${f}
 <label>Başlık (yalnız sizin için)<input name="title" maxlength="120" value="${esc(p.title || '')}"${edit ? '' : ' disabled'}></label>
 <fieldset style="border:0;padding:0;margin:0"><legend class="muted" style="font-size:13px;font-weight:600;margin-bottom:6px">Platformlar</legend><div class="row" style="gap:14px">${Object.entries(PLATFORMS).map(([k, v]) => `<label class="chk"><input type="checkbox" name="platforms" value="${k}" data-max="${v.max}"${p.platforms?.includes(k) ? ' checked' : ''}${edit ? '' : ' disabled'}> ${v.name}</label>`).join('')}</div></fieldset>
@@ -125,11 +132,11 @@ ${unscheduled.length ? `<section class="card"><h2>Tarihsiz gönderiler ve fikirl
 <label>İlk yorum (isteğe bağlı)<textarea name="first_comment" rows="2" maxlength="2200"${edit ? '' : ' disabled'}>${esc(p.first_comment || '')}</textarea></label>
 <label>Görsel fikri / çekim notu<textarea name="visual_brief" rows="2" maxlength="1000"${edit ? '' : ' disabled'}>${esc(p.visual_brief || '')}</textarea></label>
 ${edit ? '<div><button class="gold">Kaydet</button></div>' : ''}</form>
-<div class="stack"><section class="card"><h2>Görseller</h2>${p.media_ids?.length ? `<div class="thumbs">${p.media_ids.map((id, i) => `<div style="text-align:center"><a href="/medya/${id}" target="_blank"><img src="/medya/${id}" alt="Görsel ${i + 1}"></a>${edit ? `<form method="post" action="/gonderi/${p.id}/gorsel-cikar">${f}<input type="hidden" name="media_id" value="${id}"><button class="ghost" style="padding:2px 8px;font-size:12px">Çıkar</button></form>` : ''}</div>`).join('')}</div>` : '<p class="muted">Henüz görsel yok.</p>'}
+<div class="stack">${panel}<section class="card"><h2>Görseller</h2>${p.media_ids?.length ? `<div class="thumbs">${p.media_ids.map((id, i) => `<div style="text-align:center"><a href="/medya/${id}" target="_blank"><img src="/medya/${id}" alt="Görsel ${i + 1}"></a>${edit ? `<form method="post" action="/gonderi/${p.id}/gorsel-cikar">${f}<input type="hidden" name="media_id" value="${id}"><button class="ghost" style="padding:2px 8px;font-size:12px">Çıkar</button></form>` : ''}</div>`).join('')}</div>` : '<p class="muted">Henüz görsel yok.</p>'}
 ${edit ? `<div class="row"><a class="btn" href="/gonderi/${p.id}/sablon">Şablondan görsel üret</a><a class="btn ghost" href="/gonderi/${p.id}/kutuphane">Kütüphaneden seç</a></div>
 <form class="row" method="post" action="/medya" enctype="multipart/form-data">${f}<input type="hidden" name="back" value="/gonderi/${p.id}"><label>Fotoğraf yükle<input type="file" name="files" accept="image/*" multiple required></label><button class="ghost">Yükle</button></form>` : ''}</section>
 <section class="card"><h2>Notlar</h2><form class="stack" method="post" action="/gonderi/${p.id}/not">${f}<textarea name="body" rows="2" maxlength="2000" required placeholder="Ekibe not ya da düzeltme isteği"></textarea><div><button class="ghost">Not ekle</button></div></form>
-${notes.map(n => `<div style="border-top:1px solid #ECE6DA;padding-top:8px"><strong>${esc(n.author || '')}</strong> <span class="muted">${fmtDateTime(n.created_at)}${n.kind !== 'not' ? ' · ' + esc(n.kind) : ''}</span><p style="margin:4px 0;white-space:pre-wrap">${esc(n.body)}</p></div>`).join('')}</section></div></div>`, '/takvim'));
+${notes.map(n => `<div style="border-top:1px solid #ECE6DA;padding-top:8px"><strong>${esc(n.author || '')}</strong> <span class="muted">${fmtDateTime(n.created_at)}${n.kind !== 'not' ? ' · ' + esc({ durum: 'durum', duzeltme: 'düzeltme isteği', musteri: 'müşteri' }[n.kind] || n.kind) : ''}</span><p style="margin:4px 0;white-space:pre-wrap">${esc(n.body)}</p></div>`).join('')}</section></div></div>`, '/takvim'));
   });
   route('POST', '/gonderi/:id', async (ctx, res, pr) => {
     need(ctx, 'owner', 'editor'); needUsable(ctx); const p = await postFor(ctx, pr.id); const b = ctx.body;
@@ -148,8 +155,10 @@ ${notes.map(n => `<div style="border-top:1px solid #ECE6DA;padding-top:8px"><str
     const p = await postFor(ctx, pr.id); if (!['duzeltme', 'onayla'].includes(ctx.body.action)) needUsable(ctx);
     const t = transition(ctx.body.action, p, ctx.user.role, ctx.lim); if (t.error) throw new HttpError(400, t.error);
     if (t.to === 'onay' && !p.caption) throw new HttpError(400, 'Onaya göndermeden önce metni yazın.');
+    const comment = clip(nn(ctx.body.comment), 1000); if (t.to === 'duzeltme' && !comment) throw new HttpError(400, 'Neyin düzeltilmesini istediğinizi yazın.');
     await q(`UPDATE posts SET status=$1, updated_at=now()${t.to === 'paylasildi' ? ', published_at=now(), published_by=$3' : ''} WHERE id=$2`, t.to === 'paylasildi' ? [t.to, p.id, ctx.user.id] : [t.to, p.id]);
-    await q(`INSERT INTO post_notes (post_id, user_id, author, kind, body) VALUES ($1,$2,$3,'durum',$4)`, [p.id, ctx.user.id, ctx.user.name, `${POST_ST[p.status]} → ${POST_ST[t.to]}${nn(ctx.body.comment) ? ': ' + clip(ctx.body.comment, 1000) : ''}`]);
+    await q(`INSERT INTO post_notes (post_id, user_id, author, kind, body) VALUES ($1,$2,$3,$4,$5)`, [p.id, ctx.user.id, ctx.user.name, t.to === 'duzeltme' ? 'duzeltme' : 'durum', t.to === 'duzeltme' ? comment : `${POST_ST[p.status]} → ${POST_ST[t.to]}${comment ? ': ' + comment : ''}`]);
+    await onStatus({ ...ctx.ws, lim: ctx.lim }, p, t.to, { actorId: ctx.user.id, actorName: ctx.user.name, comment });
     await audit(ctx, 'post.status', { id: p.id, from: p.status, to: t.to }); redirect(res, ctx.body.back === 'paylas' ? `/gonderi/${p.id}/paylas` : `/gonderi/${p.id}`);
   });
   route('POST', '/gonderi/:id/not', async (ctx, res, pr) => {

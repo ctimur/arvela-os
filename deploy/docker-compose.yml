@@ -75,6 +75,10 @@ services:
       SOCIAL_DATABASE_URL: postgres://arvela:${DB_PASSWORD}@db:5432/social
       SOCIAL_ADMIN_EMAILS: ${SOCIAL_ADMIN_EMAILS}
       SOCIAL_URL: https://social.arveladigital.com
+      SOCIAL_BRIDGE_URL: http://app:3000
+      SOCIAL_BRIDGE_KEY: ${SOCIAL_BRIDGE_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
     volumes:
       - appsrc:/app:ro
       - node_modules:/app/node_modules:ro
