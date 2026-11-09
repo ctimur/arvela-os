@@ -88,7 +88,7 @@ export function registerWork(d) {
     const clients = await all(`SELECT id, name FROM clients WHERE agency_id=$1 AND status<>'churned' ORDER BY name`, [a]);
     const f = csrfField(ctx);
     send(res, 200, layout(ctx, 'Projeler', `<div class="page-head"><h1>Projeler</h1></div>
-<details class="card"${clients.length && !rows.length ? ' open' : ''}><summary>Yeni proje</summary><form class="stack" method="post" action="/projeler/yeni">${f}
+<details class="card" id="yeni-proje"${clients.length && !rows.length ? ' open' : ''}><summary>Yeni proje</summary><form class="stack" method="post" action="/projeler/yeni">${f}
 <div class="row"><label class="wide">Proje adı<input name="name" required></label><label>Müşteri<select name="client_id" required>${clients.map(c => `<option value="${c.id}">${h(c.name)}</option>`).join('')}</select></label><label>Teslim<input type="date" name="due_date"></label></div>
 <label>Açıklama<textarea name="description" rows="2" placeholder="Kapsam, hedef, bağlantılar"></textarea></label><div><button class="gold">Proje aç</button></div></form></details>
 <form class="filters" method="get" action="/projeler"><input type="search" name="q" value="${h(s)}" placeholder="Proje ya da müşteri ara" aria-label="Ara">

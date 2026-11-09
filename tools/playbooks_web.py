@@ -321,8 +321,12 @@ small('WEB-24', 'KVKK / GDPR site uyum paketi: aydınlatma metni, çerez politik
  ['Onaysız yüklenen çerez (0)', 'Onay oranı'], [R('Hukuki sorumluluk', 'Arvela taslak hazırlar; yayın hukukçu onayı olmadan yapılmaz')],
  ['Claude site taramasından envanteri ve metin taslaklarını çıkarır (Arvela\'nın kendi KVKK metinleri şablon).'], ['Tarayıcı ile çerez taraması (n8n + headless), onay öncesi/sonrası karşılaştırma.'], None, 70, ['Metinleri onaylar'])
 
-out = {code: {**v, 'v': 1} for code, v in P.items()}
-dst = os.path.join(os.path.dirname(__file__), '..', 'app', 'playbooks.json')
-json.dump(out, open(dst, 'w'), ensure_ascii=False, indent=1)
-open(dst, 'a').write('\n')
-print(len(out), 'hizmet kitabı', os.path.getsize(dst), 'bayt')
+
+def aylik(code, ozet, kapsam, disi, tesl, girdi, asama, kpi, risk, yontem, teknik, ek=None, oran=70, panel=None, rev='Ay içinde 1 tur'):
+    # Aylık hizmet: kitap bir aylık döngüyü anlatır; her ay bu kitaptan yeni dönem projesi açılır.
+    small(code, ozet + ' Aylık döngü: her ay bu kitaptan yeni dönem projesi açılır; ilk ay kurulum adımlarıyla başlar.', kapsam, disi, tesl, girdi, asama, 30, kpi, risk, yontem, teknik, ek, oran, panel, rev)
+
+
+if __name__ == '__main__':
+    import playbooks_build
+    playbooks_build.main()

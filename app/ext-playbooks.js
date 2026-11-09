@@ -9,6 +9,9 @@ export const AUTO = { tam: 'Tam otomatik', ai_taslak: 'Yapay zekâ taslak + insa
 export const DECISIONS = { onay: 'Onay / revizyon', secim: 'Seçenek seçimi', butce: 'Bütçe / kapsam kararı', bilgi: 'Bilgi / dosya' };
 export const ENGINES = { claude: 'Claude (Anthropic)', openai: 'OpenAI', gemini: 'Gemini (Google)' };
 const ROLE_TONE = { ai: 'ok', ekip: '', freelancer: '', musteri: 'warn' };
+// Kitaplarda kullanılan akış takma adları → n8n'deki gerçek akış (Arvela · …)
+export const AKIS = { 'Karar hatırlatma': 'Onay hatırlatma', 'Bilgi isteği': 'E-posta gönderici (karar bağlantısı)', 'Kabul ön kontrolü': 'Yapay zekâ (Claude)', 'Haftalık durum özeti': 'Sabah özeti', 'Yeni müşteri': 'Yeni müşteri karşılama' };
+export const akisName = (a) => (a ? AKIS[a] || a : a);
 
 const str = (v, max = 2000) => String(v ?? '').replace(/\r/g, '').trim().slice(0, max);
 const lines = (v) => str(v, 20000).split('\n').map(x => x.trim()).filter(Boolean).slice(0, 60);
@@ -44,9 +47,20 @@ export function planTasks(pb, start, people = {}) {
     const due = new Date(base.getTime() + day * 864e5).toISOString().slice(0, 10);
     const prefix = s.rol === 'musteri' && !/^müşteri/i.test(s.ad) ? 'Müşteri kararı: ' : s.rol === 'ai' && !/^yapay zek/i.test(s.ad) ? 'Yapay zekâ: ' : '';
     const assignee = s.rol === 'freelancer' ? (people.freelancer || people.ekip || null) : (people.ekip || null);
-    const desc = [`Rol: ${ROLES[s.rol]} · ${AUTO[s.otomasyon]}${s.karar ? ' · Karar: ' + DECISIONS[s.karar] : ''}${s.akis ? ' · n8n: ' + s.akis : ''}`, s.cikti && `Çıktı: ${s.cikti}`, s.kontrol && `Kabul: ${s.kontrol}`].filter(Boolean).join('\n');
+    const desc = [`Rol: ${ROLES[s.rol]} · ${AUTO[s.otomasyon]}${s.karar ? ' · Karar: ' + DECISIONS[s.karar] : ''}${s.akis ? ' · n8n: ' + akisName(s.akis) : ''}`, s.cikti && `Çıktı: ${s.cikti}`, s.kontrol && `Kabul: ${s.kontrol}`].filter(Boolean).join('\n');
     return { stage_no: i + 1, title: (prefix + s.ad).slice(0, 200), description: desc, due_date: due, assignee_id: assignee, role: s.rol, automation: s.otomasyon, decision: s.karar };
   });
+}
+
+// Aylık hizmet: sonraki dönemin adı ve başlangıcı. "… · Kasım 2026" → "… · Aralık 2026"; ay eki yoksa eklenir.
+const AYLAR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+export function nextPeriod(name, start) {
+  const m = new RegExp(`^(.*?)\\s*·\\s*(${AYLAR.join('|')}) (\\d{4})$`).exec(String(name || ''));
+  let y, mo, base = String(name || '').trim();
+  if (m) { base = m[1]; mo = AYLAR.indexOf(m[2]) + 1; y = Number(m[3]); if (mo === 12) { mo = 0; y++; } }
+  else { const d = new Date(start || Date.now()); y = d.getUTCFullYear(); mo = d.getUTCMonth() + 1; if (mo === 12) { mo = 0; y++; } }
+  const first = `${y}-${String(mo + 1).padStart(2, '0')}-01`;
+  return { name: `${base} · ${AYLAR[mo]} ${y}`.slice(0, 200), start: first };
 }
 
 export function stats(pb) {
@@ -83,7 +97,7 @@ function viewHtml(pb, h, badge) {
 <div class="two"><section class="card"><h2>Kapsam</h2>${ul(pb.kapsam)}<h3>Kapsam dışı</h3>${ul(pb.kapsam_disi)}</section>
 <section class="card"><h2>Teslimatlar ve kabul ölçütleri</h2>${(pb.teslimatlar || []).map(x => `<div class="line"><span class="grow"><strong>${h(x.ad)}</strong><span class="muted">${h(x.kabul)}</span></span></div>`).join('') || '<p class="muted">—</p>'}</section></div>
 <section class="card"><h2>Aşamalar</h2><div class="tbl"><table><tr><th>#</th><th>Aşama</th><th>Kim</th><th>Otomasyon</th><th>Gün</th><th>Karar</th><th>Çıktı ve kabul</th></tr>
-${(pb.asamalar || []).map((s, i) => `<tr><td>${i + 1}</td><td><strong>${h(s.ad)}</strong>${s.akis ? `<br><span class="muted">n8n: ${h(s.akis)}</span>` : ''}</td><td>${badge(ROLES[s.rol], ROLE_TONE[s.rol])}</td><td>${h(AUTO[s.otomasyon])}</td><td>${s.gun}</td><td>${s.karar ? badge(DECISIONS[s.karar], 'warn') : '—'}</td><td>${h(s.cikti)}${s.kontrol ? `<br><span class="muted">${h(s.kontrol)}</span>` : ''}</td></tr>`).join('')}</table></div></section>
+${(pb.asamalar || []).map((s, i) => `<tr><td>${i + 1}</td><td><strong>${h(s.ad)}</strong>${s.akis ? `<br><span class="muted">n8n: ${h(akisName(s.akis))}</span>` : ''}</td><td>${badge(ROLES[s.rol], ROLE_TONE[s.rol])}</td><td>${h(AUTO[s.otomasyon])}</td><td>${s.gun}</td><td>${s.karar ? badge(DECISIONS[s.karar], 'warn') : '—'}</td><td>${h(s.cikti)}${s.kontrol ? `<br><span class="muted">${h(s.kontrol)}</span>` : ''}</td></tr>`).join('')}</table></div></section>
 <div class="two"><section class="card"><h2>Müşteriden istenenler</h2>${(pb.girdiler || []).map(g => `<div class="line"><span class="grow"><strong>${h(g.ad)}</strong><span class="muted">${g.kimden === 'arvela' ? 'Arvela sağlar' : 'Müşteri'} · ${g.zorunlu ? 'zorunlu' : 'isteğe bağlı'}${g.nasil ? ' · ' + h(g.nasil) : ''}</span></span></div>`).join('') || '<p class="muted">—</p>'}</section>
 <section class="card"><h2>Müşteri panelinde</h2>${ul(pb.musteri_paneli)}<h3>Süre ve SLA</h3><p style="margin:0">${h(t`${pb.sla?.sure_gun ?? st.gun} gün`)}${pb.sla?.revizyon ? ' · ' + h(pb.sla.revizyon) : ''}${pb.sla?.yanit ? ' · ' + h(pb.sla.yanit) : ''}</p></section></div>
 <section class="card"><h2>Yapay zekâ destekli proje yönetimi</h2><h3>Yöntem</h3>${ul(pb.ai?.yontem)}<h3>Teknik ayrıntılar</h3>${ul(pb.ai?.teknik)}
@@ -177,11 +191,29 @@ ${viewHtml(pr.playbook, h, badge)}<details class="card" id="duzenle"><summary>Bu
     await audit(ctx, 'project.playbook', { id: pr.id, edited: true }); redirect(res, `/projeler/${pr.id}/kitap`);
   });
 
+  // aylık hizmet: sonraki dönemi aç (kitap, aşamalar ve aşama sorumluları taşınır)
+  route('POST', '/projeler/:id/sonraki-donem', async (ctx, res, p) => {
+    need(ctx, ...STAFF); const pr = await prjFor(ctx, int(p.id)); const a = ctx.user.agency_id;
+    const s = pr.service_id ? await one('SELECT id, code, billing FROM services WHERE id=$1', [pr.service_id]) : null;
+    if (!pr.playbook || !s || s.billing !== 'Aylık') throw new HttpError(400, 'Yalnız aylık bir hizmetten başlatılmış projede kullanılabilir.');
+    const np = nextPeriod(pr.name, pr.due_date || pr.created_at);
+    const dup = await one('SELECT id FROM projects WHERE agency_id=$1 AND client_id=$2 AND name=$3', [a, pr.client_id, np.name]);
+    if (dup) return redirect(res, `/projeler/${dup.id}`);
+    const prev = await all('SELECT stage_no, assignee_id FROM tasks WHERE project_id=$1 AND stage_no IS NOT NULL', [pr.id]); const who = Object.fromEntries(prev.map(x => [x.stage_no, x.assignee_id]));
+    const plan = planTasks(pr.playbook, np.start, {});
+    const r = await one(`INSERT INTO projects (agency_id, client_id, name, due_date, description, service_id, playbook) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`, [a, pr.client_id, np.name, plan.at(-1)?.due_date || null, pr.description || null, s.id, JSON.stringify(pr.playbook)]);
+    for (const x of plan) await q(`INSERT INTO tasks (agency_id, project_id, title, description, due_date, assignee_id, stage_role, stage_decision, stage_no) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [a, r.id, x.title, x.description, x.due_date, who[x.stage_no] ?? null, x.role, x.decision, x.stage_no]);
+    await audit(ctx, 'project.create', { id: r.id, client_id: pr.client_id, from: pr.id, period: np.name });
+    await audit(ctx, 'project.playbook', { id: r.id, service: s.code, tasks: plan.length, period: true }); redirect(res, `/projeler/${r.id}`);
+  });
+
   // proje sayfasına eklenen kart
   async function projectCard(ctx, pr) {
     const f = csrfField(ctx);
-    if (pr.playbook) { const st = stats(pr.playbook); const s = pr.service_id ? await one('SELECT code, name FROM services WHERE id=$1', [pr.service_id]) : null;
-      return `<section class="summary"><h2>Hizmet kitabı${s ? ' · ' + h(s.code + ' ' + s.name) : ''}</h2><p>${h(t`${st.asama} aşama · ${st.gun} gün · ${st.karar} müşteri kararı`)}${st.oran != null ? ' · ' + h(t`yapay zekâ ile %${st.oran}`) : ''}</p><p><a href="/projeler/${pr.id}/kitap">Kitabı aç ve bu proje için düzenle</a></p></section>`; }
+    if (pr.playbook) { const st = stats(pr.playbook); const s = pr.service_id ? await one('SELECT code, name, billing FROM services WHERE id=$1', [pr.service_id]) : null;
+      const monthly = s?.billing === 'Aylık'; const np = monthly ? nextPeriod(pr.name, pr.due_date || pr.created_at) : null;
+      return `<section class="summary"><h2>Hizmet kitabı${s ? ' · ' + h(s.code + ' ' + s.name) : ''}</h2><p>${h(t`${st.asama} aşama · ${st.gun} gün · ${st.karar} müşteri kararı`)}${st.oran != null ? ' · ' + h(t`yapay zekâ ile %${st.oran}`) : ''}</p><p><a href="/projeler/${pr.id}/kitap">Kitabı aç ve bu proje için düzenle</a></p>
+${monthly ? `<form method="post" action="/projeler/${pr.id}/sonraki-donem" class="inline">${f}<button class="ghost">Sonraki ayı başlat: ${h(np.name)}</button></form><p class="muted">Aylık hizmet: kitap, aşamalar ve aşama sorumluları yeni dönem projesine taşınır; bu proje olduğu gibi kalır.</p>` : ''}</section>`; }
     const [svcs, team] = await Promise.all([all(`SELECT s.id, s.code, s.name, (cs.id IS NOT NULL) mine FROM services s LEFT JOIN client_services cs ON cs.service_id=s.id AND cs.client_id=$2 WHERE s.agency_id=$1 AND s.active AND s.playbook IS NOT NULL ORDER BY (cs.id IS NULL), s.code`, [ctx.user.agency_id, pr.client_id]), people(ctx.user.agency_id)]);
     if (!svcs.length) return '';
     const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Istanbul' });

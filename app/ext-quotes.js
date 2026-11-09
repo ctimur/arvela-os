@@ -60,7 +60,7 @@ ${editable ? `<td><form class="inline" method="post" action="/teklifler/${x.id}/
     const its = rows.length ? await all('SELECT * FROM quote_items WHERE quote_id = ANY($1)', [rows.map(r => r.id)]) : [];
     const clients = await all(`SELECT id, name FROM clients WHERE agency_id=$1 ORDER BY name`, [ctx.user.agency_id]);
     send(res, layout(ctx, 'Teklifler', `<h1>Teklifler</h1>
-<details class="card"${rows.length ? '' : ' open'}><summary>Yeni teklif</summary><form class="row" method="post" action="/teklifler">${csrfField(ctx)}
+<details class="card" id="yeni-teklif"${rows.length ? '' : ' open'}><summary>Yeni teklif</summary><form class="row" method="post" action="/teklifler">${csrfField(ctx)}
 <label>Müşteri<select name="client_id" required>${clients.map(c => `<option value="${c.id}">${h(c.name)}</option>`).join('')}</select></label>
 <label style="flex:1;min-width:220px">Başlık<input name="title" required placeholder="Web sitesi ve bakım"></label>
 <label>Para birimi<select name="currency"><option value="TRY">TL</option><option value="EUR">EUR</option></select></label><button class="gold">Oluştur</button></form></details>
