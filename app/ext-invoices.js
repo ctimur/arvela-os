@@ -47,16 +47,16 @@ export function registerInvoices(d) {
     const x = await one('SELECT i.*, c.name client FROM invoices i JOIN clients c ON c.id=i.client_id WHERE i.id=$1 AND i.agency_id=$2', [id, ctx.user.agency_id]);
     if (!x) throw new HttpError(404, 'Fatura bulunamadı.'); return x;
   }
-  async function nextNumber(agencyId) {
-    const y = new Date().getFullYear();
-    const r = await one(`SELECT count(*)::int n FROM invoices WHERE agency_id=$1 AND number LIKE $2`, [agencyId, `ARV-${y}-%`]);
-    return `ARV-${y}-${String(r.n + 1).padStart(4, '0')}`;
+  async function nextNumber(agencyId, clientId) {
+    const y = new Date().getFullYear(); const pre = (await one('SELECT is_demo FROM clients WHERE id=$1', [clientId]).catch(() => null))?.is_demo ? 'DEMO' : 'ARV'; // demo faturalar gerçek sırayı kullanmaz
+    const r = await one(`SELECT count(*)::int n FROM invoices WHERE agency_id=$1 AND number LIKE $2`, [agencyId, `${pre}-${y}-%`]);
+    return `${pre}-${y}-${String(r.n + 1).padStart(4, '0')}`;
   }
   async function createInvoice(ctx, { clientId, period = null, quoteId = null, currency = 'TRY', items }) {
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const inv = await one(`INSERT INTO invoices (agency_id, client_id, number, period, quote_id, currency, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
-          [ctx.user.agency_id, clientId, await nextNumber(ctx.user.agency_id), period, quoteId, currency, ctx.user.id]);
+          [ctx.user.agency_id, clientId, await nextNumber(ctx.user.agency_id, clientId), period, quoteId, currency, ctx.user.id]);
         for (const [i, it] of items.entries()) {
           await q('INSERT INTO invoice_items (invoice_id, service_id, name, qty, unit_price, sort) VALUES ($1,$2,$3,$4,$5,$6)', [inv.id, it.service_id || null, it.name, it.qty || 1, it.unit_price, i]);
         }

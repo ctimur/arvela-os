@@ -21,7 +21,7 @@ import { registerDecisions, migrateDecisions, parseMultipart, decisionForm, pars
 import { THEMES } from './themes.js';
 import { NAV_CSS, DARK_CSS, NAV_ICON, navGroups } from './ext-look.js';
 
-const VERSION = '0.28.0';
+const VERSION = '0.29.0';
 let settingsApi = null;
 let notify = null;
 const PORT = Number(process.env.PORT || 3000);
@@ -559,7 +559,7 @@ route('GET', '/musteriler', async (ctx, res) => {
 <label>Not<textarea name="notes" rows="2"></textarea></label><div><button class="gold">Kaydet</button></div></form></details>
 <form class="filters" method="get" action="/musteriler"><input type="search" name="q" value="${h(sq)}" placeholder="Firma, yetkili, sektör ya da telefon" aria-label="Ara"><select name="durum" aria-label="Durum" data-auto><option value="">Tüm durumlar</option>${opts(CLIENT_ST, sd)}</select><button class="ghost">Filtrele</button></form>
 <div class="tbl"><table><tr><th>Firma</th><th>Sektör</th><th>Durum</th><th>Aktif hizmet</th><th>Açık proje</th><th>Yetkili</th></tr>
-${rows.map(c => `<tr><td><a href="/musteriler/${c.id}"><strong>${h(c.name)}</strong></a></td><td>${h(c.sector || '—')}</td><td>${badge(CLIENT_ST[c.status], tone[c.status])}</td><td>${c.svc}</td><td>${c.prj}</td><td>${h(c.contact_name || '—')}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">Bu filtreye uyan müşteri yok.</td></tr>'}
+${rows.map(c => `<tr><td><a href="/musteriler/${c.id}"><strong>${h(c.name)}</strong></a>${c.is_demo ? ' ' + badge('Demo', 'warn') : ''}</td><td>${h(c.sector || '—')}</td><td>${badge(CLIENT_ST[c.status], tone[c.status])}</td><td>${c.svc}</td><td>${c.prj}</td><td>${h(c.contact_name || '—')}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">Bu filtreye uyan müşteri yok.</td></tr>'}
 </table></div>`, '/musteriler'));
 });
 route('POST', '/musteriler', async (ctx, res) => {
@@ -584,7 +584,7 @@ route('GET', '/musteriler/:id', async (ctx, res, p) => {
   const catalog = await all(`SELECT s.id, s.code, s.name, sc.name cat FROM services s JOIN service_categories sc ON sc.id=s.category_id WHERE s.agency_id=$1 AND s.active ORDER BY sc.sort, s.code`, [a]);
   const f = csrfField(ctx);
   const HEAD = `
-<div class="page-head"><div><h1>${h(c.name)}</h1><div class="chips">${badge(CLIENT_ST[c.status])}${c.contact_name ? `<span class="muted">${h(c.contact_name)}</span>` : ''}${c.phone ? `<a href="tel:${h(c.phone.replace(/[^+\d]/g, ''))}">${h(c.phone)}</a>` : ''}${c.email ? `<a href="mailto:${h(c.email)}">${h(c.email)}</a>` : ''}</div></div>
+<div class="page-head"><div><h1>${h(c.name)}</h1><div class="chips">${badge(CLIENT_ST[c.status])}${c.is_demo ? badge('Demo verisi', 'warn') : ''}${c.contact_name ? `<span class="muted">${h(c.contact_name)}</span>` : ''}${c.phone ? `<a href="tel:${h(c.phone.replace(/[^+\d]/g, ''))}">${h(c.phone)}</a>` : ''}${c.email ? `<a href="mailto:${h(c.email)}">${h(c.email)}</a>` : ''}</div></div>
 <nav class="jump" aria-label="Sayfa içi"><a href="#hizmetler">Hizmetler</a><a href="#projeler">Projeler</a><a href="#onaylar">Kararlar</a><a href="/musteriler/${c.id}/siteler">Siteler</a><a href="/satis/${c.id}">Satış geçmişi</a><a href="/musteriler/${c.id}/karar">Karar bağlantısı</a></nav></div>
 `;
   const DET = `<details class="card"><summary>Firma bilgileri</summary><form class="stack" method="post" action="/musteriler/${c.id}">${f}
@@ -797,6 +797,7 @@ const server = http.createServer(async (req, res) => {
 
 import { registerSites, migrateSites } from './ext-sites.js';
 import { registerQuotes, migrateQuotes } from './ext-quotes.js';
+import { registerDemo, migrateDemo } from './ext-demo.js';
 import { registerInvoices, migrateInvoices } from './ext-invoices.js';
 import { registerToday, portalActions } from './ext-today.js';
 import { registerWork, migrateWork } from './ext-work.js';
@@ -811,6 +812,8 @@ const forge = registerForge({ route, all, one, q, need, layout, h, badge, fmtDat
 const crm = registerCrm({ route, all, one, q, need, layout, h, badge, fmtMoney, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, opts });
 const freelance = registerFreelance({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, opts });
 registerRetention({ route, all, one, q, need, layout, h, csrfField, HttpError, redirect, send, audit, fmtDate });
+const withTx = async (fn) => { const c = await pool.connect(); try { await c.query('BEGIN'); const r = await fn((t, p) => c.query(t, p)); await c.query('COMMIT'); return r; } catch (e) { await c.query('ROLLBACK').catch(() => {}); throw e; } finally { c.release(); } };
+const demo = registerDemo({ route, one, all, q, need, layout, h, csrfField, redirect, send, HttpError, audit, withTx, hashPassword });
 settingsApi = registerSettings({ route, all, q, need, layout, h, csrfField, redirect, send, audit });
 const ops = registerOps({ route, all, need, layout, h, send });
 notify = registerNotify({ route, all, one, q, need, layout, h, csrfField, redirect, send });
@@ -826,4 +829,4 @@ const playbooks = registerPlaybooks({ route, all, one, q, need, layout, h, badge
 registerWork({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send, projectExtra: async (ctx, pr) => (await playbooks.projectCard(ctx, pr)) + (await ai.projectCard(ctx, pr)), flowBanner: (ctx, pr, tasks) => flow.projectBanner(ctx, pr, tasks),
   taskExtra: async (ctx, tk) => (await flow.taskCard(ctx, tk)) + (await ai.taskCard(ctx, tk)) + (await suggest.taskCards(ctx, tk)), decisions });
 
-migrate().then(() => migrateOps({ q })).then(() => migrateNotify({ q })).then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => migrateFreelance({ q })).then(() => migrateRetention({ q })).then(() => migratePlaybooks({ q, all })).then((n) => n && console.log(`hizmet kitabı yazıldı: ${n}`)).then(() => migrateDecisions({ q })).then(() => migrateFlow({ q })).then(() => migrateAi({ q })).then(() => migrateSuggest({ q })).then(() => loadThemes(all)).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
+migrate().then(() => migrateDemo({ q })).then(() => migrateOps({ q })).then(() => migrateNotify({ q })).then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => migrateFreelance({ q })).then(() => migrateRetention({ q })).then(() => migratePlaybooks({ q, all })).then((n) => n && console.log(`hizmet kitabı yazıldı: ${n}`)).then(() => migrateDecisions({ q })).then(() => migrateFlow({ q })).then(() => migrateAi({ q })).then(() => migrateSuggest({ q })).then(() => loadThemes(all)).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
