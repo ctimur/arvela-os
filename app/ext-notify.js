@@ -56,6 +56,9 @@ export async function plan(action, detail, actorId, agencyId, { one, all }) {
     const x = await one(`SELECT id, name, owner_id, lead_source FROM clients WHERE id=$1 AND agency_id=$2`, [id, agencyId]);
     if (x) out.push({ to: x.owner_id ? [x.owner_id] : await admins(), kind: 'satis', title: t`Yeni aday: ${x.name}`, body: 'Sıcak adaya mesai içinde 15 dakikada dönün.', href: `/satis/${x.id}`, ref: `lead:${x.id}` });
   }
+  if (action === 'package.create' && id && d.freelancer_id) {
+    out.push({ to: [Number(d.freelancer_id)], kind: 'gorev', title: t`Yeni iş paketi teklifi: ${d.title || ''}`, body: 'Kapsamı inceleyip kabul edin.', href: `/paketler/${id}`, ref: `pkg:${id}` });
+  }
   if (action === 'lead.assign' && id && d.owner) {
     const x = await one(`SELECT id, name FROM clients WHERE id=$1 AND agency_id=$2`, [id, agencyId]);
     if (x) out.push({ to: [Number(d.owner)], kind: 'satis', title: t`Aday size atandı: ${x.name}`, body: 'Sonraki adımı ve tarihini belirleyin.', href: `/satis/${x.id}`, ref: `lead-own:${x.id}:${d.owner}` });

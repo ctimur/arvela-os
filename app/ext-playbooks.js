@@ -168,6 +168,25 @@ ${own ? `<form method="post" action="/hizmet/${r.id}/kitap/sifirla" data-confirm
 
   // proje: hizmetten başlat (kitabı kopyalar, aşamaları görev olarak açar) ve proje kitabını düzenle
   const prjFor = async (ctx, id) => { const r = await one(`SELECT p.*, c.name client FROM projects p JOIN clients c ON c.id=p.client_id WHERE p.id=$1 AND p.agency_id=$2`, [id, ctx.user.agency_id]); if (!r) throw new HttpError(404, 'Proje bulunamadı.'); return r; };
+  // Freelancer aşamalarına iş paketi: kitaptan atanan her freelancer için projede bir paket (yoksa) teklif edilir.
+  // Ücreti Yönetici girer; önceki dönemin paketi varsa ücret şekli oradan taşınır.
+  async function autoPackages(ctx, projectId, fromProjectId = null) {
+    const a = ctx.user.agency_id;
+    const pr = await one('SELECT name FROM projects WHERE id=$1', [projectId]);
+    const rows = await all(`SELECT assignee_id, title, description, due_date FROM tasks WHERE project_id=$1 AND stage_role='freelancer' AND assignee_id IS NOT NULL ORDER BY stage_no`, [projectId]);
+    const by = new Map(); for (const r of rows) { if (!by.has(r.assignee_id)) by.set(r.assignee_id, []); by.get(r.assignee_id).push(r); }
+    let n = 0;
+    for (const [fid, st] of by) {
+      if (await one('SELECT 1 FROM work_packages WHERE project_id=$1 AND freelancer_id=$2 AND status<>\'iptal\'', [projectId, fid])) continue;
+      const prev = fromProjectId ? await one(`SELECT pay_type, amount, hourly_rate, hour_cap FROM work_packages WHERE project_id=$1 AND freelancer_id=$2 AND status<>'iptal' ORDER BY id DESC LIMIT 1`, [fromProjectId, fid]) : null;
+      const desc = st.map(x => { const out = String(x.description || '').split(/\r?\n/).find(l => l.startsWith('Çıktı:')); return `• ${String(x.title).replace(/^[^:]*:\s*/, '')}${out ? ' — ' + out.slice(6).trim() : ''}`; }).join('\n');
+      const due = st.map(x => x.due_date).filter(Boolean).sort().at(-1) || null;
+      const r = await one(`INSERT INTO work_packages (agency_id, freelancer_id, project_id, title, description, pay_type, amount, hourly_rate, hour_cap, due_date, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
+        [a, fid, projectId, `${pr.name} · freelancer işi`, desc, prev?.pay_type || 'sabit', prev?.amount ?? null, prev?.hourly_rate ?? null, prev?.hour_cap ?? null, due, ctx.user.id]);
+      await audit(ctx, 'package.create', { id: r.id, title: `${pr.name} · freelancer işi`, freelancer_id: fid, auto: true }); n++;
+    }
+    return n;
+  }
   route('POST', '/projeler/:id/hizmet', async (ctx, res, p) => {
     need(ctx, ...STAFF); const pr = await prjFor(ctx, int(p.id)); const a = ctx.user.agency_id; const b = ctx.body;
     const s = await svcFor(ctx, int(b.service_id));
@@ -179,7 +198,7 @@ ${own ? `<form method="post" action="/hizmet/${r.id}/kitap/sifirla" data-confirm
     await q('UPDATE projects SET service_id=$1, playbook=$2, due_date=GREATEST(due_date, $3::date) WHERE id=$4', [s.id, JSON.stringify(pb), plan.at(-1)?.due_date || null, pr.id]);
     const base = (await one('SELECT COALESCE(max(stage_no),0)::int n FROM tasks WHERE project_id=$1', [pr.id])).n;
     for (const x of plan) await q(`INSERT INTO tasks (agency_id, project_id, title, description, due_date, assignee_id, stage_role, stage_decision, stage_no) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [a, pr.id, x.title, x.description, x.due_date, x.assignee_id, x.role, x.decision, base + x.stage_no]);
-    await audit(ctx, 'project.playbook', { id: pr.id, service: s.code, tasks: plan.length }); redirect(res, `/projeler/${pr.id}`);
+    await audit(ctx, 'project.playbook', { id: pr.id, service: s.code, tasks: plan.length }); await autoPackages(ctx, pr.id); redirect(res, `/projeler/${pr.id}`);
   });
   route('GET', '/projeler/:id/kitap', async (ctx, res, p) => {
     need(ctx, ...STAFF); const pr = await prjFor(ctx, int(p.id)); const s = pr.service_id ? await one('SELECT code, name FROM services WHERE id=$1', [pr.service_id]) : null;
@@ -204,7 +223,7 @@ ${viewHtml(pr.playbook, h, badge)}<details class="card" id="duzenle"><summary>Bu
     const r = await one(`INSERT INTO projects (agency_id, client_id, name, due_date, description, service_id, playbook) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`, [a, pr.client_id, np.name, plan.at(-1)?.due_date || null, pr.description || null, s.id, JSON.stringify(pr.playbook)]);
     for (const x of plan) await q(`INSERT INTO tasks (agency_id, project_id, title, description, due_date, assignee_id, stage_role, stage_decision, stage_no) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [a, r.id, x.title, x.description, x.due_date, who[x.stage_no] ?? null, x.role, x.decision, x.stage_no]);
     await audit(ctx, 'project.create', { id: r.id, client_id: pr.client_id, from: pr.id, period: np.name });
-    await audit(ctx, 'project.playbook', { id: r.id, service: s.code, tasks: plan.length, period: true }); redirect(res, `/projeler/${r.id}`);
+    await audit(ctx, 'project.playbook', { id: r.id, service: s.code, tasks: plan.length, period: true }); await autoPackages(ctx, r.id, pr.id); redirect(res, `/projeler/${r.id}`);
   });
 
   // proje sayfasına eklenen kart

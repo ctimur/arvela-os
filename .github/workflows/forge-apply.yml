@@ -23,10 +23,10 @@ jobs:
     environment: production
     timeout-minutes: 90  # ilk kalıcı adlı yayın ~115 parçayı yeniden yazar
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       - run: python3 -c "import yaml" 2>/dev/null || pip install pyyaml

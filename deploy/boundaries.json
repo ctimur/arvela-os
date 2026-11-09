@@ -10,7 +10,9 @@
   "    ['/panel', 'Bugün', 'G B'], ['/satis', 'Satış hattı', 'G S'], ['/musteriler', 'Müşteriler', 'G M'], ['/gorevler', 'Görevlerim', 'G G'], ['/onaylar', 'Müşteri kararları', ''], ['/projeler', 'Projeler', ''],",
   "const nn = (v) => (v === undefined || v === null || String(v).trim() === '') ? null : String(v).trim();",
   "<label>Not<textarea name=\"notes\" rows=\"2\"></textarea></label><div><button class=\"gold\">Kaydet</button></div></form></details>",
+  "<div class=\"row\"><label>Firma adı<input name=\"name\" value=\"${h(c.name)}\" required></label><label>Sektör<input name=\"sector\" value=\"${h(c.sector)}\"></label><label>Durum<select name=\"status\">${opts(CLIENT_ST, c.status)}</select></label></div>",
   "${prjs.length ? `<div class=\"tbl\"><table><tr><th>Proje</th><th>Durum</th><th>İlerleme</th><th>Teslim</th></tr>${prjs.map(p => `<tr><td><a href=\"/projeler/${p.id}\">${h(p.name)}</a></td><td>${badge(PR_ST[p.status])}</td><td>${p.done}/${p.total}</td><td>${fmtDate(p.due_date)}</td></tr>`).join('')}</table></div>` : '<p class=\"muted\">Proje yok.</p>'}",
+  "  const sum = [t`${activeSvc} aktif hizmet · ${openPrj} açık proje · ${waitAp} bekleyen onay`, lastNote ? t`Son temas: ${fmtDate(lastNote.created_at)} — ${String(lastNote.body || '').slice(0, 140)}` : 'Henüz temas kaydı yok.', ...(cu.length ? [] : ['Müşteri portalı hesabı yok.'])];",
   "  let pid = int(b.project_id);",
   "  send(res, 200, layout(ctx, 'Kayıtlar', `<div class=\"page-head\"><h1>İşlem kayıtları</h1><a class=\"btn ghost\" href=\"/veri-saklama\">Veri saklama (KVKK)</a></div><div class=\"tbl\"><table><tr><th>Zaman</th><th>Kişi</th><th>İşlem</th><th>Ayrıntı</th></tr>",
   "import { registerWork, migrateWork } from './ext-work.js';"
@@ -25,11 +27,15 @@
  "package.json": [],
  "import-sites.json": [],
  "ext-quotes.js": [
+  "  const itemsOf = (id) => all('SELECT * FROM quote_items WHERE quote_id=$1 ORDER BY sort, id', [id]);",
   "${rows.map(x => { const t = totals(x, its.filter(i => i.quote_id === x.id)); return `<tr><td><a href=\"/teklifler/${x.id}\">#${x.id} · ${h(x.title)}</a></td><td>${h(x.client)}</td><td>${badge(ST[x.status], TONE[x.status])}</td><td>${money(t.year, x.currency)}</td><td>${fmtDate(x.sent_at || x.created_at)}</td></tr>`; }).join('') || '<tr><td colspan=\"5\" class=\"muted\">Henüz teklif yok.</td></tr>'}</table></div>`, '/teklifler'));",
-  "  route('POST', '/teklifler/:id/kalem/:kid/sil', async (ctx, res, p) => {"
+  "<section style=\"flex:1 1 280px;display:flex;flex-direction:column;gap:16px\">${summary(x, items)}",
+  "  route('POST', '/teklifler/:id/kalem/:kid/sil', async (ctx, res, p) => {",
+  "    const expired = x.valid_until && new Date(x.valid_until) < new Date(new Date().toDateString());"
  ],
  "ext-invoices.js": [
   "<p class=\"muted\" style=\"margin:0\">Açıklamaya <strong>${h(x.number)}</strong> yazın.</p></div>` : '<div class=\"card\"><p class=\"muted\" style=\"margin:0\">Havale bilgileri henüz girilmedi.</p></div>';",
+  "<div class=\"row\">${tab('', 'Hepsi')}${tab('taslak', 'Taslak')}${tab('gonderildi', 'Ödeme bekleniyor')}${tab('gecikti', 'Gecikmiş')}${tab('odendi', 'Ödendi')}${tab('iptal', 'İptal')}</div>",
   "    const id = await createInvoice(ctx, { clientId: x.client_id, quoteId: x.id, currency: x.currency, items });",
   "    const vat = Math.min(100, Math.max(0, Number(b.vat_pct) || 0));"
  ],
