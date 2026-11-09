@@ -94,6 +94,7 @@ export function registerAi(d) {
     await q(`UPDATE ai_jobs SET status=$1, error=$2 WHERE id=$3`, [ok ? 'gonderildi' : 'hata', ok ? null : 'n8n "Yapay zekâ (Claude)" bağlantısına ulaşılamadı. Otomasyonlar sayfasından bağlantının etkin olduğunu kontrol edin.', jobId]);
     if (taskId) await note(taskId, ok ? `Yapay zekâ taslağı istendi (Claude, iş #${jobId}${pr.masked ? ', kişisel veriler maskelendi' : ''}). Taslak gelince bu görevin notlarına yazılır ve görev "İncelemede" olur.` : `Yapay zekâ taslağı gönderilemedi (iş #${jobId}): n8n bağlantısı yok.`);
     await audit(ctx, 'ai.request', { job: jobId, task: taskId || undefined, ok });
+    if (!ok) await audit(ctx, 'ai.result', { job: jobId, ok: false, via: 'dispatch' }); // sorumlu ve yöneticiye "taslak alınamadı" bildirimi
     return { id: jobId, ok };
   }
 

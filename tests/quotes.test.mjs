@@ -1,4 +1,4 @@
-import { registerQuotes, totals } from '../app/ext-quotes.js';
+import { registerQuotes, totals, agreedPrice } from '../app/ext-quotes.js';
 import assert from 'node:assert';
 const routes = {};
 const quote = { id: 7, agency_id: 1, client_id: 3, client: 'Türev Store', title: 'Site & bakım', currency: 'TRY', discount_pct: '15.00', status: 'taslak', valid_until: '2099-01-01', notes: 'Not <b>', comment: null, sent_at: null, created_at: new Date() };
@@ -31,3 +31,5 @@ calls = []; r = res(); await routes['POST /portal/teklifler/:id/karar'](ctx({ de
 assert.equal(r.status, 303); assert.equal(calls.filter(c => c.includes('INSERT INTO client_services')).length, 2, 'onayda hizmet eklenmeli');
 r = res(); await routes['POST /teklifler/:id/kalem'](ctx({ service_id: '5', qty: '2' }), r, { id: '7' }).catch(e => { assert.equal(e.status, 400); console.log('ok taslak değilken kalem eklenemez'); });
 console.log('TÜM TESTLER GEÇTİ');
+
+assert.equal(agreedPrice(3500, '10.00'), 3150, 'aylık hizmet indirimli anlaşılan fiyatla kaydedilir'); assert.equal(agreedPrice(6500, 0), 6500);

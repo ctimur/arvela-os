@@ -1,5 +1,7 @@
 // Arvela OS — teklif modülü: katalogdan kalem, TL/EUR, indirim, toplamlar, müşteri onayı.
 import { translateHtml } from './i18n.js';
+// Teklifte anlaşılan (indirimli) birim fiyat; aylık faturada da bu kullanılır.
+export const agreedPrice = (unit, disc) => Math.round(Number(unit || 0) * (1 - Number(disc || 0) / 100) * 100) / 100;
 const ST = { taslak: 'Taslak', gonderildi: 'Onay bekliyor', onaylandi: 'Onaylandı', reddedildi: 'Reddedildi' };
 const TONE = { taslak: '', gonderildi: 'warn', onaylandi: 'ok', reddedildi: 'bad' };
 const CUR = { TRY: 'TL', EUR: 'EUR' };
@@ -59,9 +61,10 @@ ${editable ? `<td><form class="inline" method="post" action="/teklifler/${x.id}/
     const rows = await all(`SELECT qt.*, c.name client FROM quotes qt JOIN clients c ON c.id=qt.client_id WHERE qt.agency_id=$1 ORDER BY qt.created_at DESC LIMIT 300`, [ctx.user.agency_id]);
     const its = rows.length ? await all('SELECT * FROM quote_items WHERE quote_id = ANY($1)', [rows.map(r => r.id)]) : [];
     const clients = await all(`SELECT id, name FROM clients WHERE agency_id=$1 ORDER BY name`, [ctx.user.agency_id]);
+    const pre = int(ctx.url?.searchParams.get('musteri')) || null;
     send(res, layout(ctx, 'Teklifler', `<h1>Teklifler</h1>
-<details class="card" id="yeni-teklif"${rows.length ? '' : ' open'}><summary>Yeni teklif</summary><form class="row" method="post" action="/teklifler">${csrfField(ctx)}
-<label>Müşteri<select name="client_id" required>${clients.map(c => `<option value="${c.id}">${h(c.name)}</option>`).join('')}</select></label>
+<details class="card" id="yeni-teklif"${rows.length && !pre ? '' : ' open'}><summary>Yeni teklif</summary><form class="row" method="post" action="/teklifler">${csrfField(ctx)}
+<label>Müşteri<select name="client_id" required>${clients.map(c => `<option value="${c.id}"${c.id === pre ? ' selected' : ''}>${h(c.name)}</option>`).join('')}</select></label>
 <label style="flex:1;min-width:220px">Başlık<input name="title" required placeholder="Web sitesi ve bakım"></label>
 <label>Para birimi<select name="currency"><option value="TRY">TL</option><option value="EUR">EUR</option></select></label><button class="gold">Oluştur</button></form></details>
 <div class="tbl"><table><tr><th>Teklif</th><th>Müşteri</th><th>Durum</th><th>İlk yıl</th><th>Tarih</th></tr>
@@ -133,7 +136,10 @@ ${x.status !== 'taslak' ? `<form method="post" action="/teklifler/${x.id}/kopya"
     need(ctx, 'admin'); const x = await draft(ctx, int(p.id));
     if (!(await itemsOf(x.id)).length) throw new HttpError(400, 'Kalemsiz teklif gönderilemez.');
     await q(`UPDATE quotes SET status='gonderildi', sent_at=now() WHERE id=$1`, [x.id]);
-    await audit(ctx, 'quote.send', { id: x.id, client: x.client_id }); go(res, `/teklifler/${x.id}`);
+    const ld = await one(`UPDATE clients SET stage='teklif' WHERE id=$1 AND status='lead' AND (stage IS NULL OR stage IN ('yeni','ulasildi','gorusme')) RETURNING id, stage`, [x.client_id]);
+    await audit(ctx, 'quote.send', { id: x.id, client: x.client_id });
+    if (ld) await audit(ctx, 'lead.stage', { id: ld.id, to: 'teklif', via: 'quote' });
+    go(res, `/teklifler/${x.id}`);
   });
   route('POST', '/teklifler/:id/geri', async (ctx, res, p) => {
     need(ctx, 'admin'); const x = await quoteFor(ctx, int(p.id));
@@ -144,7 +150,7 @@ ${x.status !== 'taslak' ? `<form method="post" action="/teklifler/${x.id}/kopya"
   route('POST', '/teklifler/:id/kopya', async (ctx, res, p) => {
     need(ctx, 'admin'); const x = await quoteFor(ctx, int(p.id));
     const r = await one(`INSERT INTO quotes (agency_id, client_id, title, currency, discount_pct, notes, created_by, valid_until) VALUES ($1,$2,$3,$4,$5,$6,$7, CURRENT_DATE + 14) RETURNING id`,
-      [x.agency_id, x.client_id, `${x.title} (kopya)`, x.currency, x.discount_pct, x.notes, ctx.user.id]);
+      [x.agency_id, x.client_id, String(x.title).replace(/\s*\(kopya\)$/, ''), x.currency, x.discount_pct, x.notes, ctx.user.id]);
     await q('INSERT INTO quote_items (quote_id, service_id, name, billing, unit, qty, unit_price, sort) SELECT $1, service_id, name, billing, unit, qty, unit_price, sort FROM quote_items WHERE quote_id=$2', [r.id, x.id]);
     await audit(ctx, 'quote.copy', { from: x.id, id: r.id }); go(res, `/teklifler/${r.id}`);
   });
@@ -180,9 +186,16 @@ ${x.status === 'gonderildi' ? (expired ? `<div class="err">Bu teklifin geçerlil
     if (!x) throw new HttpError(404, 'Teklif bulunamadı, süresi dolmuş ya da zaten karar verilmiş.');
     if (dcs === 'onaylandi') {
       for (const i of await itemsOf(x.id)) {
-        if (i.service_id) await q(`INSERT INTO client_services (agency_id, client_id, service_id, status, notes) VALUES ($1,$2,$3,'kurulum',$4)`, [x.agency_id, x.client_id, i.service_id, `Teklif #${x.id} ile onaylandı`]);
+        if (i.service_id) await q(`INSERT INTO client_services (agency_id, client_id, service_id, status, notes, qty, unit_price, currency, quote_id) VALUES ($1,$2,$3,'kurulum',$4,$5,$6,$7,$8)`,
+          [x.agency_id, x.client_id, i.service_id, `Teklif #${x.id} ile onaylandı`, Number(i.qty) || 1, agreedPrice(i.unit_price, x.discount_pct), x.currency, x.id]);
       }
     }
-    await audit(ctx, 'quote.decide', { id: x.id, decision: dcs }); go(res, `/portal/teklifler/${x.id}`);
+    await audit(ctx, 'quote.decide', { id: x.id, decision: dcs });
+    if (dcs === 'onaylandi') { // teklifi onaylayan aday müşteriye döner (Satış hattında "Kazanıldı")
+      const w = await one(`UPDATE clients SET status='active', stage='kazanildi', won_at=now(), next_action=NULL, next_action_at=NULL WHERE id=$1 AND status='lead' RETURNING id, name`, [x.client_id]);
+      if (w) { await q('INSERT INTO client_notes (client_id, user_id, kind, body) VALUES ($1,NULL,$2,$3)', [w.id, 'not', `Teklif #${x.id} onaylandı; aday aktif müşteriye çevrildi.`]);
+        await audit(ctx, 'lead.won', { id: w.id, name: w.name, via: 'quote' }); await audit(ctx, 'client.create', { id: w.id, name: w.name, from: 'lead' }); }
+    }
+    go(res, `/portal/teklifler/${x.id}`);
   });
 }

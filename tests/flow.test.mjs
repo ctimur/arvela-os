@@ -39,4 +39,8 @@ assert.equal(plan.at(-1).due_date, '2026-11-06');
 const cb = clientBody('Rol: Müşteri · İnsan (yapay zekâ destekli) · Karar: Onay / revizyon · n8n: Karar hatırlatma\nÇıktı: Yayın onayı\nKabul: Karar kaydı', 'Test');
 assert.ok(!/Rol:|n8n|yapay/.test(cb)); assert.ok(cb.includes('Onayınıza sunulan: Yayın onayı') && cb.includes('Tamamlanan önceki adım: Test'));
 assert.equal(clientBody('', null), null);
+const cb2 = clientBody('Rol: Müşteri\nÇıktı: Onaylı takvim\nKabul: Karar kaydı var', 'Ekip düzenlemesi', { prevDesc: 'Rol: Ekip\nÇıktı: Düzeltilmiş takvim\nKabul: Sütun oranları tutuyor', lastComment: 'Yılbaşı gönderileri ekleyin' });
+assert.match(cb2, /Onayınıza sunulan: Düzeltilmiş takvim/, 'müşteri önceki aşamanın çıktısını onaylar');
+assert.ok(!/Karar kaydı/.test(cb2) && !/Sütun oranları/.test(cb2), 'iç kabul ölçütleri müşteriye gösterilmez');
+assert.match(cb2, /Düzeltme turu: .*Yılbaşı/, 'düzeltme turunda önceki not hatırlatılır');
 console.log('flow: ok');

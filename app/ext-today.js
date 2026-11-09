@@ -156,7 +156,7 @@ export function registerToday({ all, one, h, layout, need, STAFF, forgePending, 
     ]);
     const money = (n) => Number(n || 0).toLocaleString(locale(), { maximumFractionDigits: 0 }) + ' TL';
     const kpis = [
-      ...(admin ? [['Bu ay tahsil edilen', money(kp?.paid), 'TL faturalar, ödendi']] : [['Tamamladığınız görev', String(done.n), 'toplam']]),
+      ...(admin ? [['Bu ay tahsil edilen', money(kp?.paid), 'ödenen faturalar']] : [['Tamamladığınız görev', String(done.n), 'toplam']]),
       ['Açık proje', String(kp?.open_p ?? 0), kp?.late_t ? t`${kp.late_t} görev gecikmiş` : 'gecikme yok'],
       ['Bu hafta teslim', String(kp?.week_t ?? 0), 'önümüzdeki 7 gün'],
       ['Müşteride bekleyen', String(approvals.length), 'onay ya da karar'],

@@ -30,7 +30,7 @@ registerCrm({ route: (m, p, fn) => { routes[`${m} ${p}`] = fn; }, all: async () 
 const ctx = (body, role = 'staff') => ({ user: { id: 1, agency_id: 1, role }, body, url: new URL('http://x/satis') });
 await routes['POST /satis'](ctx({ name: 'Yeni Firma', phone: '0532', lead_source: 'web', call_at: '2026-11-10T14:30', value_estimate: '20000' }), {});
 const ins = writes.find(w => w[0].startsWith('INSERT INTO clients'));
-assert.equal(ins[1][6], 'gorusme', 'ön görüşme saati varsa aşama ön görüşme'); assert.equal(ins[1][12], null, 'çalışan değer giremez');
+assert.equal(ins[1][6], 'gorusme', 'ön görüşme saati varsa aşama ön görüşme'); assert.equal(ins[1][11], null, 'çalışan değer giremez'); assert.equal(ins[1][12], 1, 'ekip üyesinin açtığı aday ona atanır');
 assert.equal(audits.at(-1)[0], 'lead.create'); assert.equal(to, '/satis/9');
 await routes['POST /satis/:id/not'](ctx({ kind: 'arama', body: 'Aradım, perşembe görüşelim', next_action: 'Görüşme', next_action_at: '2026-11-12T11:00' }), {}, { id: '9' });
 const upd = writes.find(w => w[0].startsWith('UPDATE clients SET next_action'));

@@ -21,7 +21,7 @@ import { registerDecisions, migrateDecisions, parseMultipart, decisionForm, pars
 import { THEMES } from './themes.js';
 import { NAV_CSS, DARK_CSS, NAV_ICON, navGroups } from './ext-look.js';
 
-const VERSION = '0.27.0';
+const VERSION = '0.28.0';
 let settingsApi = null;
 let notify = null;
 const PORT = Number(process.env.PORT || 3000);
@@ -108,12 +108,13 @@ function safeEqual(a, b) {
   return x.length === y.length && crypto.timingSafeEqual(x, y);
 }
 const loginHits = new Map();
-function rateLimited(ip) {
-  const now = Date.now(); const win = 15 * 60 * 1000;
-  const list = (loginHits.get(ip) || []).filter(t => now - t < win);
-  list.push(now); loginHits.set(ip, list);
-  return list.length > 10;
-}
+// Giriş sınırı: yalnız BAŞARISIZ denemeler sayılır; hem IP hem e-posta için ayrı sayaç (paylaşılan ofis IP'si kilitlenmez,
+// tek hesaba dağıtık deneme de durur). 15 dakikada IP başına 20, e-posta başına 8 başarısız deneme.
+const failCount = (key) => { const now = Date.now(); const l = (loginHits.get(key) || []).filter(t => now - t < 15 * 60 * 1000); loginHits.set(key, l); return l.length; };
+const failHit = (key) => { failCount(key); loginHits.get(key).push(Date.now()); };
+function rateLimited(ip, email = '') { return failCount('ip:' + ip) >= 20 || (email && failCount('em:' + email.toLowerCase()) >= 8); }
+// İstemci IP'si: Traefik X-Forwarded-For'un SONUNA gerçek adresi ekler; baştaki değerler istemcinin uydurabileceği şeylerdir.
+const clientIp = (req) => { const x = String(req.headers['x-forwarded-for'] || '').split(',').map(s => s.trim()).filter(Boolean); return x.at(-1) || req.socket.remoteAddress; };
 function validPassword(pw) { return typeof pw === 'string' && pw.length >= 10; }
 
 // ---------- HTML ----------
@@ -122,7 +123,7 @@ const escHtml = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;',
 const h = (v) => lang() === 'en' ? M1 + escHtml(exact(v ?? '')) + M2 : escHtml(v);
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString(locale()) : '—';
 const fmtMoney = (n) => n == null ? '—' : new Intl.NumberFormat(locale()).format(n);
-const ROLE = { admin: 'Yönetici', staff: 'Çalışan', freelancer: 'Freelancer', client: 'Müşteri' };
+const ROLE = { admin: 'Yönetici', staff: 'Ekip üyesi', freelancer: 'Freelancer', client: 'Müşteri' };
 const CLIENT_ST = { lead: 'Aday', active: 'Aktif', paused: 'Duraklatıldı', churned: 'Ayrıldı' };
 const CS_ST = { teklif: 'Teklifte', kurulum: 'Kurulumda', aktif: 'Aktif', durduruldu: 'Durduruldu' };
 const PR_ST = { planlandi: 'Planlandı', surecte: 'Süreçte', onayda: 'Onayda', tamamlandi: 'Tamamlandı' };
@@ -377,7 +378,7 @@ ${side}<div class="shell${u ? '' : ' bare'}">${top}
 <main id="icerik" class="${insp ? 'has-insp' : ''}"><div class="page-main">${flash}${main}</div>${insp}</main></div>${staffish ? cmdk(u) : ''}<script src="/app.js?v=${VERSION}" defer></script></body></html>`;
 }
 const cmdk = (u) => {
-  const items = [['/satis#yeni-aday', 'Yeni aday', 'A'], ['/paketler#yeni-paket', 'Yeni iş paketi', ''], ...(u.role === 'admin' ? [['/teklifler#yeni', 'Yeni teklif', 'T']] : []),
+  const items = [['/satis#yeni-aday', 'Yeni aday', 'A'], ['/paketler#yeni-paket', 'Yeni iş paketi', ''], ...(u.role === 'admin' ? [['/teklifler#yeni-teklif', 'Yeni teklif', 'T']] : []),
     ['/panel', 'Bugün', 'G B'], ['/satis', 'Satış hattı', 'G S'], ['/musteriler', 'Müşteriler', 'G M'], ['/gorevler', 'Görevlerim', 'G G'], ['/onaylar', 'Müşteri kararları', ''], ['/projeler', 'Projeler', ''],
     ['/paketler', 'İş paketleri', ''], ['/siteler', 'Siteler', ''], ...(u.role === 'admin' ? [['/faturalar', 'Faturalar', ''], ['/odemeler', 'Freelancer ödemeleri', ''], ['/forge', 'Forge', '']] : [])];
   return `<dialog class="cmdk" id="cmdk" aria-label="Komut paleti"><form method="get" action="/ara" role="search"><input type="search" name="q" placeholder="Ara ya da komut seç…" aria-label="Ara ya da komut seç" autocomplete="off"></form><nav>${items.map(([href, t, k]) => `<a href="${href}">${t}${k ? `<span>${k}</span>` : ''}</a>`).join('')}</nav><p class="hint">Enter: aç ya da ara · Esc: kapat · ⌘K / Ctrl+K: her yerden aç</p></dialog>`;
@@ -508,10 +509,10 @@ route('GET', '/giris', async (ctx, res) => {
 <button class="gold">Giriş yap</button></form>`));
 });
 route('POST', '/giris', async (ctx, res) => {
-  const ip = ctx.req.headers['x-forwarded-for']?.split(',')[0].trim() || ctx.req.socket.remoteAddress;
-  if (rateLimited(ip)) return send(res, 429, authPage('Giriş', `<div class="err">Çok fazla deneme. 15 dakika sonra tekrar deneyin.</div>`));
+  const ip = clientIp(ctx.req); const em = String(ctx.body.email || '').trim().slice(0, 200);
+  if (rateLimited(ip, em)) return send(res, 429, authPage('Giriş', `<div class="err">Çok fazla deneme. 15 dakika sonra tekrar deneyin.</div>`));
   const u = await one('SELECT * FROM users WHERE lower(email)=lower($1) AND active', [ctx.body.email || '']);
-  if (!u || !checkPassword(ctx.body.password || '', u.pass_hash)) return send(res, 401, authPage('Giriş', `<div class="err">E-posta ya da şifre hatalı.</div><a href="/giris">Tekrar dene</a>`));
+  if (!u || !checkPassword(ctx.body.password || '', u.pass_hash)) { failHit('ip:' + ip); if (em) failHit('em:' + em.toLowerCase()); return send(res, 401, authPage('Giriş', `<div class="err">E-posta ya da şifre hatalı.</div><a href="/giris">Tekrar dene</a>`)); }
   const sid = token(); const csrf = token(16);
   await q(`INSERT INTO sessions (id, user_id, csrf, expires_at) VALUES ($1,$2,$3, now() + interval '${SESSION_DAYS} days')`, [sid, u.id, csrf]);
   await q('UPDATE users SET last_login=now() WHERE id=$1', [u.id]);
@@ -593,10 +594,11 @@ route('GET', '/musteriler/:id', async (ctx, res, p) => {
 
 `;
   const REST = `<section class="card" id="hizmetler"><h2>Hizmetler</h2>
-${svcs.length ? svcs.map(s => `<div class="svc"><div class="svc-h"><span class="grow"><strong><a href="/hizmet/${s.id}/kitap">${h(s.code)} · ${h(s.name)}</a>${s.playbook ? ' ' + badge('Özel kitap', 'warn') : ''}</strong><span class="muted">${h(s.billing || '')}${s.start_date ? ' · başlangıç ' + fmtDate(s.start_date) : ''}${s.end_date ? ' · bitiş ' + fmtDate(s.end_date) : ''}${s.notes ? ' · ' + h(s.notes) : ''}</span></span>
+${svcs.length ? svcs.map(s => `<div class="svc"><div class="svc-h"><span class="grow"><strong><a href="/hizmet/${s.id}/kitap">${h(s.code)} · ${h(s.name)}</a>${s.playbook ? ' ' + badge('Özel kitap', 'warn') : ''}</strong><span class="muted">${h(s.billing || '')}${s.unit_price != null ? ` · ${Number(s.qty || 1) !== 1 ? Number(s.qty) + ' × ' : ''}${Number(s.unit_price).toLocaleString('tr-TR')} ${s.currency === 'EUR' ? '€' : 'TL'}` : ''}${s.start_date ? ' · başlangıç ' + fmtDate(s.start_date) : ''}${s.end_date ? ' · bitiş ' + fmtDate(s.end_date) : ''}${s.notes ? ' · ' + h(s.notes) : ''}</span></span>
 <form class="inline-status" method="post" action="/hizmet/${s.id}">${f}<select name="status" data-auto aria-label="Durum">${opts(CS_ST, s.status)}</select><button class="ghost">Kaydet</button></form></div>
 <details><summary>Düzenle</summary><form class="stack" method="post" action="/hizmet/${s.id}">${f}<div class="row"><label>Durum<select name="status">${opts(CS_ST, s.status)}</select></label><label>Başlangıç<input type="date" name="start_date" value="${s.start_date ? new Date(s.start_date).toISOString().slice(0, 10) : ''}"></label><label>Bitiş<input type="date" name="end_date" value="${s.end_date ? new Date(s.end_date).toISOString().slice(0, 10) : ''}"></label></div>
-<label>Not<input name="notes" value="${h(s.notes)}" placeholder="Paket ayrıntısı, özel fiyat, kapsam"></label><div class="row"><button>Kaydet</button></div></form>
+<div class="row"><label>Adet<input name="qty" inputmode="decimal" value="${s.qty != null ? Number(s.qty) : ''}" placeholder="1"></label><label>Anlaşılan birim fiyat (KDV hariç)<input name="unit_price" inputmode="decimal" value="${s.unit_price != null ? Number(s.unit_price) : ''}" placeholder="Boşsa katalog fiyatı"></label></div>
+<label>Not<input name="notes" value="${h(s.notes)}" placeholder="Paket ayrıntısı, kapsam"></label><p class="muted" style="margin:0">Aylık faturada adet × anlaşılan fiyat kullanılır; boşsa katalog fiyatı.</p><div class="row"><button>Kaydet</button></div></form>
 ${ctx.user.role === 'admin' ? `<form method="post" action="/hizmet/${s.id}/sil" data-confirm="Bu hizmet kaydı silinsin mi?">${f}<button class="danger">Kaydı sil</button></form>` : ''}</details></div>`).join('') : '<p class="muted">Bu müşteriye henüz hizmet eklenmedi.</p>'}
 <details class="add"><summary>Hizmet ekle</summary><form class="row" method="post" action="/musteriler/${c.id}/hizmet">${f}<label style="flex:1;min-width:260px">Katalogdan modül<select name="service_id" required>${catalog.map(s => `<option value="${s.id}">${h(s.cat)} — ${h(s.code)} ${h(s.name)}</option>`).join('')}</select></label>
 <label>Durum<select name="status">${opts(CS_ST, 'teklif')}</select></label><label>Başlangıç<input type="date" name="start_date"></label><button class="gold">Ekle</button></form></details></section>
@@ -679,10 +681,10 @@ route('GET', '/ekip', async (ctx, res) => {
   const rows = await all(`SELECT u.*, c.name client FROM users u LEFT JOIN clients c ON c.id=u.client_id WHERE u.agency_id=$1 ORDER BY u.role, u.name`, [ctx.user.agency_id]);
   const f = csrfField(ctx);
   send(res, 200, layout(ctx, 'Ekip', `<h1>Ekip ve erişim</h1>
-<div class="grid"><div class="card"><h3>Yönetici</h3><p class="muted">Her şeyi görür; fiyatları, ekibi ve kayıtları yönetir.</p></div><div class="card"><h3>Çalışan</h3><p class="muted">Müşteri, proje, görev ve onayları yönetir; fiyatları ve ekibi göremez.</p></div>
+<div class="grid"><div class="card"><h3>Yönetici</h3><p class="muted">Her şeyi görür; fiyatları, ekibi ve kayıtları yönetir.</p></div><div class="card"><h3>Ekip üyesi</h3><p class="muted">Müşteri, proje, görev ve onayları yönetir; fiyatları ve ekibi göremez.</p></div>
 <div class="card"><h3>Freelancer</h3><p class="muted">Yalnızca kendisine atanan görevleri görür ve günceller.</p></div><div class="card"><h3>Müşteri</h3><p class="muted">Yalnızca kendi hizmetlerini, projelerini ve onaylarını görür.</p></div></div>
 <details class="card"><summary>Ekip üyesi ekle</summary><form class="row" method="post" action="/ekip">${f}<label>Ad soyad<input name="name" required></label><label>E-posta<input type="email" name="email" required></label>
-<label>Rol<select name="role"><option value="staff">Çalışan</option><option value="freelancer">Freelancer</option><option value="admin">Yönetici</option></select></label>
+<label>Rol<select name="role"><option value="staff">Ekip üyesi</option><option value="freelancer">Freelancer</option><option value="admin">Yönetici</option></select></label>
 <label>İlk şifre<input name="password" required minlength="10" autocomplete="off"></label><button class="gold">Ekle</button></form><p class="muted">Müşteri hesapları müşteri sayfasından açılır.</p></details>
 <div class="tbl"><table><tr><th>Ad</th><th>E-posta</th><th>Rol</th><th>Firma</th><th>Son giriş</th><th></th></tr>
 ${rows.map(u => `<tr><td>${h(u.name)}</td><td>${h(u.email)}</td><td>${ROLE[u.role]}</td><td>${h(u.client || '—')}</td><td>${fmtDate(u.last_login)}</td>

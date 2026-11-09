@@ -92,7 +92,7 @@ ${items.map(i => `<tr><td>${h(i.name)}</td><td>${editable ? `<form class="row" m
 <p class="muted" style="margin:0">Resmî e-Arşiv / e-Fatura muhasebe yazılımınızdan kesilir; numarasını faturaya yazabilirsiniz. Tutarlar TL toplamlarıdır.</p>
 <div class="grid">${stat(pending, 'Ödeme bekleniyor')}${stat(late, 'Gecikmiş', '#7A2418')}${stat(paid, 'Bu ay tahsil edilen', '#24502B')}</div>
 <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
-<form class="card" method="post" action="/faturalar/aylik">${f}<h3>Aylık faturaları oluştur</h3><p class="muted" style="margin:0">Aktif aylık hizmeti olan her müşteri için katalog fiyatıyla taslak açılır. O ay için faturası olan müşteri atlanır.</p>
+<form class="card" method="post" action="/faturalar/aylik">${f}<h3>Aylık faturaları oluştur</h3><p class="muted" style="margin:0">Aktif aylık hizmeti olan her müşteri için teklifte anlaşılan adet ve fiyatla (yoksa katalog fiyatıyla) taslak açılır. O ay için faturası olan müşteri atlanır.</p>
 <div class="row"><label>Dönem<input type="month" name="period" value="${month}" required></label><button class="gold">Taslakları oluştur</button></div></form>
 <form class="card" method="post" action="/faturalar/tekliften">${f}<h3>Onaylı tekliften</h3>${approved.length ? `<label>Teklif<select name="quote_id">${approved.map(x => `<option value="${x.id}">#${x.id} · ${h(x.title)} · ${h(x.client)}</option>`).join('')}</select></label><div><button class="gold">Fatura taslağı</button></div>` : '<p class="muted" style="margin:0">Faturalanmamış onaylı teklif yok.</p>'}</form>
 <form class="card" method="post" action="/faturalar">${f}<h3>Boş fatura</h3><label>Müşteri<select name="client_id">${clients.map(c => `<option value="${c.id}">${h(c.name)}</option>`).join('')}</select></label><div><button class="ghost">Oluştur</button></div></form></div>
@@ -110,12 +110,12 @@ ${view.map(x => `<tr><td><a href="/faturalar/${x.id}">${h(x.number)}</a></td><td
   route('POST', '/faturalar/aylik', async (ctx, res) => {
     need(ctx, 'admin'); const period = String(ctx.body.period || '');
     if (!/^\d{4}-\d{2}$/.test(period)) throw new HttpError(400, 'Dönem geçersiz.');
-    const rows = await all(`SELECT cs.client_id, s.id service_id, s.code, s.name, s.price_try FROM client_services cs JOIN services s ON s.id=cs.service_id
-      WHERE cs.agency_id=$1 AND cs.status='aktif' AND s.billing='Aylık' AND s.price_try IS NOT NULL
+    const rows = await all(`SELECT cs.client_id, s.id service_id, s.code, s.name, COALESCE(cs.unit_price, s.price_try) price_try, COALESCE(cs.qty, 1) qty, COALESCE(cs.currency, 'TRY') currency FROM client_services cs JOIN services s ON s.id=cs.service_id
+      WHERE cs.agency_id=$1 AND cs.status='aktif' AND s.billing='Aylık' AND COALESCE(cs.unit_price, s.price_try) IS NOT NULL
       AND NOT EXISTS (SELECT 1 FROM invoices i WHERE i.client_id=cs.client_id AND i.period=$2 AND i.status<>'iptal') ORDER BY cs.client_id, s.code`, [ctx.user.agency_id, period]);
     const byClient = new Map();
-    for (const r of rows) { if (!byClient.has(r.client_id)) byClient.set(r.client_id, []); byClient.get(r.client_id).push({ service_id: r.service_id, name: `${r.code} · ${r.name} (${period})`, unit_price: r.price_try }); }
-    for (const [clientId, items] of byClient) await createInvoice(ctx, { clientId, period, items });
+    for (const r of rows) { const key = `${r.client_id}|${r.currency}`; if (!byClient.has(key)) byClient.set(key, []); byClient.get(key).push({ service_id: r.service_id, name: `${r.code} · ${r.name} (${period})`, qty: Number(r.qty) || 1, unit_price: Number(r.price_try) }); }
+    for (const [key, items] of byClient) { const [clientId, currency] = key.split('|'); await createInvoice(ctx, { clientId: Number(clientId), period, currency, items }); }
     await audit(ctx, 'invoice.monthly', { period, count: byClient.size });
     go(res, '/faturalar?durum=taslak');
   });
@@ -156,7 +156,7 @@ ${editable ? `<form class="row" method="post" action="/faturalar/${x.id}/kalem">
 <section style="flex:1 1 300px;display:flex;flex-direction:column;gap:16px">${totalsCard(x, items)}
 ${editable ? `<form class="card" method="post" action="/faturalar/${x.id}/ayar">${f}<h3>Ayarlar</h3><div class="row"><label>Düzenleme<input type="date" name="issue_date" value="${dateIn(x.issue_date)}"></label><label>Vade<input type="date" name="due_date" value="${dateIn(x.due_date)}"></label></div>
 <label>KDV (%)<input type="number" name="vat_pct" min="0" max="100" step="1" value="${Number(x.vat_pct)}"></label><label>Resmî fatura no<input name="official_no" value="${h(x.official_no)}"></label><label>Not<textarea name="notes" rows="2">${h(x.notes)}</textarea></label><button class="ghost">Kaydet</button></form>
-<form method="post" action="/faturalar/${x.id}/gonder">${f}<button class="gold" style="width:100%"${items.length && t.total > 0 ? '' : ' disabled'}>Müşteriye gönder</button></form>` : ''}
+${s.iban ? '' : '<p class="err" style="margin:0">Havale bilgisi (IBAN) girilmemiş; müşteri nereye ödeyeceğini göremez. <a href="/faturalar/ayarlar">Havale bilgilerini girin</a>.</p>'}<form method="post" action="/faturalar/${x.id}/gonder">${f}<button class="gold" style="width:100%"${items.length && t.total > 0 && s.iban ? '' : ' disabled'}>Müşteriye gönder</button></form>` : ''}
 ${x.status === 'gonderildi' ? `<form class="card" method="post" action="/faturalar/${x.id}/odendi">${f}<h3>Ödemeyi kaydet</h3><div class="row"><label>Tarih<input type="date" name="paid_at" value="${new Date().toISOString().slice(0, 10)}" required></label><label>Tutar<input type="number" name="paid_amount" min="0" value="${t.total}" required style="width:130px"></label></div>
 <label>Havale açıklaması / dekont<input name="payment_ref" placeholder="${h(x.number)}"></label><button class="gold">Ödendi olarak işaretle</button></form>` : ''}
 ${x.status === 'odendi' ? `<div class="card"><h3>Ödeme</h3><p style="margin:0">${fmtDate(x.paid_at)} · ${money(x.paid_amount, x.currency)}${x.payment_ref ? ` · ${h(x.payment_ref)}` : ''}</p>${x.paid_amount !== t.total ? `<p class="err" style="margin:0">Fatura toplamı ${money(t.total, x.currency)}; fark ${money(t.total - x.paid_amount, x.currency)}.</p>` : ''}</div>` : ''}
@@ -187,6 +187,7 @@ ${['taslak', 'gonderildi'].includes(x.status) ? `<form method="post" action="/fa
   route('POST', '/faturalar/:id/gonder', async (ctx, res, p) => {
     need(ctx, 'admin'); const x = await draft(ctx, int(p.id));
     if (invoiceTotals(x, await itemsOf(x.id)).total <= 0) throw new HttpError(400, 'Tutarı sıfır olan fatura gönderilemez.');
+    if (!(await settingsOf(ctx.user.agency_id)).iban) throw new HttpError(400, 'Önce havale bilgilerini (IBAN) girin: Faturalar › Havale bilgileri. Müşteri ödemeyi bu hesaba yapar.');
     await q(`UPDATE invoices SET status='gonderildi', sent_at=now() WHERE id=$1`, [x.id]);
     await audit(ctx, 'invoice.send', { id: x.id }); go(res, `/faturalar/${x.id}`);
   });

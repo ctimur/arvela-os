@@ -1259,5 +1259,7 @@
 "Süz": "Filter",
 "Yalnız aylık bir hizmetten başlatılmış projede kullanılabilir.": "Only available for projects started from a monthly service.",
 "Aylık hizmet: kitap, aşamalar ve aşama sorumluları yeni dönem projesine taşınır; bu proje olduğu gibi kalır.": "Monthly service: the playbook, stages and stage owners carry over to the new period project; this project stays as it is.",
-"Sonraki ayı başlat": "Start next month"
+"Sonraki ayı başlat": "Start next month",
+"Ekip üyesi": "Team member",
+"ödenen faturalar": "paid invoices"
 }
