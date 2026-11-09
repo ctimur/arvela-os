@@ -27,7 +27,7 @@ assert.ok(a.some(x => x.title.includes('aylık faturaları')));
 const s = buildActions(d, { admin: false, now });
 assert.ok(!s.some(x => ['Havale', 'Gecikmiş fatura', 'Teklif · taslak', 'Fatura'].includes(x.tag)), 'çalışan para işlerini görmez');
 const p = buildPulse(d);
-assert.deepEqual(p.map(x => x.label), ['Site sorunu', 'Ödeme gecikti', 'Onay bekliyor', 'Sağlıklı']);
+assert.deepEqual(p.map(x => x.label), ['Site sorunu', 'Ödeme gecikti', 'Karar bekliyor', 'Sağlıklı']);
 assert.equal(a.find(x => x.tag === 'Görev · gecikti').actions[0][1], '/gorev/3');
 console.log('today: ok');
 

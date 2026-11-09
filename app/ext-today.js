@@ -79,7 +79,7 @@ export function buildPulse(d) {
   for (const c of d.clients || []) put(c.id, c.name, 0, 'ok', 'Sağlıklı');
   for (const s of d.sites || []) if (s.client_id) { const hl = siteHealth(s); if (hl.label === 'Acil') put(s.client_id, s.client, 4, 'bad', s.ssl_status === 'expired' ? 'SSL doldu' : s.ssl_status === 'failed' ? 'SSL yok' : 'Site sorunu'); else if (hl.label === 'Güncelleme') put(s.client_id, s.client, 2, 'warn', 'Güncelleme'); }
   for (const i of d.overdue || []) put(i.client_id, i.client, 3, 'bad', 'Ödeme gecikti');
-  for (const a of d.approvals || []) put(a.client_id, a.client, 1, 'warn', 'Onay bekliyor');
+  for (const a of d.approvals || []) put(a.client_id, a.client, 1, 'warn', 'Karar bekliyor');
   return [...m.values()].sort((a, b) => b.rank - a.rank || a.name.localeCompare(b.name, 'tr'));
 }
 

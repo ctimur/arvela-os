@@ -6,7 +6,7 @@
   ".stack-col{display:flex;flex-direction:column;gap:16px;min-width:0}.note.sys{background:var(--soft);border-radius:10px;padding:10px 12px}.note.sys .note-h strong{color:var(--acc-t)}details.more>summary{font-size:13px;color:var(--acc-t)}",
   "  globe: '<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z\"/>',",
   "function layout(ctx, title, body, active = '') {",
-  "    ['/panel', 'Bugün', 'G B'], ['/satis', 'Satış hattı', 'G S'], ['/musteriler', 'Müşteriler', 'G M'], ['/gorevler', 'Görevlerim', 'G G'], ['/onaylar', 'Onaylar', ''], ['/projeler', 'Projeler', ''],",
+  "    ['/panel', 'Bugün', 'G B'], ['/satis', 'Satış hattı', 'G S'], ['/musteriler', 'Müşteriler', 'G M'], ['/gorevler', 'Görevlerim', 'G G'], ['/onaylar', 'Müşteri kararları', ''], ['/projeler', 'Projeler', ''],",
   "const nn = (v) => (v === undefined || v === null || String(v).trim() === '') ? null : String(v).trim();",
   "<label>Not<textarea name=\"notes\" rows=\"2\"></textarea></label><div><button class=\"gold\">Kaydet</button></div></form></details>",
   "${prjs.length ? `<div class=\"tbl\"><table><tr><th>Proje</th><th>Durum</th><th>İlerleme</th><th>Teslim</th></tr>${prjs.map(p => `<tr><td><a href=\"/projeler/${p.id}\">${h(p.name)}</a></td><td>${badge(PR_ST[p.status])}</td><td>${p.done}/${p.total}</td><td>${fmtDate(p.due_date)}</td></tr>`).join('')}</table></div>` : '<p class=\"muted\">Proje yok.</p>'}",
@@ -57,7 +57,8 @@
   "\"İş paketine süre kaydedildi\": \"Time logged on work package\",",
   "\"Otomasyon\": \"Automation\",",
   "\"Tüm aşamalar bitti\": \"All stages done\",",
-  "\"Henüz sonuç yok.\": \"No result yet.\","
+  "\"Henüz sonuç yok.\": \"No result yet.\",",
+  "\"Açılır kapanır (akordiyon)\": \"Collapsible (accordion)\","
  ],
  "ext-sync.js": [],
  "ext-automation.js": [
