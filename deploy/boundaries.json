@@ -102,30 +102,10 @@
  ],
  "ext-settings.js": [],
  "ext-playbooks.js": [
+  "    const desc = [`Rol: ${ROLES[s.rol]} · ${AUTO[s.otomasyon]}${s.karar ? ' · Karar: ' + DECISIONS[s.karar] : ''}${s.akis ? ' · n8n: ' + akisName(s.akis) : ''}`, s.cikti && `Çıktı: ${s.cikti}`, s.kontrol && `Kabul: ${s.kontrol}`].filter(Boolean).join('\\n');",
   "<section class=\"card\"><h2>Aşamalar</h2><div class=\"tbl\"><table><tr><th>#</th><th>Aşama</th><th>Kim</th><th>Otomasyon</th><th>Gün</th><th>Karar</th><th>Çıktı ve kabul</th></tr>",
   "    send(res, 200, layout(ctx, s.name, `<nav class=\"crumb\"><a href=\"/katalog\">Katalog</a> › ${h(s.cat)}</nav><div class=\"page-head\"><div><p class=\"eyebrow\">${h(s.code)} · ${h(s.sub || '')}</p><h1>${h(s.name)}</h1>",
   "    await audit(ctx, 'project.playbook', { id: pr.id, edited: true }); redirect(res, `/projeler/${pr.id}/kitap`);"
- ],
- "playbooks.json": [
-  "    \"Site haritası çıktısı JSON (sayfa, amaç, eylem, bölümler) olarak projeye kaydedilir; WEB-02 bu dosyayla başlar.\"",
-  "    \"Müşteri yorumlarını revizyon listesine çevirir, kapsam dışı olanları ayırır.\"",
-  "    \"kabul\": \"Test başvurusu Arvela OS satış hattında görünüyor\"",
-  "  \"ozet\": \"8 sayfaya kadar kurumsal web sitesi: tasarım sistemine göre geliştirme, içerik girişi, form, ölçüm, KVKK ve yayın. Site Arvela OS'te \\\"Siteler\\\" kaydıyla izlenir.\",",
-  "    \"Müşterinin revizyon e-postalarını/yorumlarını madde madde göreve çevirir.\"",
-  "     \"amac\": \"Alternatif: Asya dilleri için karşılaştırma\"",
-  "    \"ad\": \"İletişim izni metni (İYS)\",",
-  "    \"kontrol\": \"Aday Arvela OS'te\"",
-  "    \"kontrol\": \"Eksik alan yok\"",
-  "    \"ad\": \"Otomatik kontrol\",",
-  "    \"onlem\": \"Sağlayıcı süreci müşteriye bağlı; takvim karar kaydına göre kayar\"",
-  "  \"ozet\": \"Pazaryeri entegrasyonu (Trendyol, Hepsiburada, Amazon TR): ürün, stok, fiyat ve sipariş eşitlemesi.\",",
-  "    \"onlem\": \"Kurallar mali müşavir onayı olmadan canlıya alınmaz\"",
-  "  \"ozet\": \"Web uygulaması / müşteri portalı: ihtiyaç analizi, tasarım, geliştirme, test ve yayın. Sprint'lerle yürütülür.\",",
-  "   \"Hata kuyruğu ve uyarılar\",",
-  "    \"onlem\": \"Sürüm değişince önbellek yenilenir\"",
-  "    \"Aylık raporu müşteri diliyle yazar; aksiyon gerektiren bir şey yoksa \\\"her şey yolunda\\\" der.\"",
-  "    \"ad\": \"İyileştirmeler\",",
-  "    \"Claude e-posta/WhatsApp talebini okuyup görev, kabul ölçütü ve süre tahmini taslağı çıkarır.\""
  ],
  "ext-flow.js": [
   "      await audit(ctx, 'approval.request', { id: ap.id, client: p.client_id, task: x.id, via: 'flow' });",

@@ -11,7 +11,8 @@ import hashlib, json, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 APP, OUT = ROOT / 'app', ROOT / 'chunks'
-FILES = ['server.js', 'package.json', 'seed-catalog.json', 'ext-sites.js', 'import-sites.json', 'ext-quotes.js', 'ext-invoices.js', 'ext-today.js', 'ext-work.js', 'i18n.js', 'i18n-en.json', 'ext-sync.js', 'ext-automation.js', 'n8n-seed.json', 'ext-forge.js', 'ext-crm.js', 'ext-freelance.js', 'ext-retention.js', 'themes.js', 'ext-settings.js', 'ext-playbooks.js', 'playbooks.json', 'ext-flow.js', 'ext-guide.js', 'ext-icons.js', 'ext-decisions.js', 'ext-ai.js', 'ext-suggest.js']
+# Eski parça sistemi (0.19.1’den beri yayında kullanılmıyor; kaynak GitHub’dan iner). playbooks.json 0.27’de listeden çıktı (520 KB).
+FILES = ['server.js', 'package.json', 'seed-catalog.json', 'ext-sites.js', 'import-sites.json', 'ext-quotes.js', 'ext-invoices.js', 'ext-today.js', 'ext-work.js', 'i18n.js', 'i18n-en.json', 'ext-sync.js', 'ext-automation.js', 'n8n-seed.json', 'ext-forge.js', 'ext-crm.js', 'ext-freelance.js', 'ext-retention.js', 'themes.js', 'ext-settings.js', 'ext-playbooks.js', 'ext-flow.js', 'ext-guide.js', 'ext-icons.js', 'ext-decisions.js', 'ext-ai.js', 'ext-suggest.js']
 LIMIT = 8192
 
 

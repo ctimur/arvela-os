@@ -21,7 +21,7 @@ import { registerDecisions, migrateDecisions, parseMultipart, decisionForm, pars
 import { THEMES } from './themes.js';
 import { NAV_CSS, DARK_CSS, NAV_ICON, navGroups } from './ext-look.js';
 
-const VERSION = '0.26.0';
+const VERSION = '0.27.0';
 let settingsApi = null;
 let notify = null;
 const PORT = Number(process.env.PORT || 3000);
@@ -363,7 +363,7 @@ function layout(ctx, title, body, active = '') {
   let insp = inspM ? inspM[0] : '';
   if (insp) { const gm = /<section class="guide"[\s\S]*?<\/section>/.exec(main); if (gm) { main = main.replace(gm[0], ''); insp = insp.replace(/^(<aside class="insp"[^>]*>)/, '$1' + gm[0].replace('class="guide"', 'class="guide in-insp"')); } }
   const crumbHtml = `${crumbM ? `<span class="tb-path">${crumbM[1]}</span><span class="tb-sep" aria-hidden="true">›</span>` : ''}<b class="tb-title">${h(title)}</b>`;
-  const NEW = staffish ? [['/satis#yeni-aday', 'Aday'], ['/projeler#yeni-proje', 'Proje'], ['/paketler#yeni-paket', 'İş paketi'], ...(u.role === 'admin' ? [['/teklifler#yeni', 'Teklif'], ['/faturalar', 'Fatura']] : [])] : [];
+  const NEW = staffish ? [['/satis#yeni-aday', 'Aday'], ['/projeler#yeni-proje', 'Proje'], ['/paketler#yeni-paket', 'İş paketi'], ...(u.role === 'admin' ? [['/teklifler#yeni-teklif', 'Teklif'], ['/faturalar', 'Fatura']] : [])] : [];
   const newMenu = NEW.length ? `<details class="tb-new"><summary class="btn">+ <span>Yeni</span></summary><div class="tb-menu" role="menu">${NEW.map(([href, t]) => `<a role="menuitem" href="${href}">${t}</a>`).join('')}</div></details>` : '';
   const infoBtn = guided ? `<button type="button" class="info-btn" data-info aria-pressed="false" aria-controls="sayfa-bilgi"><span aria-hidden="true">i</span><b>Ayrıntılar</b></button>` : '';
   const top = u ? `<header class="topbar"><button type="button" class="icon-btn menu-btn" data-menu aria-controls="menu" aria-expanded="false" aria-label="Menüyü aç">${svg('menu')}</button><a class="brand tb-brand" href="/">Arvela<span>OS</span></a>

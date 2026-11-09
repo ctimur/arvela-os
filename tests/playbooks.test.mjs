@@ -37,3 +37,28 @@ const pf = planTasks({ asamalar: [{ ad: 'Çeviri', rol: 'freelancer', otomasyon:
 assert.equal(pf[0].assignee_id, 9, 'freelancer adımı freelancera');
 const st = stats(books['WEB-05']); assert.ok(st.gun > 20 && st.karar >= 2);
 console.log('playbooks: ok');
+
+// 0.27: tüm katalog kitapları (8 kategori, 104 modül)
+{
+  const fs = await import('node:fs');
+  const { planTasks: pt, akisName } = await import('../app/ext-playbooks.js');
+  const books = JSON.parse(fs.readFileSync(new URL('../app/playbooks.json', import.meta.url)));
+  const cat = JSON.parse(fs.readFileSync(new URL('../app/seed-catalog.json', import.meta.url)));
+  const assert = (await import('node:assert')).default;
+  for (const m of cat.modules) {
+    const pb = books[m.code]; assert.ok(pb, 'kitap yok: ' + m.code);
+    assert.ok(pb.asamalar.some(s => s.rol === 'musteri' && s.karar), m.code + ': müşteri karar noktası');
+    const plan = pt(pb, '2026-11-09', { ekip: 2, freelancer: 3 });
+    assert.equal(plan.length, pb.asamalar.length); assert.ok(plan.every(x => x.title && x.due_date >= '2026-11-10'), m.code);
+    if (m.billing === 'Aylık') assert.ok(pb.ozet.includes('Aylık döngü') || m.category === 'WEB', m.code + ': aylık döngü notu');
+  }
+  assert.equal(akisName('Karar hatırlatma'), 'Onay hatırlatma'); assert.equal(akisName('Acil site uyarısı'), 'Acil site uyarısı');
+  console.log('kitaplar: 104 ok');
+}
+{
+  const { nextPeriod } = await import('../app/ext-playbooks.js'); const assert = (await import('node:assert')).default;
+  assert.deepEqual(nextPeriod('Lotus · SEO · Kasım 2026'), { name: 'Lotus · SEO · Aralık 2026', start: '2026-12-01' });
+  assert.deepEqual(nextPeriod('Lotus · SEO · Aralık 2026'), { name: 'Lotus · SEO · Ocak 2027', start: '2027-01-01' }, 'yıl geçişi');
+  assert.equal(nextPeriod('Lotus SEO', '2026-11-20').name, 'Lotus SEO · Aralık 2026', 'ay eki yoksa eklenir');
+  console.log('dönem: ok');
+}
