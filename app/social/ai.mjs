@@ -41,7 +41,7 @@ export async function openaiImage(prompt, size) {
   if (MOCK()) return Buffer.from(PNG_1PX, 'base64');
   const key = process.env.OPENAI_API_KEY; if (!key) throw new HttpError(503, 'Görsel üretimi henüz etkin değil.');
   const r = await fetch('https://api.openai.com/v1/images/generations', { method: 'POST', signal: AbortSignal.timeout(240_000),
-    headers: { Authorization: 'Bearer ' + key, 'content-type': 'application/json' }, body: JSON.stringify({ model: process.env.SOCIAL_IMAGE_MODEL || 'gpt-image-1', prompt, size, n: 1 }) });
+    headers: { Authorization: 'Bearer ' + key, 'content-type': 'application/json' }, body: JSON.stringify({ model: process.env.SOCIAL_IMAGE_MODEL || 'gpt-image-1', prompt, size, n: 1, quality: process.env.SOCIAL_IMAGE_QUALITY || 'medium' }) }); // orta kalite: maliyet denetimi
   const j = await r.json().catch(() => ({}));
   if (!r.ok || !j.data?.[0]?.b64_json) { console.error('görsel hatası', r.status, j?.error?.code); throw new Error(j?.error?.code === 'moderation_blocked' ? 'Bu istem görsel kurallarına takıldı; farklı anlatın.' : 'Görsel üretilemedi.'); }
   return Buffer.from(j.data[0].b64_json, 'base64');
