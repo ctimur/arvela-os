@@ -144,7 +144,7 @@ export function registerToday({ all, one, h, layout, need, STAFF, forgePending, 
     const fp = admin && forgePending ? await forgePending().catch(() => 0) : 0;
     const snooze = (await one(`SELECT value FROM settings WHERE agency_id=$1 AND key='today.sites_snooze'`, [a]).catch(() => null))?.value;
     const d = { sites, tasks, approvals, clients, overdue, notified, draftQuotes, draftInvoices, monthlyDue: md?.n || 0, period, forgePending: fp, sitesSnoozed: !!snooze && new Date(snooze) > new Date() };
-    const extra = extraActions ? await extraActions(a).catch(() => []) : [];
+    const extra = (extraActions ? await extraActions(a).catch(() => []) : []).filter(x => admin || !x.adminOnly);
     const acts = [...buildActions(d, { admin }), ...extra].sort((x, y) => y.score - x.score); const cf = csrfField ? csrfField(ctx) : ''; for (const x of acts) x.csrf = cf; const pulse = buildPulse(d);
     const first = ctx.user.name.split(' ')[0]; const summary = daySummary(acts); const o = themeOpts(ctx);
     const [kp, flowItems] = await Promise.all([

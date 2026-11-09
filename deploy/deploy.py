@@ -99,6 +99,11 @@ def main():
     sha = head_sha()
     compose = build_compose(sha)
     env = f"DB_PASSWORD={os.environ['DB_PASSWORD']}\nSETUP_TOKEN={os.environ['SETUP_TOKEN']}\nFORGE_GITHUB_TOKEN={os.environ['FORGE_GITHUB_TOKEN']}\n"
+    # Yedek (0.25): tanımlı değilse boş geçer; yedek servisi eksik ayarı Ayarlar → Yedek ve izleme'de bildirir
+    for k in ('BACKUP_PASSPHRASE', 'BACKUP_GITHUB_TOKEN', 'BACKUP_REPO'):
+        v = os.environ.get(k, '').strip()
+        if '\n' in v: raise SystemExit(f'{k} tek satır olmalı')
+        env += f"{k}={v}\n"
     print('yayınlanan commit:', sha)
     call('POST', f'/virtual-machines/{VM}/docker', {'project_name': 'arvela-os', 'content': compose, 'environment': env})
     print('arvela-os yeniden yayınlandı; sağlık kontrolü bekleniyor')

@@ -1,5 +1,5 @@
 # Arvela OS — KVM 1 üzerindeki üretim projesi (Hostinger Docker Manager: "arvela-os").
-# Gizli değerler (DB_PASSWORD, SETUP_TOKEN) Hostinger projesinin ortam değişkenlerindedir; buraya yazılmaz.
+# Gizli değerler (DB_PASSWORD, SETUP_TOKEN, BACKUP_*) Hostinger projesinin ortam değişkenlerindedir; buraya yazılmaz.
 # Kaynak kod açılışta GitHub'dan, onaylanan commit'in arşivinden indirilir (FORGE_GITHUB_TOKEN, yalnız okuma yeterli).
 services:
   db:
@@ -64,6 +64,20 @@ services:
       - traefik.http.routers.arvela-os.entrypoints=websecure
       - traefik.http.routers.arvela-os.tls.certresolver=letsencrypt
       - traefik.http.services.arvela-os.loadbalancer.server.port=3000
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    command: ["sh", "-c", "sleep 120; until [ -f /src/backup.sh ]; do sleep 30; done; exec sh /src/backup.sh"]
+    environment:
+      DB_PASSWORD: ${DB_PASSWORD}
+      BACKUP_PASSPHRASE: ${BACKUP_PASSPHRASE}
+      BACKUP_GITHUB_TOKEN: ${BACKUP_GITHUB_TOKEN}
+      BACKUP_REPO: ${BACKUP_REPO}
+    volumes:
+      - appsrc:/src:ro
+    depends_on:
+      db:
+        condition: service_healthy
 volumes:
   pgdata:
   node_modules:
