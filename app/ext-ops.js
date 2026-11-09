@@ -21,7 +21,9 @@ export function backupState(rows, now = Date.now()) {
   else if (anyB && !anyB.ok) { level = 'warn'; msg = t`Son deneme başarısız: ${anyB.detail || ''}`; }
   const rAge = okR ? (now - new Date(okR.at)) / H : Infinity;
   if (level === 'ok' && rAge > 24 * 9) { level = 'warn'; msg = anyR && !anyR.ok ? t`Geri yükleme testi başarısız: ${anyR.detail || ''}` : 'Geri yükleme testi 9 günden uzun süredir yapılmadı.'; }
-  return { level, msg, okB, anyB, okR, anyR, ageHours: age };
+  const anyN = last('n8n_yedek'), okN = last('n8n_yedek', true);
+  if (level === 'ok' && anyN && !anyN.ok) { level = 'warn'; msg = anyN.detail || 'n8n yedeğinde sorun var.'; }
+  return { level, msg, okB, anyB, okR, anyR, okN, anyN, ageHours: age };
 }
 
 export function registerOps({ route, all, need, layout, h, send }) {
@@ -31,16 +33,16 @@ export function registerOps({ route, all, need, layout, h, send }) {
     need(ctx, 'admin');
     const rows = await load(60); const st = backupState(rows);
     const tone = { ok: 'ok', warn: 'warn', bad: 'bad' }[st.level];
-    const KIND = { yedek: 'Yedek', geri_yukleme: 'Geri yükleme testi' };
+    const KIND = { yedek: 'Yedek', geri_yukleme: 'Geri yükleme testi', n8n_yedek: 'n8n yedeği' };
     send(res, 200, layout(ctx, 'Yedek ve izleme', `<nav class="crumb"><a href="/ayarlar">Ayarlar</a></nav>
 <div class="page-head"><div><h1>Yedek ve izleme</h1><p class="ph-meta"><span class="badge ${tone}">${st.level === 'ok' ? 'Sağlıklı' : st.level === 'warn' ? 'Dikkat' : 'Sorun var'}</span><span>${h(st.msg)}</span></p></div></div>
 <div class="kpi"><div><span>Son başarılı yedek</span><b>${st.okB ? when(st.okB.at) : '—'}</b><span>her gece 02:30</span></div>
-<div><span>Son geri yükleme testi</span><b>${st.okR ? when(st.okR.at) : '—'}</b><span>haftada bir</span></div><div><span>Saklama</span><b>30 gün</b><span>AES-256 şifreli, sunucu dışında</span></div></div>
+<div><span>Son geri yükleme testi</span><b>${st.okR ? when(st.okR.at) : '—'}</b><span>haftada bir</span></div><div><span>Saklama</span><b>30 gün</b><span>AES-256 şifreli, sunucu dışında</span></div><div><span>n8n yedeği</span><b>${st.okN ? when(st.okN.at) : '—'}</b><span>${st.anyN ? 'her gece 02:45' : 'kurulmadı: Actions › n8n yedek'}</span></div></div>
 <section class="card"><h2>Kayıtlar</h2>${rows.length ? `<div class="tbl"><table><tr><th>Zaman</th><th>İşlem</th><th>Sonuç</th><th>Ayrıntı</th></tr>${rows.map(r => `<tr><td data-sort="${new Date(r.at).toISOString()}">${when(r.at)}</td><td>${KIND[r.kind] || h(r.kind)}</td><td><span class="badge ${r.ok ? 'ok' : 'bad'}">${r.ok ? 'Başarılı' : 'Hata'}</span></td><td>${h(r.detail || '')}</td></tr>`).join('')}</table></div>` : '<p class="muted">Henüz kayıt yok.</p>'}</section>
 <aside class="insp"><section><h2>Nasıl çalışır</h2><p>Her gece 02:30'da veritabanının tamamı alınır, AES-256 ile şifrelenir ve sunucu dışında, özel bir GitHub deposunda saklanır. 30 günden eski yedekler silinir.</p>
 <p>Haftada bir son yedek indirilir, çözülür ve boş bir veritabanına yüklenip tablo ve kayıt sayıları kontrol edilir. Yedek alınamazsa ya da test başarısız olursa Bugün ekranında uyarı çıkar.</p></section>
 <section><h2>Kurulum (bir kez)</h2><ol class="steps"><li>GitHub'da <b>özel</b> bir depo açın: <code>arvela-os-yedek</code>.</li><li>Yalnız bu depoya <b>Contents: okuma ve yazma</b> izni olan, ince ayarlı bir erişim anahtarı oluşturun.</li><li>arvela-os deposunun gizli değerlerine ekleyin: <code>BACKUP_GITHUB_TOKEN</code> (anahtar) ve <code>BACKUP_PASSPHRASE</code> (uzun bir parola; bir parola yöneticisinde saklayın, kaybolursa yedekler açılamaz).</li><li>Actions → Yayına al → Run workflow.</li></ol></section>
-<section><h2>Kesinti izleme</h2><p>GitHub her 5 dakikada bir os.arveladigital.com, n8n ve arveladigital.com adreslerini kontrol eder. İki deneme üst üste başarısız olursa arvela-os deposunda "Kesinti" kaydı açılır ve GitHub size e-posta gönderir. Site geri gelince kayıt kendiliğinden kapanır.</p></section>
+<section><h2>n8n yedeği</h2><p>n8n'in akışları, kimlik bilgileri ve çalışma geçmişi ayrı bir veritabanında durur. GitHub'da arvela-os › Actions › <b>n8n yedek</b> iş akışını bir kez <b>install</b> ile çalıştırın: n8n projesine yedek servisi eklenir, her gece 02:45'te aynı özel depoya "n8n-" ile başlayan şifreli yedek yüklenir. Durumu bu sayfa her gece denetler.</p></section><section><h2>Kesinti izleme</h2><p>GitHub her 5 dakikada bir os.arveladigital.com, n8n ve arveladigital.com adreslerini kontrol eder. İki deneme üst üste başarısız olursa arvela-os deposunda "Kesinti" kaydı açılır ve GitHub size e-posta gönderir. Site geri gelince kayıt kendiliğinden kapanır.</p></section>
 <section><h2>Geri yükleme (acil durum)</h2><p class="muted">Yedeği indirin, <code>openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in arvela.dump.enc -out arvela.dump</code> ile çözün, <code>pg_restore --clean -d arvela arvela.dump</code> ile yükleyin. Canlıya yüklemeden önce mutlaka bir kopyada deneyin.</p></section></aside>`, '/ayarlar'));
   });
   // Bugün: yalnız Yöneticiye, yedek sorunluysa

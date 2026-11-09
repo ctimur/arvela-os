@@ -22,6 +22,8 @@ jobs:
           for f in app/*.json; do node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))"; done
       - name: Testler
         run: for t in tests/*.test.mjs; do node "$t" || exit 1; done
+      - name: Betik testleri
+        run: python3 -c "import yaml" 2>/dev/null || pip install pyyaml; for t in tests/*_test.py; do python3 "$t" || exit 1; done; sh -n app/backup.sh && sh -n deploy/n8n_backup.sh
       - name: Parçalar sınıra sığıyor mu
         run: python3 deploy/rechunk.py
       - name: Parçalar birleşince dosyayı birebir veriyor mu
