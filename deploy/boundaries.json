@@ -1,152 +1,152 @@
 {
- "server.js": [
-  "      await q('INSERT INTO services (agency_id, category_id, code, sub, name, billing, unit, price_try, price_eur, availability) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT DO NOTHING',",
-  "*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}",
-  "button,.btn{font:inherit;font-weight:600;border:0;border-radius:14px;padding:11px 18px;background:var(--btn);color:var(--btn-t);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px}",
-  ".later-row{background:var(--surf);border-radius:18px;padding:14px 16px;border:1px solid transparent}.later-row:hover{border-color:var(--champ);color:var(--ink)}",
-  ".stack-col{display:flex;flex-direction:column;gap:16px;min-width:0}.note.sys{background:var(--soft);border-radius:10px;padding:10px 12px}.note.sys .note-h strong{color:var(--acc-t)}details.more>summary{font-size:13px;color:var(--acc-t)}",
-  "  globe: '<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z\"/>',",
-  "function layout(ctx, title, body, active = '') {",
-  "    ['/panel', 'Bugün', 'G B'], ['/satis', 'Satış hattı', 'G S'], ['/musteriler', 'Müşteriler', 'G M'], ['/gorevler', 'Görevlerim', 'G G'], ['/onaylar', 'Müşteri kararları', ''], ['/projeler', 'Projeler', ''],",
-  "const nn = (v) => (v === undefined || v === null || String(v).trim() === '') ? null : String(v).trim();",
-  "<label>Not<textarea name=\"notes\" rows=\"2\"></textarea></label><div><button class=\"gold\">Kaydet</button></div></form></details>",
-  "<div class=\"row\"><label>Firma adı<input name=\"name\" value=\"${h(c.name)}\" required></label><label>Sektör<input name=\"sector\" value=\"${h(c.sector)}\"></label><label>Durum<select name=\"status\">${opts(CLIENT_ST, c.status)}</select></label></div>",
-  "${prjs.length ? `<div class=\"tbl\"><table><tr><th>Proje</th><th>Durum</th><th>İlerleme</th><th>Teslim</th></tr>${prjs.map(p => `<tr><td><a href=\"/projeler/${p.id}\">${h(p.name)}</a></td><td>${badge(PR_ST[p.status])}</td><td>${p.done}/${p.total}</td><td>${fmtDate(p.due_date)}</td></tr>`).join('')}</table></div>` : '<p class=\"muted\">Proje yok.</p>'}",
-  "  const sum = [t`${activeSvc} aktif hizmet · ${openPrj} açık proje · ${waitAp} bekleyen onay`, lastNote ? t`Son temas: ${fmtDate(lastNote.created_at)} — ${String(lastNote.body || '').slice(0, 140)}` : 'Henüz temas kaydı yok.', ...(cu.length ? [] : ['Müşteri portalı hesabı yok.'])];",
-  "  let pid = int(b.project_id);",
-  "  send(res, 200, layout(ctx, 'Kayıtlar', `<div class=\"page-head\"><h1>İşlem kayıtları</h1><a class=\"btn ghost\" href=\"/veri-saklama\">Veri saklama (KVKK)</a></div><div class=\"tbl\"><table><tr><th>Zaman</th><th>Kişi</th><th>İşlem</th><th>Ayrıntı</th></tr>",
-  "import { registerWork, migrateWork } from './ext-work.js';"
- ],
- "ext-sites.js": [
-  "  route('POST', '/siteler', async (ctx, res) => {"
- ],
- "seed-catalog.json": [
-  "{\"code\":\"SOS-15\",\"category\":\"SOS\",\"sub\":\"Büyüme\",\"name\":\"Google İşletme Profili yönetimi\",\"billing\":\"Aylık\",\"unit\":\"konum\",\"try\":3500,\"eur\":200,\"status\":\"Hemen\"},",
-  "{\"code\":\"EML-05\",\"category\":\"EML\",\"sub\":\"Yazılım\",\"name\":\"Ek danışman kullanıcısı\",\"billing\":\"Aylık\",\"unit\":\"kullanıcı\",\"try\":450,\"eur\":15,\"status\":\"Yakında\"},"
- ],
- "package.json": [],
- "import-sites.json": [],
- "ext-quotes.js": [
-  "  const itemsOf = (id) => all('SELECT * FROM quote_items WHERE quote_id=$1 ORDER BY sort, id', [id]);",
-  "${rows.map(x => { const t = totals(x, its.filter(i => i.quote_id === x.id)); return `<tr><td><a href=\"/teklifler/${x.id}\">#${x.id} · ${h(x.title)}</a></td><td>${h(x.client)}</td><td>${badge(ST[x.status], TONE[x.status])}</td><td>${money(t.year, x.currency)}</td><td>${fmtDate(x.sent_at || x.created_at)}</td></tr>`; }).join('') || '<tr><td colspan=\"5\" class=\"muted\">Henüz teklif yok.</td></tr>'}</table></div>`, '/teklifler'));",
-  "<section style=\"flex:1 1 280px;display:flex;flex-direction:column;gap:16px\">${summary(x, items)}",
-  "  route('POST', '/teklifler/:id/kalem/:kid/sil', async (ctx, res, p) => {",
-  "    const expired = x.valid_until && new Date(x.valid_until) < new Date(new Date().toDateString());"
- ],
- "ext-invoices.js": [
-  "<p class=\"muted\" style=\"margin:0\">Açıklamaya <strong>${h(x.number)}</strong> yazın.</p></div>` : '<div class=\"card\"><p class=\"muted\" style=\"margin:0\">Havale bilgileri henüz girilmedi.</p></div>';",
-  "<div class=\"row\">${tab('', 'Hepsi')}${tab('taslak', 'Taslak')}${tab('gonderildi', 'Ödeme bekleniyor')}${tab('gecikti', 'Gecikmiş')}${tab('odendi', 'Ödendi')}${tab('iptal', 'İptal')}</div>",
-  "    const id = await createInvoice(ctx, { clientId: x.client_id, quoteId: x.id, currency: x.currency, items });",
-  "    const vat = Math.min(100, Math.max(0, Number(b.vat_pct) || 0));"
- ],
- "ext-today.js": [
-  "  for (const s of d.sites || []) if (s.client_id) { const hl = siteHealth(s); if (hl.label === 'Acil') put(s.client_id, s.client, 4, 'bad', s.ssl_status === 'expired' ? 'SSL doldu' : s.ssl_status === 'failed' ? 'SSL yok' : 'Site sorunu'); else if (hl.label === 'Güncelleme') put(s.client_id, s.client, 2, 'warn', 'Güncelleme'); }",
-  "      admin ? one(`SELECT count(DISTINCT cs.client_id)::int n FROM client_services cs JOIN services s ON s.id=cs.service_id",
-  "<aside class=\"insp\"><section><h2>Bugünün akışı</h2><div class=\"tl\">${tl || '<p class=\"muted\">Bugün için saatli bir iş yok.</p>'}</div></section>"
- ],
- "ext-work.js": [
-  "inp.addEventListener('keydown',function(e){var v=vis();if(e.key==='ArrowDown'){sel=Math.min(sel+1,v.length-1);mark();e.preventDefault();}else if(e.key==='ArrowUp'){sel=Math.max(sel-1,0);mark();e.preventDefault();}else if(e.key==='Enter'&&v.length&&(inp.value.trim()===''||v.length<links.length)){e.preventDefault();location.href=v[sel].getAttribute('href');}});",
-  "  // Görev durumu için tek dokunuşluk düğmeler (seçili olan vurgulu)",
-  "        ORDER BY t.stage_no NULLS LAST, (t.priority='yuksek') DESC, t.due_date NULLS LAST, t.id`, [p.id]),",
-  "<div class=\"act-btns\"><nav class=\"viewseg\" aria-label=\"Görünüm\">${vlink('liste', 'Liste')}${vlink('pano', 'Pano')}${vlink('tablo', 'Tablo')}</nav><a class=\"btn gold\" href=\"#yeni-gorev\" data-open=\"yeni-gorev\">+ Görev</a></div></div>",
-  "    await audit(ctx, 'project.delete', { id: p.id, name: p.name }); redirect(res, `/musteriler/${p.client_id}`);",
-  "      : descView(t.description);",
-  "    await q('UPDATE tasks SET status=$1 WHERE id=$2', [st, t.id]);",
-  "    const prjs = await all('SELECT id, name FROM projects WHERE client_id=$1 ORDER BY created_at DESC', [x.client_id]);",
-  "        all(`SELECT p.id, p.name, c.name client FROM projects p JOIN clients c ON c.id=p.client_id WHERE p.agency_id=$1 AND (p.name ILIKE $2 OR p.description ILIKE $2) ORDER BY p.id DESC LIMIT 20`, [a, L]),"
- ],
- "i18n.js": [],
- "i18n-en.json": [
-  "\"Yok\": \"None\",",
-  "\"Müşteri portaldan karar verir. Onayı telefonda ya da WhatsApp'ta aldıysanız buradan işleyin.\": \"The client decides in the portal. If you got the approval by phone or WhatsApp, record it here.\",",
-  "\"Sayfa bulunamadı.\": \"Page not found.\",",
-  "\"İptal edildi\": \"Revoked\",",
-  "\"Adayı ekle\": \"Add lead\",",
-  "\"İş paketine süre kaydedildi\": \"Time logged on work package\",",
-  "\"Otomasyon\": \"Automation\",",
-  "\"Tüm aşamalar bitti\": \"All stages done\",",
-  "\"Henüz sonuç yok.\": \"No result yet.\",",
-  "\"Açılır kapanır (akordiyon)\": \"Collapsible (accordion)\","
- ],
- "ext-sync.js": [],
- "ext-automation.js": [
-  "  for (const a of (await q('SELECT id FROM agencies')).rows) await q(`INSERT INTO settings (agency_id, key, value) VALUES ($1, 'webhook_token', $2) ON CONFLICT DO NOTHING`, [a.id, crypto.randomBytes(24).toString('hex')]);",
-  "    if (!ok && attempt + 1 < RETRY.length) setTimeout(() => deliver(hook, deliveryId, body, attempt + 1).catch(() => {}), RETRY[attempt + 1]).unref?.();",
-  "    if (await isDemo(action, data, detail)) return; // demo kayıtlar n8n'e (e-posta, WhatsApp) gitmez",
-  "      all('SELECT cs.id, cs.status, cs.start_date, cs.end_date, cs.notes, s.code, s.name, s.billing FROM client_services cs JOIN services s ON s.id=cs.service_id WHERE cs.client_id=$1', [c.id]),",
-  "      all(`SELECT s.*, c.name client FROM sites s LEFT JOIN clients c ON c.id=s.client_id WHERE s.agency_id=$1`, [a])]);",
-  "    const r = await one('INSERT INTO approvals (agency_id, client_id, project_id, title, body) VALUES ($1,$2,$3,$4,$5) RETURNING id', [a, c.id, pid, nn(b.title), nn(b.body)]);",
-  "<li>Hazır \"Arvela ·\" iş akışlarını açıp kimlik bilgilerini seçin, alıcı e-postasını kontrol edin ve <strong>Active</strong> yapın.</li>",
-  "    if (!nn(b.name) || !validUrl(b.url)) throw new HttpError(400, 'Ad ve https ile başlayan bir webhook adresi gerekli.');"
- ],
- "n8n-seed.json": [
-  "\"name\": \"Teklif olayları\",",
-  "\"content\": \"## Arvela · Onay hatırlatma\\nHer iş günü 10:00'da 2 günden uzun bekleyen onayları listeler; müşteriye tek dokunuşla WhatsApp hatırlatması için bağlantı verir. Bekleyen yoksa e-posta gitmez.\",",
-  "\"name\": \"Yöneticiye gönder\",",
-  "\"content\": \"## Arvela · Görev bildirimi\\nGörev oluşturulunca ya da güncellenince sorumlusuna e-posta gönderir (kendi yaptığı değişiklik hariç).\\nArvela OS → Otomasyonlar → \\\"n8n · Görev bildirimi\\\" bağlantısını Etkin yap.\",",
-  "\"content\": \"## Arvela · Web formu → aday\\nn8n'in barındırdığı iletişim formu (adresi düğümde, \\\"Production URL\\\"). Gönderilince Arvela OS'e aday müşteri, \\\"İlk görüşme\\\" projesi ve \\\"Adayı ara\\\" görevi ekler.\\nSitene bağlantı ya da iframe olarak koyabilirsin. Aydınlatma metni arveladigital.com/kvkk adresinde yayınlanmalı. Pazarlama onayı isteğe bağlıdır; \\\"Evet\\\" seçilirse adayın kaydına onay tarihi yazılır (İYS'ye yüklenmeli).\",",
-  "\"path\": \"arvela-mail\",",
-  "\"node\": \"Arvela OS'e gönder\","
- ],
- "ext-forge.js": [
-  "      await q(`UPDATE forge_changes SET status=$1, error=$2, merged_sha=COALESCE($3, merged_sha), deployed_at=CASE WHEN $1='yayinda' THEN now() ELSE deployed_at END, updated_at=now() WHERE pr=$4`,",
-  "    if (ctx.body.sha !== c.head_sha) throw new HttpError(409, 'Değişiklik siz bakarken güncellendi. Sayfayı yenileyip yeniden inceleyin.');"
- ],
- "ext-crm.js": [
-  "  const team = (a) => all(`SELECT id, name FROM users WHERE agency_id=$1 AND active AND role IN ('admin','staff') ORDER BY name`, [a]);",
-  "${rows.some(r => !OPEN_STAGES.includes(r.stage)) ? `<section class=\"card\"><h2>Kapananlar</h2>${rows.filter(r => !OPEN_STAGES.includes(r.stage)).slice(0, 30).map(l => `<a class=\"line\" href=\"/satis/${l.id}\"><span class=\"grow\"><strong>${h(l.name)}</strong><span class=\"muted\">${h(l.lost_reason || l.interest || '')}</span></span>${badge(STAGES[l.stage], STAGE_TONE[l.stage])}</a>`).join('')}</section>` : ''}`, '/satis'));",
-  "    if (!splitRecord(ctx)) return send(res, 200, layout(ctx, l.name, `<nav class=\"crumb\"><a href=\"/satis\">Satış hattı</a>${l.status !== 'lead' ? ` › <a href=\"/musteriler/${l.id}\">Müşteri sayfası</a>` : ''}</nav>${HEAD}<div class=\"two wide-first\">${HIST}${INFO}</div>`, '/satis'));"
- ],
- "ext-freelance.js": [
-  "  const payTxt = (ctx, w) => !seesMoney(ctx, w) ? PAY[w.pay_type] : w.pay_type === 'saatlik' ? (w.hour_cap ? t`${tl(w.hourly_rate)}/saat · en çok ${w.hour_cap} saat` : t`${tl(w.hourly_rate)}/saat`) : tl(w.amount);",
-  "    const p = ctx.user.role === 'admin' ? readPay(b) : { pay_type: 'sabit', amount: null, hourly_rate: null, hour_cap: null };",
-  "<div class=\"page-head\"><div><h1>${h(w.title)}</h1><div class=\"chips\">${badge(PK_ST[w.status], PK_TONE[w.status])}${staff ? `<span class=\"muted\">${h(w.freelancer)}</span>` : ''}<span class=\"muted\">${h(PAY[w.pay_type])}</span></div></div><div class=\"act-btns\">${moveForms}</div></div>",
-  "<div class=\"row\"><label class=\"wide\">Freelancer<select name=\"freelancer_id\" required>${people.map(u => `<option value=\"${u.id}\"${u.id === kim ? ' selected' : ''}>${h(u.name)}${owedOf(u.id) > 0 ? ' · ' + h(t`borç ${tl(owedOf(u.id))}`) : ''}</option>`).join('')}</select></label>"
- ],
- "ext-retention.js": [
-  "    await put(a, 'lead_months', clampMonths(b.lead_months, DEFAULTS.lead_months)); await put(a, 'audit_months', clampMonths(b.audit_months, DEFAULTS.audit_months)); await put(a, 'auto', b.auto ? '1' : '0');"
- ],
- "themes.js": [
-  "      if (o.menuGrup === 'acik') css += `.ng-h{pointer-events:none}.ng-h svg{display:none}.ng.shut .ng-b{grid-template-rows:1fr;opacity:1}.ng.shut .ng-i a{visibility:visible}`;"
- ],
- "ext-settings.js": [],
- "ext-playbooks.js": [
-  "    const desc = [`Rol: ${ROLES[s.rol]} · ${AUTO[s.otomasyon]}${s.karar ? ' · Karar: ' + DECISIONS[s.karar] : ''}${s.akis ? ' · n8n: ' + akisName(s.akis) : ''}`, s.cikti && `Çıktı: ${s.cikti}`, s.kontrol && `Kabul: ${s.kontrol}`].filter(Boolean).join('\\n');",
-  "<section class=\"card\"><h2>Aşamalar</h2><div class=\"tbl\"><table><tr><th>#</th><th>Aşama</th><th>Kim</th><th>Otomasyon</th><th>Gün</th><th>Karar</th><th>Çıktı ve kabul</th></tr>",
-  "    send(res, 200, layout(ctx, s.name, `<nav class=\"crumb\"><a href=\"/katalog\">Katalog</a> › ${h(s.cat)}</nav><div class=\"page-head\"><div><p class=\"eyebrow\">${h(s.code)} · ${h(s.sub || '')}</p><h1>${h(s.name)}</h1>",
-  "    await audit(ctx, 'project.playbook', { id: pr.id, edited: true }); redirect(res, `/projeler/${pr.id}/kitap`);"
- ],
- "ext-flow.js": [
-  "      await audit(ctx, 'approval.request', { id: ap.id, client: p.client_id, task: x.id, via: 'flow' });",
-  "<p>${h(help.what)}</p><p class=\"muted\"><b>Sonra ne olur:</b> ${h(help.after)}</p>${btn ? `<div class=\"row\">${btn}</div>` : ''}${warn}"
- ],
- "ext-guide.js": [
-  "    ['Bir aşama \"Bitti\" olunca sıradaki açılır ve sorumlusuna bildirim gider. Müşteri kararı aşamasında onay isteği kendiliğinden müşteriye gider; onaylanınca akış ilerler, düzeltme istenirse önceki aşama müşterinin notuyla yeniden açılır. Son aşama bitince proje \"Onayda\" olur.', 'When a stage is \"Done\" the next one opens and its owner is notified. At a client-decision stage an approval request goes to the client automatically; approval moves the flow on, a revision request reopens the previous stage with the client\\'s note. When the last stage is done the project moves to \"In approval\".']),",
-  "  P(/^\\/faturalar$/, ['Faturalar ve ödeme durumları. Aylık hizmetlerin faturaları tek tuşla açılır.', 'Invoices and payment status. Monthly service invoices are created in one click.'],",
-  "  'Ayrıntılar': ['Görevin tanımı, sorumlusu ve tarihi. Durumu \"Bitti\" yapmak akışı ilerletir.', 'The task definition, owner and date. Setting it to \"Done\" moves the flow on.'],",
-  "const esc = (s) => String(s).replace(/[&<>\"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[c]));"
- ],
- "ext-icons.js": [
-  "export const MANIFEST = JSON.stringify({ name: 'Arvela OS', short_name: 'Arvela OS', icons: [{ src: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }, { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml' }], theme_color: '#0B0D12', background_color: '#0B0D12', display: 'standalone', start_url: '/' });"
- ],
- "ext-decisions.js": [
-  "  const m = /boundary=(?:\"([^\"]+)\"|([^;]+))/i.exec(ctype || ''); if (!m) return { fields: {}, files: [] };",
-  "    const r = await one(`UPDATE approvals SET status=$1, comment=$2, choice=$3, decided_by=$4, decided_at=now(), decided_via=$5, decided_name=$6 WHERE id=$7 AND status='bekliyor' RETURNING id`,",
-  "    await q(`UPDATE decision_links SET code_hash=NULL, code_expires=NULL, code_tries=0, sess_hash=$1, sess_expires=now() + interval '${SESSION_MIN} minutes', verified_at=COALESCE(verified_at, now()) WHERE id=$2`, [sha(s), l.id]);",
-  "    await audit(ctx, 'decision.link_revoke', { id: int(p.id), client: l.client_id }); redirect(res, `/musteriler/${l.client_id}/karar`);"
- ],
- "ext-ai.js": [
-  "    const t = await one(`SELECT t.*, p.name pname, p.description pdesc, p.playbook, p.ai_engine, p.client_id, s.name service FROM tasks t JOIN projects p ON p.id=t.project_id LEFT JOIN services s ON s.id=p.service_id WHERE t.id=$1 AND t.agency_id=$2`, [taskId, a]);",
-  "    return `<section class=\"flowbar small\"><p class=\"eyebrow\">Yapay zekâ · Claude</p><p>${cfg.enabled ? 'Claude bu görevin tanımına, hizmet kitabına ve kabul ölçütüne göre bir taslak hazırlar. Taslak notlara düşer, görev \"İncelemede\" olur; siz kontrol edip \"Bitti\" yapınca akış ilerler.' : 'Yapay zekâ henüz kapalı. Ayarlar → Yapay zekâ\\'dan açınca bu aşamanın taslağı Claude ile hazırlanır.'}${cfg.enabled && !cfg.piiOk ? ' Müşteri adı ve iletişim bilgileri maskelenerek gönderilir.' : ''}</p>"
- ],
- "ext-suggest.js": [
-  "  await q(`CREATE TABLE IF NOT EXISTS reminders (id SERIAL PRIMARY KEY, agency_id INT NOT NULL, task_id INT REFERENCES tasks(id) ON DELETE CASCADE, project_id INT REFERENCES projects(id) ON DELETE CASCADE,",
-  "    const t = await taskOf(ctx, c.task_id);",
-  "    if (staff) out.push(`<${rems.length ? 'section' : 'details'} class=\"card${rems.length ? '' : ' add'}\" id=\"hatirlatmalar\">${rems.length ? '<h2>Hatırlatmalar</h2>' : '<summary>Hatırlatma ekle</summary>'}${rems.map(r => `<div class=\"line\"><span class=\"grow\"><strong>${h(r.title)}</strong><span class=\"muted\">${fmtDate(r.due_at)}${r.repeat_days ? ` · her ${r.repeat_days} günde` : ''} · ${h(COND[r.cond])}</span></span><form method=\"post\" action=\"/hatirlatma/${r.id}/iptal\">${f}<button class=\"linkish\">İptal</button></form></div>`).join('') || ''}"
- ],
- "ext-look.js": [
-  "export const NAV_CSS = `",
-  "const VARS = '--paper:#0E1116;--surf:#161A21;--soft:#1B2029;--gold-soft:#231E14;--sand:#1D222B;--chip:#262C36;--line:#272D37;--line2:#20262F;--line3:#3A414D;--ink:#ECEEF1;--ink2:#C4C9D1;--stone:#9EA6B2;--stone2:#9EA6B2;--acc-t:#E2BE7A;--ok-bg:#1A2C20;--ok-t:#93CFA0;--warn-bg:#2D2514;--warn-t:#E9C886;--bad-bg:#34211C;--bad-t:#F4A48E;--bad-line:#5C3328;--gold-line:#4A3E22;--track:#2A303A;--dot:#4A5260;--champ-l:#2A2315;--btn:#E2BE7A;--btn-t:#0B0D12;--btn-h:#ECCB8E;--graphite:#2A2F38;--night:#0A0C10;--ok:#7FBF8E;--bad:#F08A62;color-scheme:dark';",
-  "export const LOOK_JS = `"
- ]
+  "server.js": [
+    "      await q('INSERT INTO services (agency_id, category_id, code, sub, name, billing, unit, price_try, price_eur, availability) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT DO NOTHING',",
+    "*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}",
+    "button,.btn{font:inherit;font-weight:600;border:0;border-radius:14px;padding:11px 18px;background:var(--btn);color:var(--btn-t);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px}",
+    ".later-row{background:var(--surf);border-radius:18px;padding:14px 16px;border:1px solid transparent}.later-row:hover{border-color:var(--champ);color:var(--ink)}",
+    ".stack-col{display:flex;flex-direction:column;gap:16px;min-width:0}.note.sys{background:var(--soft);border-radius:10px;padding:10px 12px}.note.sys .note-h strong{color:var(--acc-t)}details.more>summary{font-size:13px;color:var(--acc-t)}",
+    "  globe: '<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z\"/>',",
+    "function layout(ctx, title, body, active = '') {",
+    "    ['/panel', 'Bugün', 'G B'], ['/satis', 'Satış hattı', 'G S'], ['/musteriler', 'Müşteriler', 'G M'], ['/gorevler', 'Görevlerim', 'G G'], ['/onaylar', 'Müşteri kararları', ''], ['/projeler', 'Projeler', ''],",
+    "const nn = (v) => (v === undefined || v === null || String(v).trim() === '') ? null : String(v).trim();",
+    "<label>Not<textarea name=\"notes\" rows=\"2\"></textarea></label><div><button class=\"gold\">Kaydet</button></div></form></details>",
+    "<div class=\"row\"><label>Firma adı<input name=\"name\" value=\"${h(c.name)}\" required></label><label>Sektör<input name=\"sector\" value=\"${h(c.sector)}\"></label><label>Durum<select name=\"status\">${opts(CLIENT_ST, c.status)}</select></label></div>",
+    "${prjs.length ? `<div class=\"tbl\"><table><tr><th>Proje</th><th>Durum</th><th>İlerleme</th><th>Teslim</th></tr>${prjs.map(p => `<tr><td><a href=\"/projeler/${p.id}\">${h(p.name)}</a></td><td>${badge(PR_ST[p.status])}</td><td>${p.done}/${p.total}</td><td>${fmtDate(p.due_date)}</td></tr>`).join('')}</table></div>` : '<p class=\"muted\">Proje yok.</p>'}",
+    "  const sum = [t`${activeSvc} aktif hizmet · ${openPrj} açık proje · ${waitAp} bekleyen onay`, lastNote ? t`Son temas: ${fmtDate(lastNote.created_at)} — ${String(lastNote.body || '').slice(0, 140)}` : 'Henüz temas kaydı yok.', ...(cu.length ? [] : ['Müşteri portalı hesabı yok.'])];",
+    "  let pid = int(b.project_id);",
+    "  send(res, 200, layout(ctx, 'Kayıtlar', `<div class=\"page-head\"><h1>İşlem kayıtları</h1><a class=\"btn ghost\" href=\"/veri-saklama\">Veri saklama (KVKK)</a></div><div class=\"tbl\"><table><tr><th>Zaman</th><th>Kişi</th><th>İşlem</th><th>Ayrıntı</th></tr>",
+    "import { registerWork, migrateWork } from './ext-work.js';"
+  ],
+  "ext-sites.js": [
+    "  route('POST', '/siteler', async (ctx, res) => {"
+  ],
+  "seed-catalog.json": [
+    "{\"code\":\"SOS-15\",\"category\":\"SOS\",\"sub\":\"Büyüme\",\"name\":\"Google İşletme Profili yönetimi\",\"billing\":\"Aylık\",\"unit\":\"konum\",\"try\":3500,\"eur\":200,\"status\":\"Hemen\"},",
+    "{\"code\":\"EML-05\",\"category\":\"EML\",\"sub\":\"Yazılım\",\"name\":\"Ek danışman kullanıcısı\",\"billing\":\"Aylık\",\"unit\":\"kullanıcı\",\"try\":450,\"eur\":15,\"status\":\"Yakında\"},"
+  ],
+  "package.json": [],
+  "import-sites.json": [],
+  "ext-quotes.js": [
+    "  const itemsOf = (id) => all('SELECT * FROM quote_items WHERE quote_id=$1 ORDER BY sort, id', [id]);",
+    "${rows.map(x => { const t = totals(x, its.filter(i => i.quote_id === x.id)); return `<tr><td><a href=\"/teklifler/${x.id}\">#${x.id} · ${h(x.title)}</a></td><td>${h(x.client)}</td><td>${badge(ST[x.status], TONE[x.status])}</td><td>${money(t.year, x.currency)}</td><td>${fmtDate(x.sent_at || x.created_at)}</td></tr>`; }).join('') || '<tr><td colspan=\"5\" class=\"muted\">Henüz teklif yok.</td></tr>'}</table></div>`, '/teklifler'));",
+    "<section style=\"flex:1 1 280px;display:flex;flex-direction:column;gap:16px\">${summary(x, items)}",
+    "  route('POST', '/teklifler/:id/kalem/:kid/sil', async (ctx, res, p) => {",
+    "    const expired = x.valid_until && new Date(x.valid_until) < new Date(new Date().toDateString());"
+  ],
+  "ext-invoices.js": [
+    "<p class=\"muted\" style=\"margin:0\">Açıklamaya <strong>${h(x.number)}</strong> yazın.</p></div>` : '<div class=\"card\"><p class=\"muted\" style=\"margin:0\">Havale bilgileri henüz girilmedi.</p></div>';",
+    "<div class=\"row\">${tab('', 'Hepsi')}${tab('taslak', 'Taslak')}${tab('gonderildi', 'Ödeme bekleniyor')}${tab('gecikti', 'Gecikmiş')}${tab('odendi', 'Ödendi')}${tab('iptal', 'İptal')}</div>",
+    "    const id = await createInvoice(ctx, { clientId: x.client_id, quoteId: x.id, currency: x.currency, items });",
+    "    const vat = Math.min(100, Math.max(0, Number(b.vat_pct) || 0));"
+  ],
+  "ext-today.js": [
+    "  for (const s of d.sites || []) if (s.client_id) { const hl = siteHealth(s); if (hl.label === 'Acil') put(s.client_id, s.client, 4, 'bad', s.ssl_status === 'expired' ? 'SSL doldu' : s.ssl_status === 'failed' ? 'SSL yok' : 'Site sorunu'); else if (hl.label === 'Güncelleme') put(s.client_id, s.client, 2, 'warn', 'Güncelleme'); }",
+    "      admin ? one(`SELECT count(DISTINCT cs.client_id)::int n FROM client_services cs LEFT JOIN services s ON s.id=cs.service_id",
+    "<aside class=\"insp\"><section><h2>Bugünün akışı</h2><div class=\"tl\">${tl || '<p class=\"muted\">Bugün için saatli bir iş yok.</p>'}</div></section>"
+  ],
+  "ext-work.js": [
+    "inp.addEventListener('keydown',function(e){var v=vis();if(e.key==='ArrowDown'){sel=Math.min(sel+1,v.length-1);mark();e.preventDefault();}else if(e.key==='ArrowUp'){sel=Math.max(sel-1,0);mark();e.preventDefault();}else if(e.key==='Enter'&&v.length&&(inp.value.trim()===''||v.length<links.length)){e.preventDefault();location.href=v[sel].getAttribute('href');}});",
+    "  // Görev durumu için tek dokunuşluk düğmeler (seçili olan vurgulu)",
+    "        ORDER BY t.stage_no NULLS LAST, (t.priority='yuksek') DESC, t.due_date NULLS LAST, t.id`, [p.id]),",
+    "<div class=\"act-btns\"><nav class=\"viewseg\" aria-label=\"Görünüm\">${vlink('liste', 'Liste')}${vlink('pano', 'Pano')}${vlink('tablo', 'Tablo')}</nav><a class=\"btn gold\" href=\"#yeni-gorev\" data-open=\"yeni-gorev\">+ Görev</a></div></div>",
+    "    await audit(ctx, 'project.delete', { id: p.id, name: p.name }); redirect(res, `/musteriler/${p.client_id}`);",
+    "      : descView(t.description);",
+    "    await q('UPDATE tasks SET status=$1 WHERE id=$2', [st, t.id]);",
+    "    const prjs = await all('SELECT id, name FROM projects WHERE client_id=$1 ORDER BY created_at DESC', [x.client_id]);",
+    "        all(`SELECT p.id, p.name, c.name client FROM projects p JOIN clients c ON c.id=p.client_id WHERE p.agency_id=$1 AND (p.name ILIKE $2 OR p.description ILIKE $2) ORDER BY p.id DESC LIMIT 20`, [a, L]),"
+  ],
+  "i18n.js": [],
+  "i18n-en.json": [
+    "\"Yok\": \"None\",",
+    "\"Müşteri portaldan karar verir. Onayı telefonda ya da WhatsApp'ta aldıysanız buradan işleyin.\": \"The client decides in the portal. If you got the approval by phone or WhatsApp, record it here.\",",
+    "\"Sayfa bulunamadı.\": \"Page not found.\",",
+    "\"İptal edildi\": \"Revoked\",",
+    "\"Adayı ekle\": \"Add lead\",",
+    "\"İş paketine süre kaydedildi\": \"Time logged on work package\",",
+    "\"Otomasyon\": \"Automation\",",
+    "\"Tüm aşamalar bitti\": \"All stages done\",",
+    "\"Henüz sonuç yok.\": \"No result yet.\",",
+    "\"Açılır kapanır (akordiyon)\": \"Collapsible (accordion)\","
+  ],
+  "ext-sync.js": [],
+  "ext-automation.js": [
+    "  for (const a of (await q('SELECT id FROM agencies')).rows) await q(`INSERT INTO settings (agency_id, key, value) VALUES ($1, 'webhook_token', $2) ON CONFLICT DO NOTHING`, [a.id, crypto.randomBytes(24).toString('hex')]);",
+    "    if (!ok && attempt + 1 < RETRY.length) setTimeout(() => deliver(hook, deliveryId, body, attempt + 1).catch(() => {}), RETRY[attempt + 1]).unref?.();",
+    "    if (await isDemo(action, data, detail)) return; // demo kayıtlar n8n'e (e-posta, WhatsApp) gitmez",
+    "      all('SELECT cs.id, cs.status, cs.start_date, cs.end_date, cs.notes, s.code, s.name, s.billing FROM client_services cs JOIN services s ON s.id=cs.service_id WHERE cs.client_id=$1', [c.id]),",
+    "      all(`SELECT s.*, c.name client FROM sites s LEFT JOIN clients c ON c.id=s.client_id WHERE s.agency_id=$1`, [a])]);",
+    "    const r = await one('INSERT INTO approvals (agency_id, client_id, project_id, title, body) VALUES ($1,$2,$3,$4,$5) RETURNING id', [a, c.id, pid, nn(b.title), nn(b.body)]);",
+    "<li>Hazır \"Arvela ·\" iş akışlarını açıp kimlik bilgilerini seçin, alıcı e-postasını kontrol edin ve <strong>Active</strong> yapın.</li>",
+    "    if (!nn(b.name) || !validUrl(b.url)) throw new HttpError(400, 'Ad ve https ile başlayan bir webhook adresi gerekli.');"
+  ],
+  "n8n-seed.json": [
+    "\"name\": \"Teklif olayları\",",
+    "\"content\": \"## Arvela · Onay hatırlatma\\nHer iş günü 10:00'da 2 günden uzun bekleyen onayları listeler; müşteriye tek dokunuşla WhatsApp hatırlatması için bağlantı verir. Bekleyen yoksa e-posta gitmez.\",",
+    "\"name\": \"Yöneticiye gönder\",",
+    "\"content\": \"## Arvela · Görev bildirimi\\nGörev oluşturulunca ya da güncellenince sorumlusuna e-posta gönderir (kendi yaptığı değişiklik hariç).\\nArvela OS → Otomasyonlar → \\\"n8n · Görev bildirimi\\\" bağlantısını Etkin yap.\",",
+    "\"content\": \"## Arvela · Web formu → aday\\nn8n'in barındırdığı iletişim formu (adresi düğümde, \\\"Production URL\\\"). Gönderilince Arvela OS'e aday müşteri, \\\"İlk görüşme\\\" projesi ve \\\"Adayı ara\\\" görevi ekler.\\nSitene bağlantı ya da iframe olarak koyabilirsin. Aydınlatma metni arveladigital.com/kvkk adresinde yayınlanmalı. Pazarlama onayı isteğe bağlıdır; \\\"Evet\\\" seçilirse adayın kaydına onay tarihi yazılır (İYS'ye yüklenmeli).\",",
+    "\"path\": \"arvela-mail\",",
+    "\"node\": \"Arvela OS'e gönder\","
+  ],
+  "ext-forge.js": [
+    "      await q(`UPDATE forge_changes SET status=$1, error=$2, merged_sha=COALESCE($3, merged_sha), deployed_at=CASE WHEN $1='yayinda' THEN now() ELSE deployed_at END, updated_at=now() WHERE pr=$4`,",
+    "    if (ctx.body.sha !== c.head_sha) throw new HttpError(409, 'Değişiklik siz bakarken güncellendi. Sayfayı yenileyip yeniden inceleyin.');"
+  ],
+  "ext-crm.js": [
+    "  const team = (a) => all(`SELECT id, name FROM users WHERE agency_id=$1 AND active AND role IN ('admin','staff') ORDER BY name`, [a]);",
+    "${rows.some(r => !OPEN_STAGES.includes(r.stage)) ? `<section class=\"card\"><h2>Kapananlar</h2>${rows.filter(r => !OPEN_STAGES.includes(r.stage)).slice(0, 30).map(l => `<a class=\"line\" href=\"/satis/${l.id}\"><span class=\"grow\"><strong>${h(l.name)}</strong><span class=\"muted\">${h(l.lost_reason || l.interest || '')}</span></span>${badge(STAGES[l.stage], STAGE_TONE[l.stage])}</a>`).join('')}</section>` : ''}`, '/satis'));",
+    "    if (!splitRecord(ctx)) return send(res, 200, layout(ctx, l.name, `<nav class=\"crumb\"><a href=\"/satis\">Satış hattı</a>${l.status !== 'lead' ? ` › <a href=\"/musteriler/${l.id}\">Müşteri sayfası</a>` : ''}</nav>${HEAD}<div class=\"two wide-first\">${HIST}${INFO}</div>`, '/satis'));"
+  ],
+  "ext-freelance.js": [
+    "  const payTxt = (ctx, w) => !seesMoney(ctx, w) ? PAY[w.pay_type] : w.pay_type === 'saatlik' ? (w.hour_cap ? t`${tl(w.hourly_rate)}/saat · en çok ${w.hour_cap} saat` : t`${tl(w.hourly_rate)}/saat`) : tl(w.amount);",
+    "    const p = ctx.user.role === 'admin' ? readPay(b) : { pay_type: 'sabit', amount: null, hourly_rate: null, hour_cap: null };",
+    "<div class=\"page-head\"><div><h1>${h(w.title)}</h1><div class=\"chips\">${badge(PK_ST[w.status], PK_TONE[w.status])}${staff ? `<span class=\"muted\">${h(w.freelancer)}</span>` : ''}<span class=\"muted\">${h(PAY[w.pay_type])}</span></div></div><div class=\"act-btns\">${moveForms}</div></div>",
+    "<div class=\"row\"><label class=\"wide\">Freelancer<select name=\"freelancer_id\" required>${people.map(u => `<option value=\"${u.id}\"${u.id === kim ? ' selected' : ''}>${h(u.name)}${owedOf(u.id) > 0 ? ' · ' + h(t`borç ${tl(owedOf(u.id))}`) : ''}</option>`).join('')}</select></label>"
+  ],
+  "ext-retention.js": [
+    "    await put(a, 'lead_months', clampMonths(b.lead_months, DEFAULTS.lead_months)); await put(a, 'audit_months', clampMonths(b.audit_months, DEFAULTS.audit_months)); await put(a, 'auto', b.auto ? '1' : '0');"
+  ],
+  "themes.js": [
+    "      if (o.menuGrup === 'acik') css += `.ng-h{pointer-events:none}.ng-h svg{display:none}.ng.shut .ng-b{grid-template-rows:1fr;opacity:1}.ng.shut .ng-i a{visibility:visible}`;"
+  ],
+  "ext-settings.js": [],
+  "ext-playbooks.js": [
+    "    const desc = [`Rol: ${ROLES[s.rol]} · ${AUTO[s.otomasyon]}${s.karar ? ' · Karar: ' + DECISIONS[s.karar] : ''}${s.akis ? ' · n8n: ' + akisName(s.akis) : ''}`, s.cikti && `Çıktı: ${s.cikti}`, s.kontrol && `Kabul: ${s.kontrol}`].filter(Boolean).join('\\n');",
+    "<section class=\"card\"><h2>Aşamalar</h2><div class=\"tbl\"><table><tr><th>#</th><th>Aşama</th><th>Kim</th><th>Otomasyon</th><th>Gün</th><th>Karar</th><th>Çıktı ve kabul</th></tr>",
+    "    send(res, 200, layout(ctx, s.name, `<nav class=\"crumb\"><a href=\"/katalog\">Katalog</a> › ${h(s.cat)}</nav><div class=\"page-head\"><div><p class=\"eyebrow\">${h(s.code)} · ${h(s.sub || '')}</p><h1>${h(s.name)}</h1>",
+    "    await audit(ctx, 'project.playbook', { id: pr.id, edited: true }); redirect(res, `/projeler/${pr.id}/kitap`);"
+  ],
+  "ext-flow.js": [
+    "      await audit(ctx, 'approval.request', { id: ap.id, client: p.client_id, task: x.id, via: 'flow' });",
+    "<p>${h(help.what)}</p><p class=\"muted\"><b>Sonra ne olur:</b> ${h(help.after)}</p>${btn ? `<div class=\"row\">${btn}</div>` : ''}${warn}"
+  ],
+  "ext-guide.js": [
+    "    ['Bir aşama \"Bitti\" olunca sıradaki açılır ve sorumlusuna bildirim gider. Müşteri kararı aşamasında onay isteği kendiliğinden müşteriye gider; onaylanınca akış ilerler, düzeltme istenirse önceki aşama müşterinin notuyla yeniden açılır. Son aşama bitince proje \"Onayda\" olur.', 'When a stage is \"Done\" the next one opens and its owner is notified. At a client-decision stage an approval request goes to the client automatically; approval moves the flow on, a revision request reopens the previous stage with the client\\'s note. When the last stage is done the project moves to \"In approval\".']),",
+    "  P(/^\\/faturalar$/, ['Faturalar ve ödeme durumları. Aylık hizmetlerin faturaları tek tuşla açılır.', 'Invoices and payment status. Monthly service invoices are created in one click.'],",
+    "  'Ayrıntılar': ['Görevin tanımı, sorumlusu ve tarihi. Durumu \"Bitti\" yapmak akışı ilerletir.', 'The task definition, owner and date. Setting it to \"Done\" moves the flow on.'],",
+    "const esc = (s) => String(s).replace(/[&<>\"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[c]));"
+  ],
+  "ext-icons.js": [
+    "export const MANIFEST = JSON.stringify({ name: 'Arvela OS', short_name: 'Arvela OS', icons: [{ src: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }, { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml' }], theme_color: '#0B0D12', background_color: '#0B0D12', display: 'standalone', start_url: '/' });"
+  ],
+  "ext-decisions.js": [
+    "  const m = /boundary=(?:\"([^\"]+)\"|([^;]+))/i.exec(ctype || ''); if (!m) return { fields: {}, files: [] };",
+    "    const r = await one(`UPDATE approvals SET status=$1, comment=$2, choice=$3, decided_by=$4, decided_at=now(), decided_via=$5, decided_name=$6 WHERE id=$7 AND status='bekliyor' RETURNING id`,",
+    "    await q(`UPDATE decision_links SET code_hash=NULL, code_expires=NULL, code_tries=0, sess_hash=$1, sess_expires=now() + interval '${SESSION_MIN} minutes', verified_at=COALESCE(verified_at, now()) WHERE id=$2`, [sha(s), l.id]);",
+    "    await audit(ctx, 'decision.link_revoke', { id: int(p.id), client: l.client_id }); redirect(res, `/musteriler/${l.client_id}/karar`);"
+  ],
+  "ext-ai.js": [
+    "    const t = await one(`SELECT t.*, p.name pname, p.description pdesc, p.playbook, p.ai_engine, p.client_id, s.name service FROM tasks t JOIN projects p ON p.id=t.project_id LEFT JOIN services s ON s.id=p.service_id WHERE t.id=$1 AND t.agency_id=$2`, [taskId, a]);",
+    "    return `<section class=\"flowbar small\"><p class=\"eyebrow\">Yapay zekâ · Claude</p><p>${cfg.enabled ? 'Claude bu görevin tanımına, hizmet kitabına ve kabul ölçütüne göre bir taslak hazırlar. Taslak notlara düşer, görev \"İncelemede\" olur; siz kontrol edip \"Bitti\" yapınca akış ilerler.' : 'Yapay zekâ henüz kapalı. Ayarlar → Yapay zekâ\\'dan açınca bu aşamanın taslağı Claude ile hazırlanır.'}${cfg.enabled && !cfg.piiOk ? ' Müşteri adı ve iletişim bilgileri maskelenerek gönderilir.' : ''}</p>"
+  ],
+  "ext-suggest.js": [
+    "  await q(`CREATE TABLE IF NOT EXISTS reminders (id SERIAL PRIMARY KEY, agency_id INT NOT NULL, task_id INT REFERENCES tasks(id) ON DELETE CASCADE, project_id INT REFERENCES projects(id) ON DELETE CASCADE,",
+    "    const t = await taskOf(ctx, c.task_id);",
+    "    if (staff) out.push(`<${rems.length ? 'section' : 'details'} class=\"card${rems.length ? '' : ' add'}\" id=\"hatirlatmalar\">${rems.length ? '<h2>Hatırlatmalar</h2>' : '<summary>Hatırlatma ekle</summary>'}${rems.map(r => `<div class=\"line\"><span class=\"grow\"><strong>${h(r.title)}</strong><span class=\"muted\">${fmtDate(r.due_at)}${r.repeat_days ? ` · her ${r.repeat_days} günde` : ''} · ${h(COND[r.cond])}</span></span><form method=\"post\" action=\"/hatirlatma/${r.id}/iptal\">${f}<button class=\"linkish\">İptal</button></form></div>`).join('') || ''}"
+  ],
+  "ext-look.js": [
+    "export const NAV_CSS = `",
+    "const VARS = '--paper:#0E1116;--surf:#161A21;--soft:#1B2029;--gold-soft:#231E14;--sand:#1D222B;--chip:#262C36;--line:#272D37;--line2:#20262F;--line3:#3A414D;--ink:#ECEEF1;--ink2:#C4C9D1;--stone:#9EA6B2;--stone2:#9EA6B2;--acc-t:#E2BE7A;--ok-bg:#1A2C20;--ok-t:#93CFA0;--warn-bg:#2D2514;--warn-t:#E9C886;--bad-bg:#34211C;--bad-t:#F4A48E;--bad-line:#5C3328;--gold-line:#4A3E22;--track:#2A303A;--dot:#4A5260;--champ-l:#2A2315;--btn:#E2BE7A;--btn-t:#0B0D12;--btn-h:#ECCB8E;--graphite:#2A2F38;--night:#0A0C10;--ok:#7FBF8E;--bad:#F08A62;color-scheme:dark';",
+    "export const LOOK_JS = `"
+  ]
 }
