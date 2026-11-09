@@ -8,6 +8,8 @@ export const PLANS = {
 // Deneme süresinde Business özellikleri açıktır.
 export const TRIAL_PLAN = 'business';
 export const TRIAL_AI = 40;
+// Katalogdaki liste fiyatları (Yönetim → fiyatlardan değiştirilebilir)
+export const PRICE_DEFAULTS = { 'SAAS-01': '1.490 TL / ay + KDV', 'SAAS-02': '3.990 TL / ay + KDV', 'SAAS-03': '9.990 TL / ay + KDV', 'SAAS-04': '990 TL / ay + KDV', 'SAAS-05': '4.500 TL (tek sefer) + KDV', 'SAAS-06': '6.000 TL / ay + KDV' };
 export const EXTRAS = { extra_brand: { code: 'SAAS-04', name: 'Ek marka' }, setup: { code: 'SAAS-05', name: 'Kurulum ve marka eğitimi' }, editor: { code: 'SAAS-06', name: 'İnsan editör kontrolü' } };
 
 export const WS_ST = { deneme: 'Deneme', aktif: 'Aktif', odeme: 'Ödeme bekleniyor', askida: 'Askıda' };

@@ -101,3 +101,17 @@ assert.equal(lim2({ status: 'deneme', trial_ends: '2030-01-01' }).aiPerMonth, 40
 assert.equal(lim2({ status: 'aktif', plan: 'agency' }).aiImagesPerMonth, 60);
 assert.equal(lim2({ status: 'aktif', plan: 'business' }).aiImagesPerMonth, 0);
 console.log('social faz 2 testleri tamam');
+
+// --- Faz 3: rapor ---
+const { summarize, monthRange, prevMonth, monthLabel } = await import('../app/social/report-core.mjs');
+assert.deepEqual(monthRange('2026-12'), ['2026-11-30T21:00:00.000Z', '2026-12-31T21:00:00.000Z']);
+assert.equal(prevMonth(new Date('2026-12-01T06:00:00Z')), '2026-11'); assert.equal(prevMonth(new Date('2026-01-01T06:00:00Z')), '2025-12');
+assert.equal(monthLabel('2026-12'), 'Aralık 2026');
+const sp = summarize([
+  { status: 'paylasildi', platforms: ['instagram', 'tiktok'], pillar: 'Ürün', scheduled_at: '2026-11-02T16:00:00Z', published_at: '2026-11-02T16:30:00Z', ai: true },
+  { status: 'paylasildi', platforms: ['instagram'], pillar: 'Ürün', scheduled_at: '2026-11-03T16:00:00Z', published_at: '2026-11-04T09:00:00Z' },
+  { status: 'onaylandi', platforms: ['instagram'], scheduled_at: '2020-01-01T00:00:00Z' },
+  { status: 'iptal', platforms: ['x'] }], [{ kind: 'duzeltme', body: 'x' }, { kind: 'musteri', body: 'Düzeltme istedi: y' }, { kind: 'musteri', body: 'Onayladı' }]);
+assert.deepEqual([sp.planned, sp.published, sp.onTime, sp.onTimePct, sp.missed, sp.cancelled, sp.revisions, sp.ai], [3, 2, 1, 50, 1, 1, 2, 1]);
+assert.deepEqual(sp.byPlat, { instagram: 2, tiktok: 1 }); assert.deepEqual(sp.byPillar, { 'Ürün': 2, 'Sütunsuz': 1 });
+console.log('social faz 3 testleri tamam');

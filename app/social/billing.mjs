@@ -3,9 +3,11 @@ import { route, send, redirect, audit, need } from './server.mjs';
 import { one, q } from './db.mjs';
 import { layout, csrf, badge } from './ui.mjs';
 import { esc, nn, clip, HttpError, fmtDate } from './lib.mjs';
-import { PLANS, EXTRAS, WS_ST } from './plans.mjs';
+import { PLANS, EXTRAS, WS_ST, PRICE_DEFAULTS } from './plans.mjs';
+import { syncAccount, sendMail, mailHtml } from './notify.mjs';
+import { ADMINS } from './server.mjs';
 
-export const priceOf = async (code) => { const r = await one('SELECT value FROM settings WHERE key=$1', ['price.' + code]); return r?.value || null; };
+export const priceOf = async (code) => { const r = await one('SELECT value FROM settings WHERE key=$1', ['price.' + code]); return r?.value || PRICE_DEFAULTS[code] || null; };
 const FEAT = (p) => [`${p.brands} marka`, `${p.users} kullanıcı`, `${p.accounts} sosyal hesap`, `Ayda ${p.postsPerMonth} gönderi`, p.approvals ? 'Ekip içi onay' : null, p.clientLinks ? 'Müşteri onay bağlantısı' : null, p.aiImages ? 'Yapay zekâ görseli' : null, 'Marka şablonlarıyla görsel', 'Yapay zekâ metin ve takvim'].filter(Boolean);
 
 export function register() {
@@ -29,7 +31,10 @@ ${ws.status === 'odeme' ? `<div class="note">Paket isteğiniz alındı. Arvela e
     need(ctx, 'owner'); const k = ctx.body.plan; if (!PLANS[k]) throw new HttpError(400, 'Paket geçersiz.');
     if (!ctx.ws.billing?.title) throw new HttpError(400, 'Önce aşağıdaki fatura bilgilerini doldurun.');
     await q(`UPDATE workspaces SET requested_plan=$1, status=CASE WHEN status='aktif' THEN status ELSE 'odeme' END WHERE id=$2`, [k, ctx.ws.id]);
-    await audit(ctx, 'plan.request', { plan: k }); redirect(res, '/paket');
+    await audit(ctx, 'plan.request', { plan: k });
+    const ws = await one('SELECT * FROM workspaces WHERE id=$1', [ctx.ws.id]); await syncAccount(ws, 'talep', ctx.user);
+    for (const to of ADMINS) sendMail(to, `Arvela Social paket isteği: ${ws.name} · ${PLANS[k].name}`, mailHtml('Yeni paket isteği', [`${ws.name} (${ctx.user.name}, ${ctx.user.email}) ${PLANS[k].name} paketini istedi.`, 'Arvela OS satış hattına "yeni" olarak düştü. Fatura ve havale bilgisini gönderin; ödeme gelince Yönetim sayfasından etkinleştirin.'], ['Yönetimde aç', `/yonetim/${ws.id}`]), 'genel').catch(() => {});
+    redirect(res, '/paket');
   });
   route('POST', '/paket/fatura', async (ctx, res) => {
     need(ctx, 'owner'); const b = ctx.body; if (!nn(b.title)) throw new HttpError(400, 'Unvan gerekli.');

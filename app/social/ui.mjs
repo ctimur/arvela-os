@@ -1,5 +1,6 @@
 // Arvela Social — sayfa iskeleti ve stiller (Arvela marka kılavuzu: Night/Paper, şampanya altını, Poppins/Inter).
 import { esc } from './lib.mjs';
+import { LANDING_CSS } from './landing-css.mjs';
 
 export const badge = (t, tone = '') => `<span class="badge ${tone}">${esc(t)}</span>`;
 export const csrf = (ctx) => `<input type="hidden" name="csrf" value="${esc(ctx.session?.csrf || '')}">`;
@@ -15,6 +16,7 @@ const ICON = {
   yonetim: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
   bugun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
   menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+  rapor: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
   yz: '<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
 };
 export const icon = (n) => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n] || ''}</svg>`;
@@ -78,6 +80,7 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px 12p
 .preview{background:#E9E4D8;border-radius:16px;padding:16px;display:flex;justify-content:center}.preview img{max-width:100%;max-height:560px}.preview svg{height:auto;max-width:100%}.preview img,.preview svg{border-radius:8px;box-shadow:0 1px 0 #0001}
 .count{font-size:12px;color:var(--stone)}.count.over{color:var(--bad);font-weight:600}
 .swatch{display:inline-block;width:18px;height:18px;border-radius:5px;border:1px solid #0002;vertical-align:middle}
+@media print{.side,.top,.no-print,.menu-btn{display:none!important}.app{display:block}.wrap{padding:0}.card{break-inside:avoid;box-shadow:none}body{background:#fff}}
 .pub-top{background:var(--night);color:#fff;padding:16px 24px;font-family:Poppins,sans-serif;font-size:20px}.pub-top small{font-size:11px;letter-spacing:2px;color:var(--champ)}.pub{max-width:760px;margin:0 auto;padding:28px 18px}
 .auth{min-height:100vh;display:grid;grid-template-columns:1fr 1fr}.auth .art{background:var(--night);color:#fff;padding:56px;display:flex;flex-direction:column;justify-content:space-between}
 .auth .art h1{font-size:44px;line-height:1.1;max-width:520px}.auth .art p{color:var(--muted-d);font-size:17px;max-width:480px}.auth .art .gold{color:var(--champ)}
@@ -88,11 +91,11 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px 12p
 @media (max-width:900px){.app{grid-template-columns:1fr}.side{position:fixed;inset:0 auto 0 0;width:270px;transform:translateX(-100%);transition:transform .2s;z-index:30}
 .side.open{transform:none}.menu-btn{display:inline-flex}.wrap{padding:18px}.top{padding:12px 16px}.auth{grid-template-columns:1fr}.auth .art{padding:32px}.auth .art h1{font-size:32px}
 .cal{display:flex;flex-direction:column}.cal .dow{display:none}.cal .day{min-height:0;border-right:0}.cal .day.out{display:none}.cal .day:not(:has(.chipp)) .add{display:none}.cal .day:not(:has(.chipp)):not(.today){display:none}}
-`;
+${LANDING_CSS}`;
 
 export function layout(ctx, title, body, active = '') {
   const u = ctx.user; const ws = ctx.ws;
-  const nav = [['/', 'bugun', 'Bugün'], ['/takvim', 'takvim', 'Takvim'], ['/gonderiler', 'gonderi', 'Gönderiler'], ['/markalar', 'marka', 'Markalar'], ['/medya', 'medya', 'Medya'], ['/yapay-zeka', 'yz', 'Yapay zekâ'],
+  const nav = [['/', 'bugun', 'Bugün'], ['/takvim', 'takvim', 'Takvim'], ['/gonderiler', 'gonderi', 'Gönderiler'], ['/markalar', 'marka', 'Markalar'], ['/medya', 'medya', 'Medya'], ['/yapay-zeka', 'yz', 'Yapay zekâ'], ['/rapor', 'rapor', 'Rapor'],
     ...(u.role === 'owner' ? [['/ekip', 'ekip', 'Ekip'], ['/paket', 'paket', 'Paket']] : []), ...(ctx.admin ? [['/yonetim', 'yonetim', 'Yönetim']] : [])];
   const brands = ctx.brands || [];
   const sw = brands.length > 1 ? `<form method="post" action="/marka-sec" class="row" style="align-items:center">${csrf(ctx)}<select name="brand_id" aria-label="Marka" data-autosubmit>${brands.map(b => `<option value="${b.id}"${b.id === ctx.brand?.id ? ' selected' : ''}>${esc(b.name)}</option>`).join('')}</select><noscript><button class="ghost">Seç</button></noscript></form>`

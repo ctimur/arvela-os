@@ -21,7 +21,7 @@ import { registerDecisions, migrateDecisions, parseMultipart, decisionForm, pars
 import { THEMES } from './themes.js';
 import { NAV_CSS, DARK_CSS, NAV_ICON, navGroups } from './ext-look.js';
 
-const VERSION = '0.32.0';
+const VERSION = '0.33.0';
 let settingsApi = null;
 let notify = null;
 const PORT = Number(process.env.PORT || 3000);
@@ -810,7 +810,7 @@ import { registerWork, migrateWork } from './ext-work.js';
 import { registerSync, migrateSync } from './ext-sync.js';
 import { registerAutomation, migrateAutomation, EVENT_LABEL } from './ext-automation.js';
 import { registerForge, migrateForge } from './ext-forge.js';
-import { registerSocial } from './ext-social.js';
+import { registerSocial, migrateSocial } from './ext-social.js';
 registerSites({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, STAFF });
 registerQuotes({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, audit, HttpError, int, nn });
 registerInvoices({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, audit, HttpError, int, nn });
@@ -827,7 +827,7 @@ const ops = registerOps({ route, all, need, layout, h, send });
 notify = registerNotify({ route, all, one, q, need, layout, h, csrfField, redirect, send });
 const todayPage = registerToday({ all, one, h, layout, need, STAFF, csrfField, forgePending: forge.pendingCount, extraActions: async (a) => [...crmActions(await crm.openLeads(a)), ...packageActions(await freelance.awaitingReview(a)), ...(await flow.todayActions(a)), ...(await ops.todayActions().catch(() => []))] });
 registerSync({ route, one, all, q, HttpError, safeEqual, SETUP_TOKEN, onSynced: (a, before) => hooks?.onSiteSync(a, before) });
-registerSocial({ route, one, HttpError, safeEqual, SETUP_TOKEN, send, sendMail: (a, m) => hooks ? hooks.sendMail(a, m) : Promise.resolve(false) });
+registerSocial({ route, one, all, q, HttpError, safeEqual, SETUP_TOKEN, send, sendMail: (a, m) => hooks ? hooks.sendMail(a, m) : Promise.resolve(false) });
 decisions = registerDecisions({ route, all, one, q, need, layout, authPage, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, AP_ST, APP_URL: process.env.APP_URL, cookie, parseCookies,
   sendMail: (a, m) => hooks ? hooks.sendMail(a, m) : Promise.resolve(false) });
 ai = registerAi({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, postHook: hooks.postHook, api: hooks.api, apiBody: hooks.body, onResult: (...a) => suggest.onResult(...a) });
@@ -838,4 +838,4 @@ const playbooks = registerPlaybooks({ route, all, one, q, need, layout, h, badge
 registerWork({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send, projectExtra: async (ctx, pr) => (await playbooks.projectCard(ctx, pr)) + (await ai.projectCard(ctx, pr)), flowBanner: (ctx, pr, tasks) => flow.projectBanner(ctx, pr, tasks),
   taskExtra: async (ctx, tk) => (await flow.taskCard(ctx, tk)) + (await ai.taskCard(ctx, tk)) + (await suggest.taskCards(ctx, tk)), decisions });
 
-migrate().then(() => migrateDemo({ q })).then(() => migrateInvite({ q })).then(() => migrateOps({ q })).then(() => migrateNotify({ q })).then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => migrateFreelance({ q })).then(() => migrateRetention({ q })).then(() => migratePlaybooks({ q, all })).then((n) => n && console.log(`hizmet kitabı yazıldı: ${n}`)).then(() => migrateDecisions({ q })).then(() => migrateFlow({ q })).then(() => migrateAi({ q })).then(() => migrateSuggest({ q })).then(() => loadThemes(all)).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
+migrate().then(() => migrateDemo({ q })).then(() => migrateInvite({ q })).then(() => migrateOps({ q })).then(() => migrateNotify({ q })).then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => migrateFreelance({ q })).then(() => migrateRetention({ q })).then(() => migratePlaybooks({ q, all })).then((n) => n && console.log(`hizmet kitabı yazıldı: ${n}`)).then(() => migrateDecisions({ q })).then(() => migrateFlow({ q })).then(() => migrateAi({ q })).then(() => migrateSuggest({ q })).then(() => migrateSocial({ q })).then(() => loadThemes(all)).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
