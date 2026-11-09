@@ -45,4 +45,5 @@ jobs:
           BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
           BACKUP_GITHUB_TOKEN: ${{ secrets.BACKUP_GITHUB_TOKEN }}
           BACKUP_REPO: ${{ vars.BACKUP_REPO }}
+          SOCIAL_ADMIN_EMAILS: ${{ vars.SOCIAL_ADMIN_EMAILS }}
         run: python3 -u deploy/deploy.py

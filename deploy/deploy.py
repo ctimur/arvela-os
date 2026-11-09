@@ -79,8 +79,8 @@ def build_compose(sha):
     if not re.fullmatch(r'[0-9a-f]{40}', sha or ''):
         raise SystemExit(f'geçersiz commit: {sha!r}')
     compose = (ROOT / 'deploy' / 'docker-compose.yml').read_text()
-    if compose.count('__SHA__') != 1:
-        raise SystemExit('docker-compose.yml içinde __SHA__ bulunamadı')
+    if compose.count('__SHA__') != 2:  # app indirir, social (0.31) aynı commit'i bekler
+        raise SystemExit('docker-compose.yml içinde iki __SHA__ (app, social) bekleniyor')
     compose = compose.replace('__SHA__', sha)
     if len(compose) > LIMIT:
         raise SystemExit(f'arvela-os compose {len(compose)} karakter > {LIMIT}')
@@ -100,7 +100,7 @@ def main():
     compose = build_compose(sha)
     env = f"DB_PASSWORD={os.environ['DB_PASSWORD']}\nSETUP_TOKEN={os.environ['SETUP_TOKEN']}\nFORGE_GITHUB_TOKEN={os.environ['FORGE_GITHUB_TOKEN']}\n"
     # Yedek (0.25): tanımlı değilse boş geçer; yedek servisi eksik ayarı Ayarlar → Yedek ve izleme'de bildirir
-    for k in ('BACKUP_PASSPHRASE', 'BACKUP_GITHUB_TOKEN', 'BACKUP_REPO'):
+    for k in ('BACKUP_PASSPHRASE', 'BACKUP_GITHUB_TOKEN', 'BACKUP_REPO', 'SOCIAL_ADMIN_EMAILS'):
         v = os.environ.get(k, '').strip()
         if '\n' in v: raise SystemExit(f'{k} tek satır olmalı')
         env += f"{k}={v}\n"

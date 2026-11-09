@@ -48,8 +48,21 @@ backup_once() {
   gh -X POST -H "Content-Type: application/octet-stream" --data-binary @"$f.enc" "https://uploads.github.com/repos/$REPO/releases/$id/assets?name=arvela.dump.enc" -o /dev/null \
     || { event yedek false "Yedek dosyası yüklenemedi ($tag)"; rm -f "$f.enc"; return 1; }
   rm -f "$f.enc"
-  event yedek true "$tag · $((size / 1024)) KB · sha256 $sha"
+  if psql -h db -U arvela -d social -Atqc 'SELECT 1' >/dev/null 2>&1; then
+    if social_dump "$id"; then extra=" + social"; else extra=" · UYARI: social yedeği alınamadı"; fi
+  else extra=; fi
+  event yedek true "$tag · $((size / 1024)) KB · sha256 $sha$extra"
   prune
+}
+
+social_dump() { # Arvela Social (0.31) veritabanı aynı sürüme ikinci dosya olarak eklenir; yoksa sessizce geçer
+  psql -h db -U arvela -d social -Atqc 'SELECT 1' >/dev/null 2>&1 || return 1
+  g=/tmp/social.dump; rm -f "$g" "$g.enc"
+  pg_dump -h db -U arvela -d social -Fc -Z 6 -f "$g" 2>/tmp/err \
+    && openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in "$g" -out "$g.enc" -pass env:BACKUP_PASSPHRASE \
+    && gh -X POST -H "Content-Type: application/octet-stream" --data-binary @"$g.enc" "https://uploads.github.com/repos/$REPO/releases/$1/assets?name=social.dump.enc" -o /dev/null
+  r=$?; rm -f "$g" "$g.enc"
+  return $r
 }
 
 prune() { # 30 günden eski yedekleri (sürüm + etiket) siler
