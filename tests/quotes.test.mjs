@@ -18,7 +18,12 @@ const d = {
 };
 registerQuotes(d);
 const t = totals(quote, items);
-assert.deepStrictEqual(t, { onceList: 55000, monthlyList: 7000, once: 46750, monthly: 5950, year: 118150, yearList: 139000 });
+assert.deepStrictEqual(t, { onceList: 55000, monthlyList: 7000, once: 46750, monthly: 5950, monthlyAfter: 5950, year: 118150, yearList: 139000 });
+// kalem indirimi: aylık 1000, %20, ilk 3 ay → 3×800 + 9×1000 = 11400 ilk yıl; sonra 1000
+const tp = totals({ discount_pct: 0 }, [{ qty: 1, unit_price: 1000, billing: 'Aylık', disc_pct: 20, disc_months: 3 }, { qty: 2, unit_price: 500, billing: 'Tek seferlik', disc_pct: 10 }]);
+assert.equal(tp.monthly, 800); assert.equal(tp.monthlyAfter, 1000); assert.equal(tp.year, 900 + 11400); assert.equal(tp.once, 900);
+// süresiz kalem indirimi kalıcıdır
+assert.equal(totals({ discount_pct: 0 }, [{ qty: 1, unit_price: 1000, billing: 'Aylık', disc_pct: 20 }]).year, 9600);
 const res = () => { const r = { out: '', status: 0, headers: {} }; r.writeHead = (s, hd) => { r.status = s; r.headers = hd || {}; }; r.end = (b) => { r.out = b || ''; }; return r; };
 const ctx = (body = {}) => ({ user: { id: 1, agency_id: 1, client_id: 3, role: 'admin' }, body });
 for (const [k, p] of [['GET /teklifler', {}], ['GET /teklifler/:id', { id: '7' }], ['GET /portal/teklifler', {}], ['GET /portal/teklifler/:id', { id: '7' }]]) {
@@ -33,3 +38,5 @@ r = res(); await routes['POST /teklifler/:id/kalem'](ctx({ service_id: '5', qty:
 console.log('TÜM TESTLER GEÇTİ');
 
 assert.equal(agreedPrice(3500, '10.00'), 3150, 'aylık hizmet indirimli anlaşılan fiyatla kaydedilir'); assert.equal(agreedPrice(6500, 0), 6500);
+
+assert.equal(agreedPrice(1000, 10, 20), 720, 'genel ve kalem indirimi birlikte');

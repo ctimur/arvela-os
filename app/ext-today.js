@@ -136,8 +136,8 @@ export function registerToday({ all, one, h, layout, need, STAFF, forgePending, 
       admin ? all(`SELECT i.*, c.name client FROM invoices i JOIN clients c ON c.id=i.client_id WHERE i.agency_id=$1 AND i.status='gonderildi' AND i.client_notified_at IS NOT NULL ORDER BY i.client_notified_at`, [a]) : [],
       admin ? all(`SELECT x.*, c.name client FROM quotes x JOIN clients c ON c.id=x.client_id WHERE x.agency_id=$1 AND x.status='taslak' ORDER BY x.created_at LIMIT 10`, [a]) : [],
       admin ? all(`SELECT i.*, c.name client FROM invoices i JOIN clients c ON c.id=i.client_id WHERE i.agency_id=$1 AND i.status='taslak' ORDER BY i.created_at LIMIT 10`, [a]) : [],
-      admin ? one(`SELECT count(DISTINCT cs.client_id)::int n FROM client_services cs JOIN services s ON s.id=cs.service_id
-        WHERE cs.agency_id=$1 AND cs.status='aktif' AND s.billing='Aylık' AND s.price_try IS NOT NULL
+      admin ? one(`SELECT count(DISTINCT cs.client_id)::int n FROM client_services cs LEFT JOIN services s ON s.id=cs.service_id
+        WHERE cs.agency_id=$1 AND cs.status='aktif' AND COALESCE(s.billing, cs.billing)='Aylık' AND COALESCE(cs.unit_price, s.price_try) IS NOT NULL
         AND NOT EXISTS (SELECT 1 FROM invoices i WHERE i.client_id=cs.client_id AND i.period=$2 AND i.status<>'iptal')`, [a, period]) : { n: 0 },
       one(`SELECT count(*)::int n FROM tasks WHERE agency_id=$1 AND assignee_id=$2 AND status='bitti'`, [a, ctx.user.id]),
     ]);

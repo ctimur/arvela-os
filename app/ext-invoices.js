@@ -110,11 +110,15 @@ ${view.map(x => `<tr><td><a href="/faturalar/${x.id}">${h(x.number)}</a></td><td
   route('POST', '/faturalar/aylik', async (ctx, res) => {
     need(ctx, 'admin'); const period = String(ctx.body.period || '');
     if (!/^\d{4}-\d{2}$/.test(period)) throw new HttpError(400, 'Dönem geçersiz.');
-    const rows = await all(`SELECT cs.client_id, s.id service_id, s.code, s.name, COALESCE(cs.unit_price, s.price_try) price_try, COALESCE(cs.qty, 1) qty, COALESCE(cs.currency, 'TRY') currency FROM client_services cs JOIN services s ON s.id=cs.service_id
-      WHERE cs.agency_id=$1 AND cs.status='aktif' AND s.billing='Aylık' AND COALESCE(cs.unit_price, s.price_try) IS NOT NULL
-      AND NOT EXISTS (SELECT 1 FROM invoices i WHERE i.client_id=cs.client_id AND i.period=$2 AND i.status<>'iptal') ORDER BY cs.client_id, s.code`, [ctx.user.agency_id, period]);
+    // Fiyat: indirimli dönemdeyse indirimli fiyat, yoksa teklifte anlaşılan, o da yoksa katalog. Katalog dışı aylık kalemler de dahil.
+    const rows = await all(`SELECT cs.client_id, s.id service_id, COALESCE(s.code || ' · ' || s.name, cs.name) label,
+        CASE WHEN cs.promo_until IS NOT NULL AND to_date($2 || '-01', 'YYYY-MM-DD') <= cs.promo_until THEN cs.promo_price ELSE COALESCE(cs.unit_price, s.price_try) END price_try,
+        (cs.promo_until IS NOT NULL AND to_date($2 || '-01', 'YYYY-MM-DD') <= cs.promo_until) promo, COALESCE(cs.qty, 1) qty, COALESCE(cs.currency, 'TRY') currency
+      FROM client_services cs LEFT JOIN services s ON s.id=cs.service_id
+      WHERE cs.agency_id=$1 AND cs.status='aktif' AND COALESCE(s.billing, cs.billing)='Aylık' AND COALESCE(cs.unit_price, s.price_try) IS NOT NULL
+      AND NOT EXISTS (SELECT 1 FROM invoices i WHERE i.client_id=cs.client_id AND i.period=$2 AND i.status<>'iptal') ORDER BY cs.client_id, 3`, [ctx.user.agency_id, period]);
     const byClient = new Map();
-    for (const r of rows) { const key = `${r.client_id}|${r.currency}`; if (!byClient.has(key)) byClient.set(key, []); byClient.get(key).push({ service_id: r.service_id, name: `${r.code} · ${r.name} (${period})`, qty: Number(r.qty) || 1, unit_price: Number(r.price_try) }); }
+    for (const r of rows) { const key = `${r.client_id}|${r.currency}`; if (!byClient.has(key)) byClient.set(key, []); byClient.get(key).push({ service_id: r.service_id, name: `${r.label} (${period}${r.promo ? ', indirimli dönem' : ''})`, qty: Number(r.qty) || 1, unit_price: Number(r.price_try) }); }
     for (const [key, items] of byClient) { const [clientId, currency] = key.split('|'); await createInvoice(ctx, { clientId: Number(clientId), period, currency, items }); }
     await audit(ctx, 'invoice.monthly', { period, count: byClient.size });
     go(res, '/faturalar?durum=taslak');
@@ -125,7 +129,7 @@ ${view.map(x => `<tr><td><a href="/faturalar/${x.id}">${h(x.number)}</a></td><td
     if (!x) throw new HttpError(400, 'Onaylı teklif bulunamadı.');
     const k = 1 - Number(x.discount_pct || 0) / 100;
     const its = await all('SELECT * FROM quote_items WHERE quote_id=$1 ORDER BY sort, id', [x.id]);
-    const items = its.map(i => ({ service_id: i.service_id, name: i.billing === 'Aylık' ? `${i.name} (ilk ay)` : i.name, qty: i.qty, unit_price: Math.round(i.unit_price * k) }));
+    const items = its.map(i => ({ service_id: i.service_id, name: i.billing === 'Aylık' ? `${i.name} (ilk ay)` : i.name, qty: i.qty, unit_price: Math.round(i.unit_price * k * (1 - Math.min(100, Number(i.disc_pct || 0)) / 100)) }));
     const id = await createInvoice(ctx, { clientId: x.client_id, quoteId: x.id, currency: x.currency, items });
     await audit(ctx, 'invoice.from_quote', { id, quote: x.id }); go(res, `/faturalar/${id}`);
   });

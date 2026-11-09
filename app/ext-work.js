@@ -16,6 +16,12 @@ export async function migrateWork({ q }) {
   await q(`ALTER TABLE client_services ADD COLUMN IF NOT EXISTS unit_price NUMERIC(12,2)`);
   await q(`ALTER TABLE client_services ADD COLUMN IF NOT EXISTS currency TEXT`);
   await q(`ALTER TABLE client_services ADD COLUMN IF NOT EXISTS quote_id INT`);
+  // 0.30: katalog dışı aylık kalem (service_id boş, adı ve faturalaması kendinde) ve süreli indirim
+  await q('ALTER TABLE client_services ALTER COLUMN service_id DROP NOT NULL');
+  await q('ALTER TABLE client_services ADD COLUMN IF NOT EXISTS name TEXT');
+  await q('ALTER TABLE client_services ADD COLUMN IF NOT EXISTS billing TEXT');
+  await q('ALTER TABLE client_services ADD COLUMN IF NOT EXISTS promo_price NUMERIC(12,2)');
+  await q('ALTER TABLE client_services ADD COLUMN IF NOT EXISTS promo_until DATE');
   // 0.28: önceki teklif onaylarından gelen hizmetlere anlaşılan koşulları bir kez yaz.
   await q(`UPDATE client_services cs SET qty=qi.qty, unit_price=ROUND(qi.unit_price * (1 - qt.discount_pct / 100), 2), currency=qt.currency, quote_id=qt.id
     FROM quotes qt JOIN quote_items qi ON qi.quote_id=qt.id

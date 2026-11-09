@@ -83,7 +83,7 @@ export function registerAutomation(d) {
     if (kind === 'lead') return one(`SELECT c.id, c.name, c.contact_name, c.phone, c.email, c.sector, c.status, c.stage, c.lead_source, c.lead_score, c.interest, c.call_at, c.next_action, c.next_action_at, c.lost_reason, c.owner_id, u.name owner, u.email owner_email,
       (SELECT body FROM client_notes n WHERE n.client_id=c.id ORDER BY n.created_at DESC LIMIT 1) last_note, '${BASE}/satis/' || c.id url FROM clients c LEFT JOIN users u ON u.id=c.owner_id WHERE c.id=$1`, [id]);
     if (kind === 'client') return one(`SELECT id, name, sector, contact_name, phone, email, status, '${BASE}/musteriler/' || id url FROM clients WHERE id=$1`, [id]);
-    if (kind === 'client_service') return one(`SELECT cs.id, cs.status, cs.start_date, cs.end_date, cs.notes, s.code, s.name service, s.billing, cs.client_id, c.name client FROM client_services cs JOIN services s ON s.id=cs.service_id JOIN clients c ON c.id=cs.client_id WHERE cs.id=$1`, [id]);
+    if (kind === 'client_service') return one(`SELECT cs.id, cs.status, cs.start_date, cs.end_date, cs.notes, s.code, COALESCE(s.name, cs.name) service, COALESCE(s.billing, cs.billing) billing, cs.client_id, c.name client FROM client_services cs LEFT JOIN services s ON s.id=cs.service_id JOIN clients c ON c.id=cs.client_id WHERE cs.id=$1`, [id]);
     if (kind === 'project') return one(`SELECT p.id, p.name, p.status, p.due_date, p.description, p.client_id, c.name client, '${BASE}/projeler/' || p.id url FROM projects p JOIN clients c ON c.id=p.client_id WHERE p.id=$1`, [id]);
     if (kind === 'task') return one(`SELECT t.id, t.title, t.status, t.priority, t.due_date, t.description, t.project_id, p.name project, p.client_id, c.name client, t.assignee_id, u.name assignee, u.email assignee_email,
       (SELECT body FROM task_comments k WHERE k.task_id=t.id ORDER BY k.created_at DESC LIMIT 1) last_note, '${BASE}/gorev/' || t.id url
@@ -208,7 +208,7 @@ export function registerAutomation(d) {
   api('GET', '/clients/:id', 'is', async (ctx, a, p) => {
     const c = await one('SELECT * FROM clients WHERE id=$1 AND agency_id=$2', [int(p.id), a]); if (!c) throw new HttpError(404, 'Müşteri bulunamadı.');
     const [services, projects, sites, approvals] = await Promise.all([
-      all('SELECT cs.id, cs.status, cs.start_date, cs.end_date, cs.notes, s.code, s.name, s.billing FROM client_services cs JOIN services s ON s.id=cs.service_id WHERE cs.client_id=$1', [c.id]),
+      all('SELECT cs.id, cs.status, cs.start_date, cs.end_date, cs.notes, s.code, COALESCE(s.name, cs.name) name, COALESCE(s.billing, cs.billing) billing FROM client_services cs LEFT JOIN services s ON s.id=cs.service_id WHERE cs.client_id=$1', [c.id]),
       all('SELECT id, name, status, due_date FROM projects WHERE client_id=$1 ORDER BY id DESC', [c.id]),
       all('SELECT domain, platform, wp_version, wp_vulns, ssl_status, ssl_expires, issue FROM sites WHERE client_id=$1', [c.id]),
       all('SELECT id, title, status, created_at, decided_at FROM approvals WHERE client_id=$1 ORDER BY id DESC LIMIT 50', [c.id])]);

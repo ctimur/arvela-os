@@ -21,7 +21,7 @@ import { registerDecisions, migrateDecisions, parseMultipart, decisionForm, pars
 import { THEMES } from './themes.js';
 import { NAV_CSS, DARK_CSS, NAV_ICON, navGroups } from './ext-look.js';
 
-const VERSION = '0.29.1';
+const VERSION = '0.30.0';
 let settingsApi = null;
 let notify = null;
 const PORT = Number(process.env.PORT || 3000);
@@ -513,12 +513,15 @@ route('POST', '/giris', async (ctx, res) => {
   if (rateLimited(ip, em)) return send(res, 429, authPage('Giriş', `<div class="err">Çok fazla deneme. 15 dakika sonra tekrar deneyin.</div>`));
   const u = await one('SELECT * FROM users WHERE lower(email)=lower($1) AND active', [ctx.body.email || '']);
   if (!u || !checkPassword(ctx.body.password || '', u.pass_hash)) { failHit('ip:' + ip); if (em) failHit('em:' + em.toLowerCase()); return send(res, 401, authPage('Giriş', `<div class="err">E-posta ya da şifre hatalı.</div><a href="/giris">Tekrar dene</a>`)); }
-  const sid = token(); const csrf = token(16);
-  await q(`INSERT INTO sessions (id, user_id, csrf, expires_at) VALUES ($1,$2,$3, now() + interval '${SESSION_DAYS} days')`, [sid, u.id, csrf]);
-  await q('UPDATE users SET last_login=now() WHERE id=$1', [u.id]);
-  await q('DELETE FROM sessions WHERE expires_at < now()');
-  redirect(res, '/', { 'Set-Cookie': cookie('sid', sid, SESSION_DAYS * 86400) });
+  await startSession(res, u.id, '/');
 });
+async function startSession(res, uid, to) {
+  const sid = token(); const csrf = token(16);
+  await q(`INSERT INTO sessions (id, user_id, csrf, expires_at) VALUES ($1,$2,$3, now() + interval '${SESSION_DAYS} days')`, [sid, uid, csrf]);
+  await q('UPDATE users SET last_login=now() WHERE id=$1', [uid]);
+  await q('DELETE FROM sessions WHERE expires_at < now()');
+  redirect(res, to, { 'Set-Cookie': cookie('sid', sid, SESSION_DAYS * 86400) });
+}
 // Dil seçimi: giriş öncesi çerezde, giriş sonrası kullanıcı tercihinde tutulur.
 route('POST', '/dil', async (ctx, res) => {
   const l = LANGS[ctx.body.lang] ? ctx.body.lang : 'tr';
@@ -577,10 +580,10 @@ async function clientFor(ctx, id) {
 }
 route('GET', '/musteriler/:id', async (ctx, res, p) => {
   need(ctx, ...STAFF); const c = await clientFor(ctx, int(p.id)); const a = ctx.user.agency_id;
-  const svcs = await all(`SELECT cs.*, s.code, s.name, s.billing FROM client_services cs JOIN services s ON s.id=cs.service_id WHERE cs.client_id=$1 ORDER BY cs.created_at`, [c.id]);
+  const svcs = await all(`SELECT cs.*, COALESCE(s.code, 'Özel') code, COALESCE(s.name, cs.name) name, COALESCE(s.billing, cs.billing) billing FROM client_services cs LEFT JOIN services s ON s.id=cs.service_id WHERE cs.client_id=$1 ORDER BY cs.created_at`, [c.id]);
   const prjs = await all(`SELECT p.*, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id)::int total, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id AND t.status='bitti')::int done FROM projects p WHERE p.client_id=$1 ORDER BY p.created_at DESC`, [c.id]);
   const aps = await all('SELECT * FROM approvals WHERE client_id=$1 ORDER BY created_at DESC LIMIT 20', [c.id]);
-  const cu = await all(`SELECT id, name, email, last_login, active FROM users WHERE client_id=$1 AND role='client'`, [c.id]);
+  const cu = await all(`SELECT id, name, email, last_login, active, invite_hash, invite_expires FROM users WHERE client_id=$1 AND role='client'`, [c.id]);
   const catalog = await all(`SELECT s.id, s.code, s.name, sc.name cat FROM services s JOIN service_categories sc ON sc.id=s.category_id WHERE s.agency_id=$1 AND s.active ORDER BY sc.sort, s.code`, [a]);
   const f = csrfField(ctx);
   const HEAD = `
@@ -594,7 +597,7 @@ route('GET', '/musteriler/:id', async (ctx, res, p) => {
 
 `;
   const REST = `<section class="card" id="hizmetler"><h2>Hizmetler</h2>
-${svcs.length ? svcs.map(s => `<div class="svc"><div class="svc-h"><span class="grow"><strong><a href="/hizmet/${s.id}/kitap">${h(s.code)} · ${h(s.name)}</a>${s.playbook ? ' ' + badge('Özel kitap', 'warn') : ''}</strong><span class="muted">${h(s.billing || '')}${s.unit_price != null ? ` · ${Number(s.qty || 1) !== 1 ? Number(s.qty) + ' × ' : ''}${Number(s.unit_price).toLocaleString('tr-TR')} ${s.currency === 'EUR' ? '€' : 'TL'}` : ''}${s.start_date ? ' · başlangıç ' + fmtDate(s.start_date) : ''}${s.end_date ? ' · bitiş ' + fmtDate(s.end_date) : ''}${s.notes ? ' · ' + h(s.notes) : ''}</span></span>
+${svcs.length ? svcs.map(s => `<div class="svc"><div class="svc-h"><span class="grow"><strong>${s.service_id ? `<a href="/hizmet/${s.id}/kitap">${h(s.code)} · ${h(s.name)}</a>` : `${h(s.name)} ${badge('Katalog dışı')}`}${s.playbook ? ' ' + badge('Özel kitap', 'warn') : ''}</strong><span class="muted">${h(s.billing || '')}${s.unit_price != null ? ` · ${Number(s.qty || 1) !== 1 ? Number(s.qty) + ' × ' : ''}${Number(s.unit_price).toLocaleString('tr-TR')} ${s.currency === 'EUR' ? '€' : 'TL'}` : ''}${s.promo_until ? ` · ${new Date(s.promo_until).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric', timeZone: 'Europe/Istanbul' })} sonuna dek ${Number(s.promo_price).toLocaleString('tr-TR')} ${s.currency === 'EUR' ? '€' : 'TL'}` : ''}${s.start_date ? ' · başlangıç ' + fmtDate(s.start_date) : ''}${s.end_date ? ' · bitiş ' + fmtDate(s.end_date) : ''}${s.notes ? ' · ' + h(s.notes) : ''}</span></span>
 <form class="inline-status" method="post" action="/hizmet/${s.id}">${f}<select name="status" data-auto aria-label="Durum">${opts(CS_ST, s.status)}</select><button class="ghost">Kaydet</button></form></div>
 <details><summary>Düzenle</summary><form class="stack" method="post" action="/hizmet/${s.id}">${f}<div class="row"><label>Durum<select name="status">${opts(CS_ST, s.status)}</select></label><label>Başlangıç<input type="date" name="start_date" value="${s.start_date ? new Date(s.start_date).toISOString().slice(0, 10) : ''}"></label><label>Bitiş<input type="date" name="end_date" value="${s.end_date ? new Date(s.end_date).toISOString().slice(0, 10) : ''}"></label></div>
 <div class="row"><label>Adet<input name="qty" inputmode="decimal" value="${s.qty != null ? Number(s.qty) : ''}" placeholder="1"></label><label>Anlaşılan birim fiyat (KDV hariç)<input name="unit_price" inputmode="decimal" value="${s.unit_price != null ? Number(s.unit_price) : ''}" placeholder="Boşsa katalog fiyatı"></label></div>
@@ -614,10 +617,12 @@ ${aps.length ? `<div class="tbl"><table><tr><th>Konu</th><th>Durum</th><th>Müş
 <label>Açıklama ya da bağlantı<textarea name="body" rows="2"></textarea></label>${decisions.requestFields()}<div><button class="gold">Karar iste</button></div></form></details>
 <p class="muted">Müşteri portala girmek zorunda değil: <a href="/musteriler/${c.id}/karar">karar bağlantısı</a> gönderin, e-postasını doğrulayıp giriş yapmadan karar versin.</p></section>
 
-<section class="card"><h2>Portal kullanıcıları</h2>
-${cu.length ? `<div class="tbl"><table><tr><th>Ad</th><th>E-posta</th><th>Son giriş</th></tr>${cu.map(x => `<tr><td>${h(x.name)}</td><td>${h(x.email)}</td><td>${fmtDate(x.last_login)}</td></tr>`).join('')}</table></div>` : '<p class="muted">Müşteri henüz portala davet edilmedi.</p>'}
-${ctx.user.role === 'admin' ? `<details class="add"><summary>Portal hesabı aç</summary><form class="row" method="post" action="/ekip">${f}<input type="hidden" name="role" value="client"><input type="hidden" name="client_id" value="${c.id}">
-<label>Ad soyad<input name="name" required></label><label>E-posta<input type="email" name="email" required></label><label>İlk şifre<input name="password" required minlength="10" autocomplete="off"></label><button class="gold">Portal hesabı aç</button></form></details>` : ''}</section>`;
+<section class="card" id="portal"><h2>Portal kullanıcıları</h2>
+${cu.length ? `<div class="tbl"><table><tr><th>Ad</th><th>E-posta</th><th>Durum</th></tr>${cu.map(x => `<tr><td>${h(x.name)}</td><td>${h(x.email)}</td><td>${x.last_login ? t`Son giriş ${fmtDate(x.last_login)}` : x.invite_hash ? (new Date(x.invite_expires) > new Date() ? badge('Davet bekliyor', 'warn') : badge('Davetin süresi doldu', 'bad')) : badge('Hiç giriş yapmadı')}</td></tr>`).join('')}</table></div>` : '<p class="muted">Müşteri henüz portala davet edilmedi.</p>'}
+${ctx.user.role === 'admin' ? `<details class="add"${cu.length ? '' : ' open'}><summary>${cu.length ? 'Davet gönder / yeniden davet et' : 'Portala davet et'}</summary><form class="row" method="post" action="/musteriler/${c.id}/davet">${f}
+<label>Ad soyad<input name="name" required value="${h(cu.length ? '' : c.contact_name || '')}"></label><label>E-posta<input type="email" name="email" required value="${h(cu.length ? '' : c.email || '')}"></label>
+<label class="chk"><input type="checkbox" name="mail" value="1" checked> Davet e-postası gönder</label><button class="gold">Davet bağlantısı oluştur</button></form>
+<p class="muted">Müşteri bağlantıdan kendi şifresini belirler (${7} gün geçerli). Henüz giriş yapmamış bir e-postayı yeniden davet ederseniz eski bağlantı geçersiz olur.</p></details>` : ''}</section>`;
   if (!splitRecord(ctx)) return send(res, 200, layout(ctx, c.name, `<nav class="crumb"><a href="/musteriler">Müşteriler</a></nav>${HEAD}${DET}${REST}`, '/musteriler'));
   const lastNote = await one('SELECT n.kind, n.body, n.created_at FROM client_notes n WHERE n.client_id=$1 ORDER BY n.created_at DESC LIMIT 1', [c.id]).catch(() => null);
   const activeSvc = svcs.filter(x => x.status === 'aktif').length; const openPrj = prjs.filter(x => x.status !== 'tamamlandi').length; const waitAp = aps.filter(x => x.status === 'bekliyor').length;
@@ -733,7 +738,7 @@ ${rows.map(r => `<tr><td>${new Date(r.created_at).toLocaleString(locale(), { dat
 route('GET', '/portal', async (ctx, res) => {
   need(ctx, 'client'); const cid = ctx.user.client_id;
   const c = await one('SELECT * FROM clients WHERE id=$1', [cid]);
-  const svcs = await all(`SELECT cs.*, s.name, sc.name cat FROM client_services cs JOIN services s ON s.id=cs.service_id JOIN service_categories sc ON sc.id=s.category_id WHERE cs.client_id=$1 AND cs.status<>'durduruldu' ORDER BY cs.created_at`, [cid]);
+  const svcs = await all(`SELECT cs.*, COALESCE(s.name, cs.name) name, COALESCE(sc.name, 'Özel hizmet') cat FROM client_services cs LEFT JOIN services s ON s.id=cs.service_id LEFT JOIN service_categories sc ON sc.id=s.category_id WHERE cs.client_id=$1 AND cs.status<>'durduruldu' ORDER BY cs.created_at`, [cid]);
   const aps = await all(`SELECT * FROM approvals WHERE client_id=$1 ORDER BY (status<>'bekliyor'), created_at DESC LIMIT 30`, [cid]);
   const prjs = await all(`SELECT p.*, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id)::int total, (SELECT count(*) FROM tasks t WHERE t.project_id=p.id AND t.status='bitti')::int done FROM projects p WHERE p.client_id=$1 ORDER BY (p.status='tamamlandi'), p.created_at DESC`, [cid]);
   const f = csrfField(ctx); const pending = aps.filter(a => a.status === 'bekliyor');
@@ -765,7 +770,7 @@ const server = http.createServer(async (req, res) => {
       ctx.body = await readBody(req, url.pathname); ctx.files = ctx.body.__files || []; delete ctx.body.__files;
       const isApi = url.pathname.startsWith('/api/');
       // karar bağlantısı sayfaları oturumsuzdur: köken denetlenir, karar için doğrulanmış karar çerezi gerekir (SameSite=Lax)
-      const open = isApi || ['/giris', '/kurulum', '/dil', '/mod'].includes(url.pathname) || url.pathname.startsWith('/karar/');
+      const open = isApi || ['/giris', '/kurulum', '/dil', '/mod'].includes(url.pathname) || url.pathname.startsWith('/karar/') || url.pathname.startsWith('/davet/');
       if (!open && (!ctx.session || !safeEqual(ctx.body.csrf || '', ctx.session.csrf))) throw new HttpError(403, 'Oturum doğrulanamadı. Sayfayı yenileyip tekrar deneyin.');
       if (open) {
         const origin = req.headers.origin; const host = req.headers['x-forwarded-host'] || req.headers.host;
@@ -798,6 +803,7 @@ const server = http.createServer(async (req, res) => {
 import { registerSites, migrateSites } from './ext-sites.js';
 import { registerQuotes, migrateQuotes } from './ext-quotes.js';
 import { registerDemo, migrateDemo } from './ext-demo.js';
+import { registerInvite, migrateInvite } from './ext-invite.js';
 import { registerInvoices, migrateInvoices } from './ext-invoices.js';
 import { registerToday, portalActions } from './ext-today.js';
 import { registerWork, migrateWork } from './ext-work.js';
@@ -813,6 +819,7 @@ const crm = registerCrm({ route, all, one, q, need, layout, h, badge, fmtMoney, 
 const freelance = registerFreelance({ route, all, one, q, need, layout, h, badge, fmtDate, fmtMoney, csrfField, HttpError, int, nn, redirect, send, STAFF, audit, opts });
 registerRetention({ route, all, one, q, need, layout, h, csrfField, HttpError, redirect, send, audit, fmtDate });
 const withTx = async (fn) => { const c = await pool.connect(); try { await c.query('BEGIN'); const r = await fn((t, p) => c.query(t, p)); await c.query('COMMIT'); return r; } catch (e) { await c.query('ROLLBACK').catch(() => {}); throw e; } finally { c.release(); } };
+registerInvite({ route, one, q, need, layout, authPage, h, csrfField, HttpError, int, nn, send, audit, sendMail: (a, m) => hooks ? hooks.sendMail(a, m) : Promise.resolve(false), APP_URL: process.env.APP_URL, hashPassword, validPassword, token, startSession });
 const demo = registerDemo({ route, one, all, q, need, layout, h, csrfField, redirect, send, HttpError, audit, withTx, hashPassword });
 settingsApi = registerSettings({ route, all, q, need, layout, h, csrfField, redirect, send, audit });
 const ops = registerOps({ route, all, need, layout, h, send });
@@ -829,4 +836,4 @@ const playbooks = registerPlaybooks({ route, all, one, q, need, layout, h, badge
 registerWork({ route, all, one, q, need, layout, h, badge, fmtDate, csrfField, audit, HttpError, int, nn, opts, ROLE, PR_ST, TK_ST, AP_ST, CS_ST, STAFF, redirect, send, projectExtra: async (ctx, pr) => (await playbooks.projectCard(ctx, pr)) + (await ai.projectCard(ctx, pr)), flowBanner: (ctx, pr, tasks) => flow.projectBanner(ctx, pr, tasks),
   taskExtra: async (ctx, tk) => (await flow.taskCard(ctx, tk)) + (await ai.taskCard(ctx, tk)) + (await suggest.taskCards(ctx, tk)), decisions });
 
-migrate().then(() => migrateDemo({ q })).then(() => migrateOps({ q })).then(() => migrateNotify({ q })).then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => migrateFreelance({ q })).then(() => migrateRetention({ q })).then(() => migratePlaybooks({ q, all })).then((n) => n && console.log(`hizmet kitabı yazıldı: ${n}`)).then(() => migrateDecisions({ q })).then(() => migrateFlow({ q })).then(() => migrateAi({ q })).then(() => migrateSuggest({ q })).then(() => loadThemes(all)).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });
+migrate().then(() => migrateDemo({ q })).then(() => migrateInvite({ q })).then(() => migrateOps({ q })).then(() => migrateNotify({ q })).then(() => migrateSites({ q, one })).then(() => migrateQuotes({ q })).then(() => migrateInvoices({ q })).then(() => migrateWork({ q })).then(() => migrateSync({ q, one })).then(() => migrateAutomation({ q })).then(() => migrateForge({ q })).then(() => migrateCrm({ q })).then(() => migrateFreelance({ q })).then(() => migrateRetention({ q })).then(() => migratePlaybooks({ q, all })).then((n) => n && console.log(`hizmet kitabı yazıldı: ${n}`)).then(() => migrateDecisions({ q })).then(() => migrateFlow({ q })).then(() => migrateAi({ q })).then(() => migrateSuggest({ q })).then(() => loadThemes(all)).then(() => server.listen(PORT, () => console.log(`Arvela OS ${VERSION} :${PORT}`))).catch(e => { console.error('başlatılamadı', e); process.exit(1); });

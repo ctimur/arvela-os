@@ -26,7 +26,7 @@ jobs:
     environment: production
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Arvela OS'e bildir
         env:
           GITHUB_TOKEN: ${{ github.token }}
