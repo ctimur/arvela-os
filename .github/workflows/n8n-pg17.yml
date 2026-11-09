@@ -5,11 +5,11 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "migrate (17'ye taşı) ya da rollback (eski veritabanına dön)"
+        description: "migrate (17'ye taşı), rollback (eskiye dön), tidy (pgmove'u kaldır), finalize (eski veritabanını kaldır)"
         required: true
         default: migrate
         type: choice
-        options: [migrate, rollback]
+        options: [migrate, rollback, tidy, finalize]
 
 permissions:
   contents: read

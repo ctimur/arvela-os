@@ -5,6 +5,8 @@ migrate : Hostinger'daki 'n8n' projesine yeni bir Postgres 17 servisi (db17, bir
           işaret tablosu bırakır; n8n yalnız taşıma başarıyla bitince db17 ile açılır.
           Eski veritabanı ve birimi (n8n_pg) olduğu gibi kalır.
 rollback: n8n'i yeniden eski veritabanına (db) bağlar; db17 ve pgmove kaldırılır, birimleri silinmez.
+tidy    : işini bitirmiş pgmove servisini kaldırır (n8n yalnız db17'ye bağlı kalır). Geri dönüş yolu açık kalır.
+finalize: eski veritabanı servisini (db) ve pgmove'u kaldırır. Eski birim (n8n_pg) silinmez; gerekirse elle geri eklenebilir.
 
 Ortam değişkenleri (gizli değerler) okunduğu gibi geri gönderilir; loga yazılmaz. Ortam: HOSTINGER_API_TOKEN, MODE.
 """
@@ -90,6 +92,21 @@ def migrate(compose):
     return compose
 
 
+def drop(compose, names):
+    return re.sub(r'(?m)^  (?:' + '|'.join(names) + r'):\n(?:    .*\n|      .*\n|        .*\n|\n)*?(?=  [a-z0-9_-]+:\n|volumes:\n)', '', compose)
+
+
+def tidy(compose):
+    if 'DB_POSTGRESDB_HOST: db17\n' not in compose:
+        sys.exit('n8n henüz db17 kullanmıyor; temizlik yapılmadı')
+    compose = drop(compose, ['pgmove'])
+    return n8n_depends(compose, '    depends_on:\n      db17:\n        condition: service_healthy\n')
+
+
+def finalize(compose):
+    return drop(tidy(compose), ['db'])
+
+
 def rollback(compose):
     compose = strip_services(compose)
     compose = n8n_depends(compose, '    depends_on:\n      db:\n        condition: service_healthy\n')
@@ -109,18 +126,18 @@ def check(compose):
 
 def main():
     mode = os.environ.get('MODE', 'migrate')
-    if mode not in ('migrate', 'rollback'):
-        sys.exit('MODE migrate ya da rollback olmalı')
+    if mode not in ('migrate', 'rollback', 'tidy', 'finalize'):
+        sys.exit('MODE migrate, rollback, tidy ya da finalize olmalı')
     proj = hostinger('GET', f'/virtual-machines/{VM}/docker/n8n')
     compose, env = proj['content'], proj.get('environment') or ''
     if 'N8N_ENCRYPTION_KEY=' not in env or 'N8N_DB_PASSWORD=' not in env:
         sys.exit('n8n ortamı okunamadı; değişiklik yapılmadı')
-    new = migrate(compose) if mode == 'migrate' else rollback(compose)
+    new = {'migrate': migrate, 'rollback': rollback, 'tidy': tidy, 'finalize': finalize}[mode](compose)
     check(new)
     if new == compose:
         print('Değişiklik yok'); return
     hostinger('POST', f'/virtual-machines/{VM}/docker', {'project_name': 'n8n', 'content': new, 'environment': env})
-    print('n8n yeniden kuruluyor:', 'Postgres 17 (db17), eski veritabanı korunuyor' if mode == 'migrate' else 'eski veritabanı (db)')
+    print('n8n yeniden kuruluyor:', {'migrate': 'Postgres 17 (db17), eski veritabanı korunuyor', 'rollback': 'eski veritabanı (db)', 'tidy': 'pgmove kaldırıldı', 'finalize': 'eski veritabanı servisi kaldırıldı, birimi duruyor'}[mode])
 
 
 if __name__ == '__main__':
