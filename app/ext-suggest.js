@@ -117,7 +117,8 @@ export function registerSuggest(d) {
     const p = { ...s.payload, ...(edited ? { baslik: edited } : {}) }; const a = ctx.user.agency_id; const today = new Date().toISOString().slice(0, 10);
     if (p.tur === 'gorev' || p.tur === 'alt_gorev' || p.tur === 'fikir') {
       const title = (p.tur === 'fikir' ? 'Fikir: ' : p.rol === 'ai' ? 'Yapay zekâ: ' : '') + p.baslik;
-      const assignee = p.tur === 'fikir' ? null : p.rol === 'ekip' ? t.assignee_id : null;
+      const fl = p.rol === 'freelancer' ? await one(`SELECT assignee_id FROM tasks WHERE project_id=$1 AND stage_role='freelancer' AND assignee_id IS NOT NULL ORDER BY stage_no LIMIT 1`, [t.project_id]) : null;
+      const assignee = p.tur === 'fikir' ? null : p.rol === 'ekip' ? t.assignee_id : p.rol === 'freelancer' ? fl?.assignee_id || null : null;
       const r = await one(`INSERT INTO tasks (agency_id, project_id, title, description, due_date, assignee_id, parent_id) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
         [a, t.project_id, title.slice(0, 200), [p.aciklama, `Claude önerisi (iş #${s.job_id}) · ${t.title}`].filter(Boolean).join('\n\n'), addDays(today, p.gun ?? 7), assignee, p.tur === 'alt_gorev' ? t.id : null]);
       await audit(ctx, 'task.create', { id: r.id, project: t.project_id, via: 'ai', suggestion: s.id });

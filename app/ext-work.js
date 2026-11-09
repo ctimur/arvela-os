@@ -11,6 +11,15 @@ export async function migrateWork({ q }) {
   await q(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS description TEXT`);
   await q(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS priority TEXT NOT NULL DEFAULT 'normal'`);
   await q(`ALTER TABLE client_services ADD COLUMN IF NOT EXISTS end_date DATE`);
+  // Anlaşılan koşullar (teklif onayından): adet, indirimli birim fiyat, para birimi. Aylık fatura bunları kullanır.
+  await q(`ALTER TABLE client_services ADD COLUMN IF NOT EXISTS qty NUMERIC(10,2)`);
+  await q(`ALTER TABLE client_services ADD COLUMN IF NOT EXISTS unit_price NUMERIC(12,2)`);
+  await q(`ALTER TABLE client_services ADD COLUMN IF NOT EXISTS currency TEXT`);
+  await q(`ALTER TABLE client_services ADD COLUMN IF NOT EXISTS quote_id INT`);
+  // 0.28: önceki teklif onaylarından gelen hizmetlere anlaşılan koşulları bir kez yaz.
+  await q(`UPDATE client_services cs SET qty=qi.qty, unit_price=ROUND(qi.unit_price * (1 - qt.discount_pct / 100), 2), currency=qt.currency, quote_id=qt.id
+    FROM quotes qt JOIN quote_items qi ON qi.quote_id=qt.id
+    WHERE cs.quote_id IS NULL AND cs.unit_price IS NULL AND cs.notes = 'Teklif #' || qt.id || ' ile onaylandı' AND qi.service_id=cs.service_id AND qt.client_id=cs.client_id`).catch(() => {});
   await q(`ALTER TABLE users ADD COLUMN IF NOT EXISTS lang TEXT NOT NULL DEFAULT 'tr'`);
   await q(`CREATE TABLE IF NOT EXISTS task_comments (id SERIAL PRIMARY KEY, task_id INT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
     user_id INT REFERENCES users(id), body TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT now())`);
@@ -234,13 +243,14 @@ ${notes.map(n => { const sys = String(n.body).startsWith('Arvela OS · '); const
     need(ctx, ...STAFF); const t = await taskFor(ctx, int(prm.id)); const b = ctx.body;
     await q('UPDATE tasks SET title=$1, status=$2, assignee_id=$3, due_date=$4, description=$5, priority=$6 WHERE id=$7',
       [nn(b.title) || t.title, TK_ST[b.status] ? b.status : t.status, await validAssignee(ctx, b.assignee_id), nn(b.due_date), nn(b.description), PRIO[b.priority] ? b.priority : t.priority, t.id]);
-    const st2 = TK_ST[b.status] ? b.status : t.status;
-    await audit(ctx, 'task.update', { id: t.id, ...(st2 !== t.status ? { status: st2 } : {}) }); redirect(res, `/gorev/${t.id}`);
+    const st2 = TK_ST[b.status] ? b.status : t.status; const asg = await one('SELECT assignee_id FROM tasks WHERE id=$1', [t.id]);
+    await audit(ctx, 'task.update', { id: t.id, ...(st2 !== t.status ? { status: st2 } : {}), ...(asg?.assignee_id && asg.assignee_id !== t.assignee_id ? { assignee: asg.assignee_id } : {}) }); redirect(res, `/gorev/${t.id}`);
   });
 
   route('POST', '/gorev/:id/durum', async (ctx, res, prm) => {
     need(ctx, ...WORKERS); const t = await taskFor(ctx, int(prm.id));
     const st = TK_ST[ctx.body.status] ? ctx.body.status : t.status;
+    if (ctx.user.role === 'freelancer' && t.stage_no != null && !t.ready_at && st !== t.status) throw new HttpError(400, 'Bu aşamanın sırası henüz gelmedi; önceki aşama bitince size haber verilir.');
     await q('UPDATE tasks SET status=$1 WHERE id=$2', [st, t.id]);
     await audit(ctx, 'task.status', { id: t.id, status: st }); redirect(res, backTo(ctx, t));
   });
@@ -276,7 +286,7 @@ ${fl ? '' : `<select name="kim" aria-label="Kimin" data-auto><option value="ben"
 <select name="durum" aria-label="Durum" data-auto><option value="acik"${durum === 'acik' ? ' selected' : ''}>Açık</option><option value="gecikti"${durum === 'gecikti' ? ' selected' : ''}>Geciken</option>${opts(TK_ST, durum)}<option value="hepsi"${durum === 'hepsi' ? ' selected' : ''}>Tümü</option></select><button class="ghost">Filtrele</button></form>`;
     send(res, 200, layout(ctx, title, `<div class="page-head"><h1>${title}</h1>${fl ? '' : '<a class="btn ghost" href="/projeler">Projeler</a>'}</div>${filters}
 <div class="tbl"><table><tr><th>Görev</th><th>Proje</th>${fl ? '' : '<th>Müşteri</th><th>Sorumlu</th>'}<th>Teslim</th><th>Durum</th></tr>
-${rows.map(t => `<tr${isLate(t) ? ' class="is-late"' : ''}><td><a href="/gorev/${t.id}"><strong>${h(t.title)}</strong></a>${t.priority === 'yuksek' ? ' ' + badge('Öncelikli', 'bad') : ''}${t.ready_at && t.status !== 'bitti' ? ' ' + badge('Sırada', 'warn') : ''}</td><td>${fl ? h(t.project) : `<a href="/projeler/${t.project_id}">${h(t.project)}</a>`}</td>${fl ? '' : `<td>${h(t.client)}</td><td>${h(t.assignee || '—')}</td>`}<td>${dueTxt(t)}</td><td>${statusForm(ctx, t, 'mine')}</td></tr>`).join('') || `<tr><td colspan="${fl ? 4 : 6}" class="muted">Bu filtreye uyan görev yok.</td></tr>`}</table></div>`, '/gorevler'));
+${rows.map(t => `<tr${isLate(t) ? ' class="is-late"' : ''}><td><a href="/gorev/${t.id}"><strong>${h(t.title)}</strong></a>${t.priority === 'yuksek' ? ' ' + badge('Öncelikli', 'bad') : ''}${t.ready_at && t.status !== 'bitti' ? ' ' + badge('Sırada', 'warn') : t.stage_no != null && !t.ready_at && t.status !== 'bitti' ? ' ' + badge('Sırası gelmedi') : ''}</td><td>${fl ? h(t.project) : `<a href="/projeler/${t.project_id}">${h(t.project)}</a>`}</td>${fl ? '' : `<td>${h(t.client)}</td><td>${h(t.assignee || '—')}</td>`}<td>${dueTxt(t)}</td><td>${statusForm(ctx, t, 'mine')}</td></tr>`).join('') || `<tr><td colspan="${fl ? 4 : 6}" class="muted">Bu filtreye uyan görev yok.</td></tr>`}</table></div>`, '/gorevler'));
   });
 
   // ---------- onaylar ----------
@@ -352,7 +362,8 @@ ${decisionForm(x, `/onaylar/${x.id}/karar`, f, h)}
     need(ctx, ...STAFF); const cs = await csFor(ctx, int(prm.id)); const b = ctx.body;
     const st = CS_ST[b.status] ? b.status : cs.status;
     const full = 'notes' in b || 'start_date' in b;
-    if (full) await q('UPDATE client_services SET status=$1, start_date=$2, end_date=$3, notes=$4 WHERE id=$5', [st, nn(b.start_date) || (st === 'aktif' && !cs.start_date ? dateVal(new Date()) : null), nn(b.end_date), nn(b.notes), cs.id]);
+    const numOr = (v, old) => { if (v === undefined) return old; const n = Number(String(v).replace(/\./g, '').replace(',', '.')); return String(v).trim() === '' ? null : Number.isFinite(n) && n >= 0 ? n : old; };
+    if (full) await q('UPDATE client_services SET status=$1, start_date=$2, end_date=$3, notes=$4, qty=$5, unit_price=$6 WHERE id=$7', [st, nn(b.start_date) || (st === 'aktif' && !cs.start_date ? dateVal(new Date()) : null), nn(b.end_date), nn(b.notes), numOr(b.qty, cs.qty), numOr(b.unit_price, cs.unit_price), cs.id]);
     else await q(`UPDATE client_services SET status=$1, start_date=COALESCE(start_date, CASE WHEN $1='aktif' THEN CURRENT_DATE END) WHERE id=$2`, [st, cs.id]);
     await audit(ctx, 'client_service.update', { id: cs.id, status: st }); redirect(res, `/musteriler/${cs.client_id}#hizmetler`);
   });

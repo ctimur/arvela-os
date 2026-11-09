@@ -118,6 +118,7 @@ ${rows.some(r => !OPEN_STAGES.includes(r.stage)) ? `<section class="card"><h2>Ka
     need(ctx, ...STAFF); const b = ctx.body; const a = ctx.user.agency_id;
     if (!nn(b.name)) throw new HttpError(400, 'Firma adı gerekli.');
     let owner = int(b.owner_id); if (owner && !(await one(`SELECT 1 FROM users WHERE id=$1 AND agency_id=$2 AND role IN ('admin','staff')`, [owner, a]))) owner = null;
+    if (!owner && !('owner_id' in b && b.owner_id === '') && ctx.user.role === 'staff') owner = ctx.user.id; // ekip üyesinin açtığı aday onundur
     const x = { lead_source: SOURCES[b.lead_source] ? b.lead_source : 'diger', phone: nn(b.phone), email: nn(b.email), sector: nn(b.sector), call_at: dtParse(b.call_at), stage: dtParse(b.call_at) ? 'gorusme' : 'yeni', value_estimate: ctx.user.role === 'admin' ? int(String(b.value_estimate || '').replace(/\D/g, '')) : null };
     const r = await one(`INSERT INTO clients (agency_id, name, contact_name, phone, email, sector, status, stage, lead_source, lead_score, interest, call_at, value_estimate, owner_id)
       VALUES ($1,$2,$3,$4,$5,$6,'lead',$7,$8,$9,$10,$11,$12,$13) RETURNING id`, [a, nn(b.name), nn(b.contact_name), x.phone, x.email, x.sector, x.stage, x.lead_source, leadScore(x), nn(b.interest), x.call_at, x.value_estimate, owner]);
@@ -149,7 +150,7 @@ ${notes.map(n => `<div class="note"><div class="note-h"><strong>${h(KINDS[n.kind
 <label class="chk"><input type="checkbox" name="marketing_consent"${l.marketing_consent_at ? ' checked' : ''}> Kampanya ve duyuru iletisi onayı var</label>
 ${l.marketing_consent_at ? `<p class="muted">Onay: ${h(fmtDT(l.marketing_consent_at))}${l.marketing_consent_source ? ' · ' + h(l.marketing_consent_source) : ''}</p>` : '<p class="muted">Yalnız kişi açıkça onay verdiyse işaretleyin (İYS).</p>'}
 <label>Kaybedilme nedeni<input name="lost_reason" value="${h(l.lost_reason)}" placeholder="Yalnız kaybedildiyse"></label><div><button>Kaydet</button></div></form>
-${open && l.status === 'lead' ? `<div class="row"><form method="post" action="/satis/${l.id}/kazanildi" data-confirm="Aday kazanıldı olarak işaretlenip aktif müşteriye çevrilsin mi?">${f(ctx)}<button class="gold">Kazanıldı · müşteriye çevir</button></form>${admin ? `<a class="btn ghost" href="/teklifler#yeni">Teklif hazırla</a>` : ''}</div>` : ''}
+${open && l.status === 'lead' ? `<div class="row"><form method="post" action="/satis/${l.id}/kazanildi" data-confirm="Aday kazanıldı olarak işaretlenip aktif müşteriye çevrilsin mi?">${f(ctx)}<button class="gold">Kazanıldı · müşteriye çevir</button></form>${admin ? `<a class="btn ghost" href="/teklifler?musteri=${l.id}#yeni-teklif">Teklif hazırla</a>` : ''}</div>` : ''}
 <p class="muted">Puan; kaynak, iletişim bilgisi, ön görüşme ve tahmini değere göre önerilir, elle değiştirebilirsiniz.</p></section>`;
     if (!splitRecord(ctx)) return send(res, 200, layout(ctx, l.name, `<nav class="crumb"><a href="/satis">Satış hattı</a>${l.status !== 'lead' ? ` › <a href="/musteriler/${l.id}">Müşteri sayfası</a>` : ''}</nav>${HEAD}<div class="two wide-first">${HIST}${INFO}</div>`, '/satis'));
     const kv = [['Aşama', badge(STAGES[l.stage] || 'Aday', STAGE_TONE[l.stage])], ['Puan', badge(String(score), scoreTone(score))], ['Kaynak', h(SOURCES[l.lead_source] || '—')], ['Sorumlu', h(l.owner || '—')],
@@ -177,6 +178,7 @@ ${open && l.status === 'lead' ? `<div class="row"><form method="post" action="/s
     const consent = !!b.marketing_consent;
     if (consent !== !!l.marketing_consent_at) await q(`UPDATE clients SET marketing_consent_at=$1, marketing_consent_source=$2 WHERE id=$3`, consent ? [new Date().toISOString(), t`${ctx.user.name} işaretledi`, l.id] : [null, null, l.id]);
     if (stage !== l.stage) await audit(ctx, 'lead.stage', { id: l.id, from: l.stage, to: stage }); else await audit(ctx, 'lead.update', { id: l.id });
+    if (owner && owner !== l.owner_id) await audit(ctx, 'lead.assign', { id: l.id, owner });
     redirect(res, `/satis/${l.id}`);
   });
 

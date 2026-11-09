@@ -13,8 +13,14 @@ assert.equal(n.length, 1); assert.deepEqual(n[0].to, [7]); assert.equal(n[0].kin
 n = await plan('task.create', { id: 5 }, 7, 1, db({ 'FROM tasks t JOIN projects': T }));
 assert.equal(n.length, 0, 'kendine atadığı görev için bildirim yok');
 
-n = await plan('task.status', { id: 5, status: 'bitti' }, 7, 1, db({ 'FROM tasks t JOIN projects': T, "ready_at > now()": [{ id: 6, title: 'Test', assignee_id: 9 }] }));
-assert.ok(n.some(x => x.kind === 'sira' && x.to[0] === 9 && x.href === '/gorev/6'), 'sıra sende');
+n = await plan('task.update', { id: 6, stage: 'ready', via: 'flow' }, 7, 1, db({ 'FROM tasks t JOIN projects': { id: 6, title: 'Test', assignee_id: 9, project_id: 2, project: 'Lotus' } }));
+assert.ok(n.length === 1 && n[0].kind === 'sira' && n[0].to[0] === 9 && n[0].href === '/gorev/6', 'sıra sende — "görev atandı" değil');
+n = await plan('task.update', { id: 5 }, 1, 1, db({ 'FROM tasks t JOIN projects': T }));
+assert.equal(n.length, 0, 'sorumlu değişmeyen güncellemede atama bildirimi yok');
+n = await plan('task.update', { id: 5, assignee: 7 }, 1, 1, db({ 'FROM tasks t JOIN projects': T }));
+assert.equal(n[0]?.kind, 'gorev', 'sorumlu değişince atama bildirimi');
+n = await plan('task.update', { id: 5, stage: 'revision' }, 1, 1, db({ 'FROM tasks t JOIN projects': T }));
+assert.match(n[0]?.title || '', /düzeltme/, 'düzeltme turu bildirimi');
 
 n = await plan('task.note', { id: 5 }, 1, 1, db({ 'FROM tasks t JOIN projects': T, 'FROM task_comments': { id: 33, body: 'Logo dosyası eklendi '.repeat(20) } }));
 assert.equal(n[0].kind, 'not'); assert.ok(n[0].body.length <= 140); assert.equal(n[0].ref, 'note:33');

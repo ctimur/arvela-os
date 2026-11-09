@@ -1,6 +1,7 @@
 {
  "server.js": [
   "      await q('INSERT INTO services (agency_id, category_id, code, sub, name, billing, unit, price_try, price_eur, availability) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT DO NOTHING',",
+  "*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}",
   "button,.btn{font:inherit;font-weight:600;border:0;border-radius:14px;padding:11px 18px;background:var(--btn);color:var(--btn-t);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px}",
   ".later-row{background:var(--surf);border-radius:18px;padding:14px 16px;border:1px solid transparent}.later-row:hover{border-color:var(--champ);color:var(--ink)}",
   ".stack-col{display:flex;flex-direction:column;gap:16px;min-width:0}.note.sys{background:var(--soft);border-radius:10px;padding:10px 12px}.note.sys .note-h strong{color:var(--acc-t)}details.more>summary{font-size:13px;color:var(--acc-t)}",
@@ -38,6 +39,7 @@
   "<aside class=\"insp\"><section><h2>Bugünün akışı</h2><div class=\"tl\">${tl || '<p class=\"muted\">Bugün için saatli bir iş yok.</p>'}</div></section>"
  ],
  "ext-work.js": [
+  "inp.addEventListener('keydown',function(e){var v=vis();if(e.key==='ArrowDown'){sel=Math.min(sel+1,v.length-1);mark();e.preventDefault();}else if(e.key==='ArrowUp'){sel=Math.max(sel-1,0);mark();e.preventDefault();}else if(e.key==='Enter'&&v.length&&(inp.value.trim()===''||v.length<links.length)){e.preventDefault();location.href=v[sel].getAttribute('href');}});",
   "  // Görev durumu için tek dokunuşluk düğmeler (seçili olan vurgulu)",
   "        ORDER BY t.stage_no NULLS LAST, (t.priority='yuksek') DESC, t.due_date NULLS LAST, t.id`, [p.id]),",
   "<div class=\"act-btns\"><nav class=\"viewseg\" aria-label=\"Görünüm\">${vlink('liste', 'Liste')}${vlink('pano', 'Pano')}${vlink('tablo', 'Tablo')}</nav><a class=\"btn gold\" href=\"#yeni-gorev\" data-open=\"yeni-gorev\">+ Görev</a></div></div>",

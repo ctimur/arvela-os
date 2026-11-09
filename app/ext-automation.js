@@ -6,7 +6,7 @@ import { siteHealth } from './ext-sites.js';
 import { leadScore, OPEN_STAGES } from './ext-crm.js';
 
 export const EVENTS = {
-  'Satış': ['lead.create', 'lead.update', 'lead.stage', 'lead.note', 'lead.won'],
+  'Satış': ['lead.create', 'lead.update', 'lead.stage', 'lead.note', 'lead.won', 'lead.assign'],
   'Müşteri': ['client.create', 'client.update', 'client_service.add', 'client_service.update', 'client_service.delete'],
   'Proje': ['project.create', 'project.update', 'project.delete'],
   'Görev': ['task.create', 'task.update', 'task.status', 'task.note', 'task.delete'],
@@ -17,7 +17,7 @@ export const EVENTS = {
   'Freelancer': ['package.create', 'package.update', 'package.status', 'package.time', 'freelancer.payment'],
 };
 export const EVENT_LABEL = {
-  'lead.create': 'Yeni aday', 'lead.update': 'Aday güncellendi', 'lead.stage': 'Aday aşaması değişti', 'lead.note': 'Adayla iletişim kaydı', 'lead.won': 'Aday kazanıldı',
+  'lead.create': 'Yeni aday', 'lead.update': 'Aday güncellendi', 'lead.stage': 'Aday aşaması değişti', 'lead.note': 'Adayla iletişim kaydı', 'lead.won': 'Aday kazanıldı', 'lead.assign': 'Aday bir kişiye atandı',
   'client.create': 'Yeni müşteri', 'client.update': 'Müşteri güncellendi', 'client_service.add': 'Hizmet eklendi', 'client_service.update': 'Hizmet güncellendi', 'client_service.delete': 'Hizmet silindi',
   'project.create': 'Yeni proje', 'project.update': 'Proje güncellendi', 'project.delete': 'Proje silindi',
   'task.create': 'Yeni görev', 'task.update': 'Görev güncellendi', 'task.status': 'Görev durumu değişti', 'task.note': 'Göreve not eklendi', 'task.delete': 'Görev silindi',

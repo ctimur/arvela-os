@@ -121,7 +121,7 @@ export const SECTIONS = {
   'Yeni proje': ['Projeyi açtıktan sonra proje sayfasında hizmetten başlatın.', 'After creating it, start it from a service on the project page.'],
   'Yeni teklif': ['Taslak açılır; kalemleri ekleyip gönderin.', 'A draft is created; add items and send.'],
   'Site ekle': ['Site eklenince eşitlemeyle sağlık durumu dolar.', 'Health fills in with the next sync.'],
-  'Ekip üyesi ekle': ['Rol seçin: Yönetici her şeyi, Çalışan iş kısmını, Freelancer yalnız kendine atananları görür.', 'Pick a role: Admin sees everything, Staff the work side, Freelancer only what is assigned to them.'],
+  'Ekip üyesi ekle': ['Rol seçin: Yönetici her şeyi, Ekip üyesi iş kısmını, Freelancer yalnız kendine atananları görür.', 'Pick a role: Admin sees everything, Staff the work side, Freelancer only what is assigned to them.'],
   'Şimdi uygula': ['Süresi dolan kayıtları hemen temizler. Geri alınamaz.', 'Cleans records past their period now. Cannot be undone.'],
   'Yeni bağlantı': ['Müşterinin bekleyen kararları için yeni bağlantı. Eski bağlantılar süresi dolana ya da iptal edilene kadar çalışır.', 'A new link for the client\'s pending decisions. Older links work until they expire or are revoked.'],
   'Bağlantılar': ['Oluşturulan bağlantılar; şüpheli bir durumda iptal edin.', 'Links created so far; revoke one if anything looks wrong.'],

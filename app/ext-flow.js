@@ -33,15 +33,18 @@ export function lateEnd(projectDue, tasks) {
 }
 const tx = (s) => t([s]);
 // Müşteriye giden onay metni: iç bilgiler (rol, otomasyon, n8n) çıkarılır; çıktı ve kabul ölçütü müşteri diliyle yazılır.
-export function clientBody(desc, prevTitle) {
-  const out = [];
-  for (const l of String(desc || '').split(/\r?\n/)) {
-    if (/^Rol:/.test(l)) continue;
-    if (/^Çıktı:/.test(l)) out.push('Onayınıza sunulan: ' + l.replace(/^Çıktı:\s*/, ''));
-    else if (/^Kabul:/.test(l)) out.push('Kontrol etmeniz gereken: ' + l.replace(/^Kabul:\s*/, ''));
-    else if (l.trim()) out.push(l.trim());
-  }
+// Müşteri kararı aşamasının açıklaması iç kayıt dilindedir ("Çıktı: Onaylı takvim", "Kabul: Karar kaydı var").
+// Müşteriye onaylayacağı şey önceki aşamanın çıktısıdır; düzeltme turunda önceki isteği de hatırlatırız.
+const lineOf = (desc, key) => (String(desc || '').split(/\r?\n/).find(l => l.startsWith(key + ':')) || '').slice(key.length + 1).trim();
+export function clientBody(desc, prevTitle, { prevDesc = null, lastComment = null } = {}) {
+  const out = []; const shown = lineOf(prevDesc, 'Çıktı') || lineOf(desc, 'Çıktı');
+  if (lastComment) out.push(`Düzeltme turu: önceki notunuz — "${String(lastComment).slice(0, 300).replace(/[.!\s]+$/, '')}". Ekibimiz düzeltmeyi yaptı.`);
+  if (shown) out.push('Onayınıza sunulan: ' + shown);
   if (prevTitle) out.push(`Tamamlanan önceki adım: ${prevTitle}`);
+  for (const l of String(desc || '').split(/\r?\n/)) {
+    if (/^(Rol|Çıktı|Kabul):/.test(l) || !l.trim()) continue;
+    out.push(l.trim());
+  }
   return out.join('\n') || null;
 }
 const ROLE_TXT = { ai: 'Yapay zekâ', ekip: 'Ekip', freelancer: 'Freelancer', musteri: 'Müşteri' };
@@ -66,7 +69,8 @@ export function registerFlow(d) {
     const r = await one('UPDATE tasks SET ready_at=now() WHERE id=$1 AND ready_at IS NULL RETURNING id', [x.id]); if (!r) return;
     if (x.stage_role === 'musteri' && !x.approval_id) {
       const p = await one('SELECT client_id FROM projects WHERE id=$1', [x.project_id]);
-      const body = clientBody(x.description, prev ? tidy(prev.title) : null);
+      const last = await one(`SELECT comment FROM approvals WHERE project_id=$1 AND title=$2 AND status='reddedildi' ORDER BY id DESC LIMIT 1`, [x.project_id, tidy(x.title)]);
+      const body = clientBody(x.description, prev ? tidy(prev.title) : null, { prevDesc: prev?.description, lastComment: last?.comment });
       const kind = ['onay', 'secim', 'butce', 'bilgi'].includes(x.stage_decision) ? x.stage_decision : 'onay';
       const ap = await one('INSERT INTO approvals (agency_id, client_id, project_id, title, body, requested_by, kind) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id',
         [x.agency_id, p.client_id, x.project_id, tidy(x.title), body, ctx.user?.role === 'client' ? null : ctx.user?.id || null, kind]);
