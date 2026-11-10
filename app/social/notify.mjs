@@ -76,7 +76,7 @@ export async function onStatus(ws, post, to, { actorId, actorName, comment, clie
 export async function remindDue(now = new Date()) {
   const due = await all(`SELECT p.*, b.name brand, w.id ws, w.plan, w.status ws_status FROM posts p JOIN brands b ON b.id=p.brand_id JOIN workspaces w ON w.id=p.workspace_id
     WHERE p.reminded_at IS NULL AND p.scheduled_at IS NOT NULL AND p.scheduled_at <= $1::timestamptz + interval '30 minutes' AND p.scheduled_at > $1::timestamptz - interval '2 hours'
-      AND (p.status='onaylandi' OR (p.status='taslak' AND w.plan='solo')) AND w.status<>'askida' ORDER BY p.scheduled_at LIMIT 200`, [now.toISOString()]);
+      AND (p.status='onaylandi' OR (p.status='taslak' AND w.plan='solo')) AND p.publish_mode<>'otomatik' AND w.status<>'askida' ORDER BY p.scheduled_at LIMIT 200`, [now.toISOString()]);
   let n = 0;
   for (const p of due) {
     const upd = await one('UPDATE posts SET reminded_at=now() WHERE id=$1 AND reminded_at IS NULL RETURNING id', [p.id]); if (!upd) continue; // aynı anda iki çalışmaya karşı
@@ -106,7 +106,8 @@ export function register() {
 <div class="grid2" style="align-items:start"><form class="card stack" method="post" action="/hesabim">${f}<h2>Bilgiler ve bildirimler</h2><label>Adınız<input name="name" maxlength="80" required value="${esc(u.name)}"></label>
 <label class="chk"><input type="checkbox" name="mail" value="1"${u.mail_off ? '' : ' checked'}> Onay istekleri, düzeltmeler ve paylaşım hatırlatmaları e-postayla gelsin</label><div><button class="gold">Kaydet</button></div></form>
 <form class="card stack" method="post" action="/hesabim/sifre">${f}<h2>Şifre değiştir</h2><label>Şu anki şifre<input type="password" name="current" required autocomplete="current-password"></label>
-<label>Yeni şifre (en az 10 karakter)<input type="password" name="password" minlength="10" required autocomplete="new-password"></label><div><button class="ghost">Şifreyi değiştir</button></div></form></div>`, '/hesabim'));
+<label>Yeni şifre (en az 10 karakter)<input type="password" name="password" minlength="10" required autocomplete="new-password"></label><div><button class="ghost">Şifreyi değiştir</button></div></form></div>
+${ctx.user.role === 'owner' ? `<details class="card"><summary style="cursor:pointer;font-weight:600;color:#9B2C2C">Hesabı ve verileri sil</summary><form class="stack" method="post" action="/hesabim/sil" style="margin-top:12px">${f}<p class="muted" style="margin:0">Markalar, gönderiler, görseller, kanal bağlantıları ve ekip kalıcı olarak silinir. Bu işlem geri alınamaz.</p><label>Onay için işletme adını yazın: <strong>${esc(ctx.ws.name)}</strong><input name="onay" required autocomplete="off"></label><div><button class="danger" data-confirm="Tüm veriler kalıcı olarak silinecek. Emin misiniz?">Hesabı kalıcı olarak sil</button></div></form></details>` : ''}`, '/hesabim'));
   });
   route('POST', '/hesabim', async (ctx, res) => {
     const name = clip(nn(ctx.body.name), 80); if (!name) throw new HttpError(400, 'Ad gerekli.');

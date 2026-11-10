@@ -6,6 +6,13 @@ import { esc, nn, int, clip, HttpError, imageType } from './lib.mjs';
 import { PLATFORMS } from './plans.mjs';
 import { FONTS, brandColors } from './templates.mjs';
 import { linksSection } from './approve.mjs';
+// Marka imzaları: gönderi sonuna eklenen hazır metinler; varsayılan imza yeni gönderiye kendiliğinden eklenir
+async function sigSection(ctx, brandId, editable) {
+  const rows = await all('SELECT * FROM signatures WHERE brand_id=$1 ORDER BY is_default DESC, name', [brandId]); const f = csrf(ctx);
+  return `<section class="card" id="imzalar"><h2>İmzalar</h2><p class="muted">Gönderi sonuna eklenen hazır metin (iletişim, adres, kampanya kodu). Varsayılan imza yeni gönderilere kendiliğinden eklenir.</p>
+${rows.map(g => `<div class="row" style="justify-content:space-between;border-top:1px solid #ECE6DA;padding-top:8px"><span><strong>${esc(g.name)}</strong>${g.is_default ? ' · varsayılan' : ''}<br><span class="muted" style="white-space:pre-wrap">${esc(g.body)}</span></span>${editable ? `<form method="post" action="/imzalar/${g.id}/sil">${f}<button class="danger">Sil</button></form>` : ''}</div>`).join('')}
+${editable ? `<form class="stack" method="post" action="/markalar/${brandId}/imza" style="margin-top:10px">${f}<div class="row"><label>Ad<input name="name" maxlength="60" required placeholder="İletişim"></label><label class="chk"><input type="checkbox" name="default" value="1"> Varsayılan</label></div><label>Metin<textarea name="body" rows="2" maxlength="600" required placeholder="📍 Moda Cd. 12, Kadıköy · ☎ 0216 000 00 00"></textarea></label><div><button class="ghost">İmza ekle</button></div></form>` : ''}</section>`;
+}
 
 export const brandFor = async (ctx, id) => { const b = await one('SELECT * FROM brands WHERE id=$1 AND workspace_id=$2', [int(id), ctx.ws.id]); if (!b) throw new HttpError(404, 'Marka bulunamadı.'); return b; };
 const TONES = { samimi: 'Samimi ve sıcak', profesyonel: 'Profesyonel ve güven veren', eglenceli: 'Eğlenceli ve enerjik', sade: 'Sade ve bilgilendirici', premium: 'Premium ve zarif' };
@@ -74,11 +81,11 @@ ${ctx.user.role === 'owner' ? (can ? `<form method="post" action="/markalar">${c
     const editable = ctx.user.role !== 'approver';
     send(res, 200, layout(ctx, b.name, `<div class="page-head"><div><p class="muted" style="margin:0"><a href="/markalar">Markalar</a></p><h1>${esc(b.name)}</h1></div></div>
 ${editable ? brandForm(ctx, b, `/markalar/${b.id}`) : `<div class="note">Marka ayarlarını yalnız sahip ve editörler değiştirebilir.</div>`}
-<section class="card"><h2>Sosyal hesaplar</h2><p class="muted">Şimdilik planlama içindir: paylaşım zamanı geldiğinde hangi hesaba paylaşacağınızı hatırlatırız. Otomatik yayın bağlantısı yakında. (${accCount} / ${ctx.lim.accounts} hesap)</p>
+<section class="card"><h2>Sosyal hesaplar</h2><p class="muted">Instagram, Facebook ve LinkedIn hesaplarını <a href="/kanallar">Kanallar</a> sayfasından bağlayınca gönderiler otomatik paylaşılır. Buradan eklenen hesaplar elle paylaşım içindir; zamanı gelince hatırlatırız. (${accCount} / ${ctx.lim.accounts} hesap)</p>
 ${acc.length ? `<div class="tbl"><table><tr><th>Platform</th><th>Hesap</th><th>Tercih edilen saatler</th><th></th></tr>${acc.map(a => `<tr><td>${esc(PLATFORMS[a.platform]?.name || a.platform)}</td><td>${esc(a.handle)}</td><td>${esc(a.best_times || '—')}</td>
 <td>${editable ? `<form method="post" action="/hesaplar/${a.id}/sil" data-confirm="Hesap kaldırılsın mı?">${csrf(ctx)}<button class="danger">Kaldır</button></form>` : ''}</td></tr>`).join('')}</table></div>` : '<p class="muted">Henüz hesap eklenmedi.</p>'}
 ${editable && accCount < ctx.lim.accounts ? `<form class="row" method="post" action="/markalar/${b.id}/hesap">${csrf(ctx)}<label>Platform<select name="platform">${opts(Object.fromEntries(Object.entries(PLATFORMS).map(([k, v]) => [k, v.name])), 'instagram')}</select></label>
-<label>Kullanıcı adı<input name="handle" required maxlength="80" placeholder="@markaniz"></label><label>Tercih edilen saatler<input name="best_times" maxlength="80" placeholder="09:00, 19:30"></label><button>Ekle</button></form>` : ''}</section>${await linksSection(ctx, b.id)}`, '/markalar'));
+<label>Kullanıcı adı<input name="handle" required maxlength="80" placeholder="@markaniz"></label><label>Tercih edilen saatler<input name="best_times" maxlength="80" placeholder="09:00, 19:30"></label><button>Ekle</button></form>` : ''}</section>${await sigSection(ctx, b.id, editable)}${await linksSection(ctx, b.id)}`, '/markalar'));
   });
   route('POST', '/markalar/:id', async (ctx, res, p) => {
     need(ctx, 'owner', 'editor'); needUsable(ctx); const b = await brandFor(ctx, p.id);

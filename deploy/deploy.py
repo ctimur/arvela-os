@@ -103,7 +103,9 @@ def main():
     # Yedek (0.25): tanımlı değilse boş geçer; yedek servisi eksik ayarı Ayarlar → Yedek ve izleme'de bildirir
     # Arvela Social (0.32): Arvela OS köprü anahtarı SETUP_TOKEN'dan türetilir (ext-social.js bridgeKey ile aynı)
     env += 'SOCIAL_BRIDGE_KEY=' + hmac.new(os.environ['SETUP_TOKEN'].encode(), b'arvela-social-bridge', hashlib.sha256).hexdigest() + '\n'
-    for k in ('BACKUP_PASSPHRASE', 'BACKUP_GITHUB_TOKEN', 'BACKUP_REPO', 'SOCIAL_ADMIN_EMAILS', 'ANTHROPIC_API_KEY', 'OPENAI_API_KEY'):
+    # Kanal erişim anahtarlarını şifreleyen anahtar (vault.mjs); SETUP_TOKEN değişmedikçe sabit kalır
+    env += 'SOCIAL_TOKEN_KEY=' + hmac.new(os.environ['SETUP_TOKEN'].encode(), b'arvela-social-tokens', hashlib.sha256).hexdigest() + '\n'
+    for k in ('BACKUP_PASSPHRASE', 'BACKUP_GITHUB_TOKEN', 'BACKUP_REPO', 'SOCIAL_ADMIN_EMAILS', 'ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'META_APP_ID', 'META_APP_SECRET', 'LINKEDIN_CLIENT_ID', 'LINKEDIN_CLIENT_SECRET', 'LINKEDIN_ORG'):
         v = os.environ.get(k, '').strip()
         if '\n' in v: raise SystemExit(f'{k} tek satır olmalı')
         env += f"{k}={v}\n"

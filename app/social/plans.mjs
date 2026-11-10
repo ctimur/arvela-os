@@ -1,9 +1,9 @@
 // Arvela Social — paketler, sınırlar ve sabit sözlükler. Katalogdaki SAAS-01…06 ile aynı.
 export const TRIAL_DAYS = 14;
 export const PLANS = {
-  solo: { code: 'SAAS-01', name: 'Solo', brands: 1, users: 1, accounts: 2, postsPerMonth: 30, approvals: false, clientLinks: false, aiImages: false, aiPerMonth: 40, aiImagesPerMonth: 0 },
-  business: { code: 'SAAS-02', name: 'Business', brands: 1, users: 3, accounts: 5, postsPerMonth: 60, approvals: true, clientLinks: false, aiImages: false, aiPerMonth: 150, aiImagesPerMonth: 0 },
-  agency: { code: 'SAAS-03', name: 'Agency', brands: 5, users: 10, accounts: 25, postsPerMonth: 200, approvals: true, clientLinks: true, aiImages: true, aiPerMonth: 500, aiImagesPerMonth: 60 },
+  solo: { code: 'SAAS-01', name: 'Solo', brands: 1, users: 1, accounts: 2, postsPerMonth: 30, approvals: false, clientLinks: false, aiImages: false, aiPerMonth: 40, aiImagesPerMonth: 0, automation: false },
+  business: { code: 'SAAS-02', name: 'Business', brands: 1, users: 3, accounts: 5, postsPerMonth: 60, approvals: true, clientLinks: false, aiImages: false, aiPerMonth: 150, aiImagesPerMonth: 0, automation: true },
+  agency: { code: 'SAAS-03', name: 'Agency', brands: 5, users: 10, accounts: 25, postsPerMonth: 200, approvals: true, clientLinks: true, aiImages: true, aiPerMonth: 500, aiImagesPerMonth: 60, automation: true },
 };
 // Deneme süresinde Business özellikleri açıktır.
 export const TRIAL_PLAN = 'business';
