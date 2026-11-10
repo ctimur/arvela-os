@@ -68,5 +68,29 @@ export async function migrate() {
   await q(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS editor_status TEXT CHECK (editor_status IN ('bekliyor','kontrol_edildi'))`);
   await q(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS editor_checked_at TIMESTAMPTZ`);
   await q(`CREATE INDEX IF NOT EXISTS posts_editor_queue ON posts(editor_status) WHERE editor_status='bekliyor'`);
+  // Kanallar ve otomatik paylaşım (0.4): bağlı hesaplar, OAuth durumları, kanal başına paylaşım sonucu, etiketler, imzalar, tekrar
+  for (const c of ['kind TEXT', 'external_id TEXT', 'name TEXT', 'avatar TEXT', 'token_enc TEXT', 'token_expires TIMESTAMPTZ', `status TEXT NOT NULL DEFAULT 'manuel'`, 'last_error TEXT',
+    'followers INT', 'followers_at TIMESTAMPTZ', 'connected_by INT', 'connected_at TIMESTAMPTZ', 'page_id TEXT']) await q(`ALTER TABLE accounts ADD COLUMN IF NOT EXISTS ${c}`);
+  await q(`CREATE UNIQUE INDEX IF NOT EXISTS accounts_ext ON accounts(brand_id, kind, external_id) WHERE external_id IS NOT NULL`);
+  await q(`CREATE TABLE IF NOT EXISTS oauth_states (id SERIAL PRIMARY KEY, token_hash TEXT NOT NULL UNIQUE, workspace_id INT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, brand_id INT NOT NULL REFERENCES brands(id) ON DELETE CASCADE,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE, provider TEXT NOT NULL, payload_enc TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), used_at TIMESTAMPTZ)`);
+  await q(`DELETE FROM oauth_states WHERE created_at < now() - interval '1 day'`);
+  for (const c of [`account_ids INT[] NOT NULL DEFAULT '{}'`, `publish_mode TEXT NOT NULL DEFAULT 'elle'`, `tags TEXT[] NOT NULL DEFAULT '{}'`, 'repeat_rule TEXT', 'repeat_until DATE', 'repeat_of INT', 'publish_error TEXT', 'locked_at TIMESTAMPTZ'])
+    await q(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS ${c}`);
+  await q(`CREATE TABLE IF NOT EXISTS post_targets (id SERIAL PRIMARY KEY, post_id INT NOT NULL REFERENCES posts(id) ON DELETE CASCADE, account_id INT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'bekliyor' CHECK (status IN ('bekliyor','paylasildi','hata')), external_id TEXT, url TEXT, error TEXT, attempts INT NOT NULL DEFAULT 0, next_try TIMESTAMPTZ,
+    published_at TIMESTAMPTZ, metrics JSONB, metrics_at TIMESTAMPTZ, UNIQUE (post_id, account_id))`);
+  await q(`CREATE INDEX IF NOT EXISTS posts_due ON posts(scheduled_at) WHERE publish_mode='otomatik' AND status='onaylandi'`);
+  await q(`CREATE TABLE IF NOT EXISTS tags (id SERIAL PRIMARY KEY, workspace_id INT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, name TEXT NOT NULL, color TEXT NOT NULL DEFAULT '#B08433', UNIQUE (workspace_id, name))`);
+  await q(`CREATE TABLE IF NOT EXISTS signatures (id SERIAL PRIMARY KEY, brand_id INT NOT NULL REFERENCES brands(id) ON DELETE CASCADE, name TEXT NOT NULL, body TEXT NOT NULL, is_default BOOLEAN NOT NULL DEFAULT false)`);
+  // Otomasyon (0.4): kısa link, webhook, API anahtarı, RSS
+  await q(`CREATE TABLE IF NOT EXISTS shortlinks (id SERIAL PRIMARY KEY, workspace_id INT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, post_id INT REFERENCES posts(id) ON DELETE SET NULL,
+    code TEXT NOT NULL UNIQUE, url TEXT NOT NULL, clicks INT NOT NULL DEFAULT 0, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`);
+  await q(`CREATE TABLE IF NOT EXISTS webhooks (id SERIAL PRIMARY KEY, workspace_id INT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, url TEXT NOT NULL, secret_enc TEXT NOT NULL,
+    events TEXT[] NOT NULL DEFAULT '{paylasildi,hata}', active BOOLEAN NOT NULL DEFAULT true, last_status INT, last_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`);
+  await q(`CREATE TABLE IF NOT EXISTS api_keys (id SERIAL PRIMARY KEY, workspace_id INT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, name TEXT NOT NULL, key_hash TEXT NOT NULL UNIQUE, prefix TEXT NOT NULL,
+    created_by INT REFERENCES users(id) ON DELETE SET NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), last_used_at TIMESTAMPTZ, revoked_at TIMESTAMPTZ)`);
+  await q(`CREATE TABLE IF NOT EXISTS feeds (id SERIAL PRIMARY KEY, workspace_id INT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, brand_id INT NOT NULL REFERENCES brands(id) ON DELETE CASCADE,
+    url TEXT NOT NULL, seen TEXT[] NOT NULL DEFAULT '{}', last_checked TIMESTAMPTZ, error TEXT, active BOOLEAN NOT NULL DEFAULT true, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`);
   await q(`DELETE FROM sessions WHERE expires_at < now()`);
 }

@@ -71,7 +71,7 @@ const finish = (id, status, out, err, tok = {}) => q(`UPDATE ai_jobs SET status=
 export async function runPlan(jobId) {
   const job = await one('SELECT * FROM ai_jobs WHERE id=$1', [jobId]); const inp = job.input;
   try {
-    const brand = await one('SELECT * FROM brands WHERE id=$1', [job.brand_id]); const accounts = await all('SELECT platform, best_times FROM accounts WHERE brand_id=$1', [job.brand_id]);
+    const brand = await one('SELECT * FROM brands WHERE id=$1', [job.brand_id]); const accounts = await all('SELECT id, platform, best_times, kind, status FROM accounts WHERE brand_id=$1', [job.brand_id]);
     const pr = planPrompt({ brand, accounts, month: inp.month, count: inp.count, platforms: inp.platforms, focus: inp.focus, today: inp.today });
     const r = await claude({ ...pr, maxTokens: Math.min(16000, 1200 + inp.count * 700) });
     const j = extractJson(r.text); if (!j) throw new Error('Yapay zekâ beklenen biçimde yanıt vermedi; tekrar deneyin.');
@@ -80,9 +80,10 @@ export async function runPlan(jobId) {
     if (!items.length) throw new Error('Plan oluşturulamadı; tekrar deneyin.');
     const ids = [];
     for (const it of items.slice(0, inp.count)) {
-      const p = await one(`INSERT INTO posts (workspace_id, brand_id, platforms, scheduled_at, status, title, caption, hashtags, first_comment, visual_brief, pillar, template, template_data, ai, created_by)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,true,$14) RETURNING id`, [job.workspace_id, job.brand_id, it.platforms, fromLocalInput(`${it.day}T${it.time}`), inp.as === 'fikir' ? 'fikir' : 'taslak',
-        it.title, it.caption, it.hashtags, it.first_comment, it.visual_brief, it.pillar, it.template, JSON.stringify(it.template_data), job.created_by]);
+      const accIds = accounts.filter(a => it.platforms.includes(a.platform)).map(a => a.id); const auto = accounts.some(a => accIds.includes(a.id) && a.kind && a.status === 'bagli');
+      const p = await one(`INSERT INTO posts (workspace_id, brand_id, platforms, scheduled_at, status, title, caption, hashtags, first_comment, visual_brief, pillar, template, template_data, ai, created_by, account_ids, publish_mode)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,true,$14,$15,$16) RETURNING id`, [job.workspace_id, job.brand_id, it.platforms, fromLocalInput(`${it.day}T${it.time}`), inp.as === 'fikir' ? 'fikir' : 'taslak',
+        it.title, it.caption, it.hashtags, it.first_comment, it.visual_brief, it.pillar, it.template, JSON.stringify(it.template_data), job.created_by, accIds, auto ? 'otomatik' : 'elle']);
       ids.push(p.id);
     }
     await finish(jobId, 'bitti', { posts: ids }, null, r);

@@ -7,7 +7,7 @@ import { CSS, authPage } from './ui.mjs';
 import { CLIENT_JS } from './client.mjs';
 import { limits } from './plans.mjs';
 
-export const VERSION = '0.3.0';
+export const VERSION = '0.4.0';
 const PORT = Number(process.env.PORT || 3100);
 const SECURE = process.env.NODE_ENV === 'production';
 const SESSION_DAYS = 14;
@@ -16,7 +16,7 @@ export const ADMINS = String(process.env.SOCIAL_ADMIN_EMAILS || '').toLowerCase(
 const routes = [];
 let anonHome = null; export const setAnonHome = (fn) => { anonHome = fn; }; // giriş yapmamış ziyaretçiye "/" (tanıtım)
 export const route = (method, pattern, fn, { open = false } = {}) => {
-  const keys = []; const re = new RegExp('^' + pattern.replace(/:(\w+)/g, (_, k) => { keys.push(k); return k === 'token' ? '([A-Za-z0-9_-]{20,80})' : '(\\d+)'; }) + '$');
+  const keys = []; const re = new RegExp('^' + pattern.replace(/:(\w+)/g, (_, k) => { keys.push(k); return k === 'token' ? '([A-Za-z0-9_-]{20,80})' : k === 'sig' ? '([A-Za-z0-9_-]{16,64})' : k === 'code' ? '([A-Za-z0-9]{4,16})' : k === 'prov' ? '(meta|linkedin)' : '(\\d+)'; }) + '$');
   routes.push({ method, re, keys, fn, open });
 };
 export const redirect = (res, to, headers = {}) => { res.writeHead(303, { Location: to, ...headers }); res.end(); };
@@ -83,11 +83,12 @@ export const server = http.createServer(async (req, res) => {
 });
 
 // Rotaları yükle ve başlat
-const mods = ['./auth.mjs', './brands.mjs', './posts.mjs', './media.mjs', './team.mjs', './billing.mjs', './admin.mjs', './ai.mjs', './approve.mjs', './notify.mjs', './report.mjs', './landing.mjs'];
+const mods = ['./auth.mjs', './brands.mjs', './posts.mjs', './media.mjs', './team.mjs', './billing.mjs', './admin.mjs', './ai.mjs', './approve.mjs', './notify.mjs', './report.mjs', './landing.mjs', './channels.mjs', './analytics.mjs', './automation.mjs', './legal.mjs'];
 export async function start() {
   await ensureDatabase(); await migrate();
   for (const m of mods) (await import(m)).register();
   if (process.env.SOCIAL_REMINDERS !== '0') (await import('./notify.mjs')).startReminders();
+  if (process.env.SOCIAL_PUBLISHER !== '0') (await import('./publisher.mjs')).startPublisher();
   server.listen(PORT, () => console.log(`Arvela Social ${VERSION} :${PORT}`));
 }
 if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split('/').pop())) start().catch(e => { console.error('başlatılamadı', e); process.exit(1); });

@@ -8,6 +8,8 @@ export { transition };
 import { TEMPLATES, renderSvg } from './templates.mjs';
 import { saveImage, mediaDataUri } from './media.mjs';
 import { aiPanel, aiReady } from './ai.mjs';
+import { avatar, KIND_NAME } from './channels.mjs';
+import { REPEATS, createNextRepeat } from './publisher.mjs';
 import { onStatus } from './notify.mjs';
 
 const MONTHS = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
@@ -59,22 +61,43 @@ ${sec('Önümüzdeki 7 gün', week, 'Önümüzdeki hafta boş. <a href="/gonderi
   // ---------- Takvim ----------
   route('GET', '/takvim', async (ctx, res) => {
     if (!ctx.brand) return redirect(res, '/baslangic');
-    const now = new Date(Date.now() + 3 * 3600e3); const ay = /^\d{4}-\d{2}$/.test(ctx.url.searchParams.get('ay') || '') ? ctx.url.searchParams.get('ay') : now.toISOString().slice(0, 7);
-    const [y, m] = ay.split('-').map(Number); const first = new Date(Date.UTC(y, m - 1, 1)); const startDow = (first.getUTCDay() + 6) % 7;
-    const gridStart = new Date(first.getTime() - startDow * 864e5); const days = Array.from({ length: 42 }, (_, i) => new Date(gridStart.getTime() + i * 864e5));
-    const posts = await all(`SELECT * FROM posts WHERE brand_id=$1 AND status<>'iptal' AND scheduled_at >= $2::timestamptz - interval '3 hours' AND scheduled_at < $3::timestamptz - interval '3 hours' ORDER BY scheduled_at`,
-      [ctx.brand.id, days[0].toISOString(), new Date(days[41].getTime() + 864e5).toISOString()]);
-    const byDay = new Map(); for (const p of posts) { const k = dayKey(p.scheduled_at); if (!byDay.has(k)) byDay.set(k, []); byDay.get(k).push(p); }
+    const sp = ctx.url.searchParams; const now = new Date(Date.now() + 3 * 3600e3); const todayK = now.toISOString().slice(0, 10);
+    const week = sp.get('gorunum') === 'hafta'; const canMove = ctx.user.role !== 'approver' && ctx.lim.usable;
+    const tagColors = new Map((await all('SELECT name, color FROM tags WHERE workspace_id=$1', [ctx.ws.id])).map(t => [t.name, t.color]));
+    const accs = new Map((await all('SELECT * FROM accounts WHERE brand_id=$1', [ctx.brand.id])).map(a => [a.id, a]));
+    const chip = (p) => { const tc = (p.tags || []).map(t => tagColors.get(t)).find(Boolean); const av = (p.account_ids || []).map(id => accs.get(id)).filter(Boolean).slice(0, 3);
+      return `<a class="chipp ${p.status}"${tc ? ` style="border-left-color:${esc(tc)}"` : ''} href="/gonderi/${p.id}"${canMove && p.status !== 'paylasildi' ? ` draggable="true" data-post="${p.id}"` : ''}><small>${fmtTime(p.scheduled_at)}${p.publish_mode === 'otomatik' ? ' · ⚡' : ''}${p.repeat_rule ? ' · ↻' : ''}</small><span class="chip-av">${av.map(a => avatar(a, 16)).join('')}</span>${esc((p.title || p.caption || 'Başlıksız').slice(0, 48))}</a>`; };
+    let from, to, label, prevQ, nextQ, body;
+    if (week) {
+      const d0 = /^\d{4}-\d{2}-\d{2}$/.test(sp.get('gun') || '') ? new Date(sp.get('gun') + 'T00:00:00Z') : new Date(todayK + 'T00:00:00Z');
+      const mon = new Date(d0.getTime() - ((d0.getUTCDay() + 6) % 7) * 864e5); const days = Array.from({ length: 7 }, (_, i) => new Date(mon.getTime() + i * 864e5));
+      from = days[0]; to = new Date(days[6].getTime() + 864e5);
+      label = `${days[0].getUTCDate()} ${MONTHS[days[0].getUTCMonth()]} – ${days[6].getUTCDate()} ${MONTHS[days[6].getUTCMonth()]} ${days[6].getUTCFullYear()}`;
+      prevQ = `gorunum=hafta&gun=${new Date(mon.getTime() - 7 * 864e5).toISOString().slice(0, 10)}`; nextQ = `gorunum=hafta&gun=${new Date(mon.getTime() + 7 * 864e5).toISOString().slice(0, 10)}`;
+      body = async (byKey) => { const hours = Array.from({ length: 18 }, (_, i) => i + 6);
+        return `<div class="wk"><div class="wk-h"></div>${days.map((d, i) => `<div class="wk-h${d.toISOString().slice(0, 10) === todayK ? ' today' : ''}">${DOW[i]} ${d.getUTCDate()}</div>`).join('')}
+${hours.map(h => `<div class="wk-t">${String(h).padStart(2, '0')}:00</div>${days.map(d => { const k = d.toISOString().slice(0, 10); const hh = String(h).padStart(2, '0'); const list = (byKey.get(k) || []).filter(p => fmtTime(p.scheduled_at).slice(0, 2) === hh || (h === 6 && fmtTime(p.scheduled_at) < '06') || (h === 23 && fmtTime(p.scheduled_at) > '23'));
+  return `<div class="wk-c" data-day="${k}" data-time="${hh}:00">${list.map(chip).join('')}${canMove && !list.length ? `<a class="add" href="/gonderi/yeni?gun=${k}">+</a>` : ''}</div>`; }).join('')}`).join('')}</div>`; };
+    } else {
+      const ay = /^\d{4}-\d{2}$/.test(sp.get('ay') || '') ? sp.get('ay') : now.toISOString().slice(0, 7);
+      const [y, m] = ay.split('-').map(Number); const first = new Date(Date.UTC(y, m - 1, 1)); const startDow = (first.getUTCDay() + 6) % 7;
+      const gridStart = new Date(first.getTime() - startDow * 864e5); const days = Array.from({ length: 42 }, (_, i) => new Date(gridStart.getTime() + i * 864e5));
+      from = days[0]; to = new Date(days[41].getTime() + 864e5); label = `${MONTHS[m - 1]} ${y}`;
+      prevQ = `ay=${new Date(Date.UTC(y, m - 2, 1)).toISOString().slice(0, 7)}`; nextQ = `ay=${new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 7)}`;
+      body = async (byKey) => `<div class="cal">${DOW.map(d => `<div class="dow">${d}</div>`).join('')}${days.map(d => { const k = d.toISOString().slice(0, 10); const list = byKey.get(k) || [];
+        return `<div class="day${d.getUTCMonth() !== m - 1 ? ' out' : ''}${k === todayK ? ' today' : ''}" data-day="${k}"><span class="n">${d.getUTCDate()}</span>${list.map(chip).join('')}${canMove ? `<a class="add" href="/gonderi/yeni?gun=${k}">+ ekle</a>` : ''}</div>`; }).join('')}</div>`;
+    }
+    const tagF = sp.get('etiket') || ''; const accF = int(sp.get('kanal'));
+    const posts = (await all(`SELECT * FROM posts WHERE brand_id=$1 AND status<>'iptal' AND scheduled_at >= $2::timestamptz - interval '3 hours' AND scheduled_at < $3::timestamptz - interval '3 hours' ORDER BY scheduled_at`,
+      [ctx.brand.id, from.toISOString(), to.toISOString()])).filter(p => (!tagF || (p.tags || []).includes(tagF)) && (!accF || (p.account_ids || []).includes(accF)));
+    const byKey = new Map(); for (const p of posts) { const k = dayKey(p.scheduled_at); if (!byKey.has(k)) byKey.set(k, []); byKey.get(k).push(p); }
     const unscheduled = await all(`SELECT * FROM posts WHERE brand_id=$1 AND status NOT IN ('iptal','paylasildi') AND scheduled_at IS NULL ORDER BY id DESC LIMIT 20`, [ctx.brand.id]);
-    const prev = new Date(Date.UTC(y, m - 2, 1)).toISOString().slice(0, 7), next = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 7); const todayK = now.toISOString().slice(0, 10);
-    const cells = days.map(d => { const k = d.toISOString().slice(0, 10); const list = byDay.get(k) || [];
-      return `<div class="day${d.getUTCMonth() !== m - 1 ? ' out' : ''}${k === todayK ? ' today' : ''}"><span class="n">${d.getUTCDate()}${d.getUTCMonth() !== m - 1 ? '' : ''}</span>
-${list.map(p => `<a class="chipp ${p.status}" href="/gonderi/${p.id}"><small>${fmtTime(p.scheduled_at)} · ${(p.platforms || []).map(x => esc(PLATFORMS[x]?.name || x)).join(', ')}</small>${esc((p.title || p.caption || 'Başlıksız').slice(0, 48))}</a>`).join('')}
-${ctx.user.role !== 'approver' ? `<a class="add" href="/gonderi/yeni?gun=${k}">+ ekle</a>` : ''}</div>`; }).join('');
-    send(res, 200, layout(ctx, 'Takvim', `<div class="page-head"><div><h1>${MONTHS[m - 1]} ${y}</h1><p>${posts.filter(p => dayKey(p.scheduled_at).startsWith(ay)).length} gönderi planlandı</p></div>
-<div class="row"><a class="btn ghost" href="/takvim?ay=${prev}">← ${MONTHS[(m + 10) % 12]}</a><a class="btn ghost" href="/takvim">Bu ay</a><a class="btn ghost" href="/takvim?ay=${next}">${MONTHS[m % 12]} →</a></div></div>
-<div class="cal">${DOW.map(d => `<div class="dow">${d}</div>`).join('')}${cells}</div>
-${unscheduled.length ? `<section class="card"><h2>Tarihsiz gönderiler ve fikirler</h2>${unscheduled.map(p => `<a class="chipp ${p.status}" href="/gonderi/${p.id}">${esc((p.title || p.caption || 'Başlıksız').slice(0, 80))} <small>${POST_ST[p.status]}</small></a>`).join('')}</section>` : ''}`, '/takvim'));
+    const keep = (q2) => `/takvim?${q2}${tagF ? '&etiket=' + encodeURIComponent(tagF) : ''}${accF ? '&kanal=' + accF : ''}`;
+    send(res, 200, layout(ctx, 'Takvim', `<div class="page-head"><div><h1>${esc(label)}</h1><p>${posts.length} gönderi · ⚡ otomatik paylaşım · ↻ tekrarlayan${canMove ? ' · Gönderileri sürükleyip başka güne taşıyabilirsiniz' : ''}</p></div>
+<div class="row"><div class="seg"><a class="${week ? '' : 'on'}" href="/takvim">Ay</a><a class="${week ? 'on' : ''}" href="/takvim?gorunum=hafta">Hafta</a></div><a class="btn ghost" href="${keep(prevQ)}">←</a><a class="btn ghost" href="${keep(week ? 'gorunum=hafta' : '')}">Bugün</a><a class="btn ghost" href="${keep(nextQ)}">→</a></div></div>
+${accs.size ? `<div class="cal-filter"><a class="${accF ? '' : 'on'}" href="/takvim${week ? '?gorunum=hafta' : ''}">Tüm kanallar</a>${[...accs.values()].map(a => `<a class="${accF === a.id ? 'on' : ''}" href="/takvim?${week ? 'gorunum=hafta&' : ''}kanal=${a.id}" title="${esc(a.name || a.handle)}">${avatar(a, 22)}</a>`).join('')}${tagColors.size ? `<span class="sep"></span>${[...tagColors.entries()].map(([t, c]) => `<a class="tagp${tagF === t ? ' on' : ''}" style="border-color:${esc(c)}" href="/takvim?${week ? 'gorunum=hafta&' : ''}etiket=${encodeURIComponent(t)}">${esc(t)}</a>`).join('')}` : ''}</div>` : ''}
+<div data-dnd="${canMove ? 1 : 0}">${canMove ? csrf(ctx) : ''}${await body(byKey)}</div>
+${unscheduled.length ? `<section class="card"><h2>Tarihsiz gönderiler ve fikirler</h2>${unscheduled.map(p => `<a class="chipp ${p.status}" href="/gonderi/${p.id}"${canMove ? ` draggable="true" data-post="${p.id}"` : ''}>${esc((p.title || p.caption || 'Başlıksız').slice(0, 80))} <small>${POST_ST[p.status]}</small></a>`).join('')}</section>` : ''}`, '/takvim'));
   });
 
   // ---------- Liste ----------
@@ -104,8 +127,11 @@ ${unscheduled.length ? `<section class="card"><h2>Tarihsiz gönderiler ve fikirl
     const best = await one(`SELECT best_times FROM accounts WHERE brand_id=$1 AND best_times IS NOT NULL LIMIT 1`, [ctx.brand.id]);
     const time = (/(\d{2}):(\d{2})/.exec(best?.best_times || '') || [null, '19', '00']).slice(1).join(':');
     const when = gun ? fromLocalInput(`${gun}T${time}`) : null;
-    const p = await one(`INSERT INTO posts (workspace_id, brand_id, platforms, scheduled_at, status, created_by, title) VALUES ($1,$2,$3,$4,'taslak',$5,$6) RETURNING id`,
-      [ctx.ws.id, ctx.brand.id, acc.map(a => a.platform).slice(0, 7), when, ctx.user.id, clip(nn(ctx.body.title), 120)]);
+    const all_ = await all('SELECT id, platform, kind, status FROM accounts WHERE brand_id=$1', [ctx.brand.id]);
+    const live = all_.filter(x => x.kind && x.status === 'bagli'); const pick = live.length ? live : all_; // bağlı kanallar varsayılan seçili
+    const sig = await one('SELECT body FROM signatures WHERE brand_id=$1 AND is_default LIMIT 1', [ctx.brand.id]);
+    const p = await one(`INSERT INTO posts (workspace_id, brand_id, platforms, account_ids, publish_mode, scheduled_at, status, created_by, title, caption) VALUES ($1,$2,$3,$4,$5,$6,'taslak',$7,$8,$9) RETURNING id`,
+      [ctx.ws.id, ctx.brand.id, [...new Set(pick.map(a => a.platform))].slice(0, 7), pick.map(a => a.id), live.length ? 'otomatik' : 'elle', when, ctx.user.id, clip(nn(ctx.body.title), 120), sig ? '\n\n' + sig.body : null]);
     await audit(ctx, 'post.create', { id: p.id }); redirect(res, `/gonderi/${p.id}`);
   });
   route('GET', '/gonderi/:id', async (ctx, res, pr) => {
@@ -117,37 +143,62 @@ ${unscheduled.length ? `<section class="card"><h2>Tarihsiz gönderiler ve fikirl
     const canRevise = !transition('duzeltme', p, ctx.user.role, ctx.lim).error;
     const lastRev = p.status === 'duzeltme' ? await one(`SELECT author, body, created_at FROM post_notes WHERE post_id=$1 AND kind IN ('duzeltme','musteri') ORDER BY id DESC LIMIT 1`, [p.id]) : null;
     const panel = await aiPanel(ctx, p, ctx.url.searchParams.get('yz'));
+    const accs = await all('SELECT * FROM accounts WHERE brand_id=$1 ORDER BY (kind IS NULL), platform, id', [p.brand_id]);
+    const sigs = await all('SELECT id, name, body, is_default FROM signatures WHERE brand_id=$1 ORDER BY is_default DESC, name', [p.brand_id]);
+    const wsTags = await all('SELECT name, color FROM tags WHERE workspace_id=$1 ORDER BY name', [ctx.ws.id]);
+    const targets = await all('SELECT t.*, a.name, a.platform FROM post_targets t JOIN accounts a ON a.id=t.account_id WHERE t.post_id=$1 ORDER BY t.id', [p.id]);
+    const firstImg = p.media_ids?.[0]; const selected = new Set(p.account_ids || []);
+    const prevPlats = [...new Set(accs.filter(a => selected.has(a.id)).map(a => a.platform))].filter(k => ['instagram', 'facebook', 'linkedin'].includes(k));
+    const anyAuto = accs.some(a => a.kind && a.status === 'bagli');
     send(res, 200, layout(ctx, p.title || 'Gönderi', `<div class="page-head"><div><p class="muted" style="margin:0"><a href="/takvim">Takvim</a> · ${esc(p.brand)}</p><h1>${esc(p.title || 'Yeni gönderi')}</h1>
-<p>${badge(POST_ST[p.status], POST_TONE[p.status])} ${p.scheduled_at ? fmtDateTime(p.scheduled_at) : 'Tarihsiz'} ${p.ai ? badge('Yapay zekâ taslağı', 'gold') : ''} ${p.editor_status === 'bekliyor' ? badge('Editör kontrolünde', 'warn') : p.editor_status === 'kontrol_edildi' ? badge('Editör kontrol etti', 'ok') : ''}</p></div>
-<div class="row">${ctx.ws.editor_service && edit && p.caption && p.editor_status !== 'bekliyor' ? `<form method="post" action="/gonderi/${p.id}/editore">${f}<button class="ghost">Editör kontrolüne gönder</button></form>` : ''}${p.status !== 'iptal' ? `<a class="btn ${p.status === 'onaylandi' ? 'gold' : 'ghost'}" href="/gonderi/${p.id}/paylas">Paylaşım sayfası</a>` : ''}${acts.map(([a, l, t]) => `<form method="post" action="/gonderi/${p.id}/durum">${f}<input type="hidden" name="action" value="${a}"><button class="${t}">${l}</button></form>`).join('')}</div></div>
+<p>${badge(POST_ST[p.status], POST_TONE[p.status])} ${p.scheduled_at ? fmtDateTime(p.scheduled_at) : 'Tarihsiz'} ${p.publish_mode === 'otomatik' ? badge('Otomatik paylaşım', 'gold') : ''} ${p.repeat_rule ? badge(REPEATS[p.repeat_rule] || 'Tekrar', 'muted') : ''} ${(p.tags || []).map(t => `<span class="tagp">${esc(t)}</span>`).join(' ')} ${p.ai ? badge('Yapay zekâ taslağı', 'gold') : ''} ${p.editor_status === 'bekliyor' ? badge('Editör kontrolünde', 'warn') : p.editor_status === 'kontrol_edildi' ? badge('Editör kontrol etti', 'ok') : ''}</p></div>
+<div class="row">${ctx.ws.editor_service && edit && p.caption && p.editor_status !== 'bekliyor' ? `<form method="post" action="/gonderi/${p.id}/editore">${f}<button class="ghost">Editör kontrolüne gönder</button></form>` : ''}${ctx.user.role !== 'approver' && ctx.lim.usable ? `<form method="post" action="/gonderi/${p.id}/cogalt">${f}<button class="ghost">Çoğalt</button></form>` : ''}${p.status !== 'iptal' && p.publish_mode !== 'otomatik' ? `<a class="btn ${p.status === 'onaylandi' ? 'gold' : 'ghost'}" href="/gonderi/${p.id}/paylas">Paylaşım sayfası</a>` : ''}${acts.map(([a, l, t]) => `<form method="post" action="/gonderi/${p.id}/durum">${f}<input type="hidden" name="action" value="${a}"><button class="${t}">${l}</button></form>`).join('')}</div></div>
 ${lastRev ? `<div class="err"><strong>Düzeltme istendi</strong> · ${esc(lastRev.author || '')} · ${fmtDateTime(lastRev.created_at)}<br><span style="white-space:pre-wrap">${esc(lastRev.body)}</span></div>` : ''}
 ${canRevise ? `<details class="card"${p.status === 'onay' && ctx.user.role === 'approver' ? ' open' : ''}><summary style="cursor:pointer;font-weight:600">Düzeltme iste</summary><form class="stack" method="post" action="/gonderi/${p.id}/durum" style="margin-top:12px">${f}<input type="hidden" name="action" value="duzeltme"><label>Neyin değişmesini istiyorsunuz?<textarea name="comment" rows="2" maxlength="1000" required placeholder="Metin biraz uzun, fiyatı çıkaralım; görselde logo daha görünür olsun."></textarea></label><div><button class="ghost">Düzeltme iste</button></div></form></details>` : ''}
 <div class="grid2" style="align-items:start"><form class="card stack" method="post" action="/gonderi/${p.id}">${f}
 <label>Başlık (yalnız sizin için)<input name="title" maxlength="120" value="${esc(p.title || '')}"${edit ? '' : ' disabled'}></label>
-<fieldset style="border:0;padding:0;margin:0"><legend class="muted" style="font-size:13px;font-weight:600;margin-bottom:6px">Platformlar</legend><div class="row" style="gap:14px">${Object.entries(PLATFORMS).map(([k, v]) => `<label class="chk"><input type="checkbox" name="platforms" value="${k}" data-max="${v.max}"${p.platforms?.includes(k) ? ' checked' : ''}${edit ? '' : ' disabled'}> ${v.name}</label>`).join('')}</div></fieldset>
+<fieldset class="chan-sel"><legend>Kanallar</legend>${accs.length ? `<div class="chan-chips">${accs.map(a => `<label class="chan-chip${a.kind ? '' : ' manual'}" title="${esc(a.kind ? KIND_NAME[a.kind] : 'Elle paylaşım')}"><input type="checkbox" name="account_ids" value="${a.id}" data-max="${PLATFORMS[a.platform]?.max || 2200}" data-plat="${esc(a.platform)}"${selected.has(a.id) ? ' checked' : ''}${edit ? '' : ' disabled'}>${avatar(a, 30)}<span>${esc(a.name || a.handle)}<small>${esc(PLATFORMS[a.platform]?.name || a.platform)}${a.kind ? '' : ' · elle'}${a.kind && a.status !== 'bagli' ? ' · bağlantı koptu' : ''}</small></span></label>`).join('')}</div>` : `<p class="muted" style="margin:0">Bu markada kanal yok. <a href="/kanallar">Kanal bağlayın</a>.</p>`}</fieldset>
+<div class="row"><label>Paylaşım<select name="mode"${edit ? '' : ' disabled'}><option value="otomatik"${p.publish_mode === 'otomatik' ? ' selected' : ''}${anyAuto ? '' : ' disabled'}>Zamanı gelince otomatik paylaş${anyAuto ? '' : ' (bağlı kanal yok)'}</option><option value="elle"${p.publish_mode !== 'otomatik' ? ' selected' : ''}>Hatırlat, elle paylaşırım</option></select></label>
+<label>Tekrar<select name="repeat_rule"${edit ? '' : ' disabled'}><option value="">Tekrar yok</option>${opts(REPEATS, p.repeat_rule)}</select></label><label>Tekrar bitişi<input type="date" name="repeat_until" value="${p.repeat_until ? String(p.repeat_until).slice(0, 10) : ''}"${edit ? '' : ' disabled'}></label></div>
 <div class="row"><label>Paylaşım zamanı<input type="datetime-local" name="scheduled_at" value="${toLocalInput(p.scheduled_at)}"${edit ? '' : ' disabled'}></label><label>Biçim<select name="format"${edit ? '' : ' disabled'}>${opts(Object.fromEntries(Object.entries(FORMATS).map(([k, v]) => [k, v.name])), p.format)}</select></label>
 <label>İçerik sütunu<select name="pillar"${edit ? '' : ' disabled'}><option value="">—</option>${opts(Object.fromEntries((brand.pillars || []).map(x => [x, x])), p.pillar)}</select></label></div>
 <label>Metin <span class="count" id="cap-count"></span><textarea id="caption" name="caption" rows="9" maxlength="63206" data-count="#cap-count" data-max="${max}"${edit ? '' : ' disabled'}>${esc(p.caption || '')}</textarea></label>
-<label>Etiketler<input name="hashtags" maxlength="600" value="${esc(p.hashtags || '')}" placeholder="#kahve #moda"${edit ? '' : ' disabled'}></label>
+${edit && sigs.length ? `<div class="row" style="align-items:end"><label>İmza<select id="sig-pick">${sigs.map(g => `<option value="${esc(g.body)}">${esc(g.name)}${g.is_default ? ' (varsayılan)' : ''}</option>`).join('')}</select></label><button type="button" class="ghost" data-sig="#sig-pick" data-target="#caption">İmzayı ekle</button></div>` : ''}
+<label>Hashtag'ler<input id="hashtags" name="hashtags" maxlength="600" value="${esc(p.hashtags || '')}" placeholder="#kahve #moda"${edit ? '' : ' disabled'}></label>
+<label>Etiketler (iç takip; virgülle)<input name="tags" maxlength="200" list="tag-list" value="${esc((p.tags || []).join(', '))}" placeholder="kampanya, kış"${edit ? '' : ' disabled'}><datalist id="tag-list">${wsTags.map(t => `<option value="${esc(t.name)}">`).join('')}</datalist></label>
 <label>İlk yorum (isteğe bağlı)<textarea name="first_comment" rows="2" maxlength="2200"${edit ? '' : ' disabled'}>${esc(p.first_comment || '')}</textarea></label>
 <label>Görsel fikri / çekim notu<textarea name="visual_brief" rows="2" maxlength="1000"${edit ? '' : ' disabled'}>${esc(p.visual_brief || '')}</textarea></label>
-${edit ? '<div><button class="gold">Kaydet</button></div>' : ''}</form>
-<div class="stack">${panel}<section class="card"><h2>Görseller</h2>${p.media_ids?.length ? `<div class="thumbs">${p.media_ids.map((id, i) => `<div style="text-align:center"><a href="/medya/${id}" target="_blank"><img src="/medya/${id}" alt="Görsel ${i + 1}"></a>${edit ? `<form method="post" action="/gonderi/${p.id}/gorsel-cikar">${f}<input type="hidden" name="media_id" value="${id}"><button class="ghost" style="padding:2px 8px;font-size:12px">Çıkar</button></form>` : ''}</div>`).join('')}</div>` : '<p class="muted">Henüz görsel yok.</p>'}
+${edit ? `<div class="row"><button class="gold">Kaydet</button><button class="ghost" formaction="/gonderi/${p.id}/kisalt" formnovalidate title="Metindeki bağlantıları tıklama takipli kısa linke çevirir (önce kaydedin)">Bağlantıları kısalt</button></div>` : ''}</form>
+<div class="stack">${targets.length || p.publish_error ? `<section class="card"><h2>Paylaşım durumu</h2>${p.publish_error ? `<div class="err">${esc(p.publish_error)}</div>` : ''}${targets.map(t => `<div class="row" style="justify-content:space-between;border-top:1px solid #ECE6DA;padding-top:8px"><span><strong>${esc(t.name)}</strong> <span class="muted">${esc(PLATFORMS[t.platform]?.name || t.platform)}</span>${t.error && t.status !== 'paylasildi' ? `<br><span class="muted">${esc(t.error)}</span>` : ''}</span>
+<span>${t.status === 'paylasildi' ? `${badge('Paylaşıldı', 'ok')}${t.url ? ` <a href="${esc(t.url)}" target="_blank" rel="noopener">Gönderiyi aç</a>` : ''}` : t.status === 'hata' ? badge(t.attempts >= 3 ? 'Başarısız' : `Yeniden denenecek (${t.attempts}/3)`, t.attempts >= 3 ? 'bad' : 'warn') : badge('Bekliyor', 'muted')}</span></div>`).join('')}
+${edit && (p.publish_error || targets.some(t => t.status === 'hata')) ? `<form method="post" action="/gonderi/${p.id}/yeniden" style="margin-top:10px">${f}<button class="gold">Yeniden dene</button></form>` : ''}</section>` : ''}
+${prevPlats.length ? `<section class="card"><h2>Önizleme</h2><div class="pv-tabs">${prevPlats.map((k, i) => `<button type="button" class="pv-tab${i ? '' : ' on'}" data-pv-tab="${k}">${esc(PLATFORMS[k].name)}</button>`).join('')}</div>
+${prevPlats.map((k, i) => { const a = accs.find(x => selected.has(x.id) && x.platform === k); return `<div class="pv pv-${k}" data-pv="${k}"${i ? ' hidden' : ''}><div class="pv-h">${avatar(a, 32)}<div><strong>${esc(a.name || a.handle)}</strong><small>${k === 'linkedin' ? 'Şimdi · 🌐' : k === 'facebook' ? 'Şimdi · Herkese açık' : esc(a.handle || '')}</small></div></div>
+${k === 'instagram' ? `${firstImg ? `<img class="pv-img" src="/medya/${firstImg}" alt="">` : '<div class="pv-img pv-empty">Instagram gönderisi için görsel gerekli</div>'}<p class="pv-t"><strong>${esc((a.handle || a.name || '').replace(/^@/, ''))}</strong> <span data-pv-text></span></p>`
+  : `<p class="pv-t" data-pv-text></p>${firstImg ? `<img class="pv-img" src="/medya/${firstImg}" alt="">` : ''}`}</div>`; }).join('')}<p class="muted" style="margin:8px 0 0;font-size:12px">Yaklaşık görünüm; platform metni kısaltabilir.</p></section>` : ''}
+${panel}<section class="card"><h2>Görseller</h2>${p.media_ids?.length ? `<div class="thumbs">${p.media_ids.map((id, i) => `<div style="text-align:center"><a href="/medya/${id}" target="_blank"><img src="/medya/${id}" alt="Görsel ${i + 1}"></a>${edit ? `<form method="post" action="/gonderi/${p.id}/gorsel-cikar">${f}<input type="hidden" name="media_id" value="${id}"><button class="ghost" style="padding:2px 8px;font-size:12px">Çıkar</button></form>` : ''}</div>`).join('')}</div>` : '<p class="muted">Henüz görsel yok.</p>'}
 ${edit ? `<div class="row"><a class="btn" href="/gonderi/${p.id}/sablon">Şablondan görsel üret</a><a class="btn ghost" href="/gonderi/${p.id}/kutuphane">Kütüphaneden seç</a></div>
-<form class="row" method="post" action="/medya" enctype="multipart/form-data">${f}<input type="hidden" name="back" value="/gonderi/${p.id}"><label>Fotoğraf yükle<input type="file" name="files" accept="image/*" multiple required></label><button class="ghost">Yükle</button></form>` : ''}</section>
+<form class="row" method="post" action="/medya" enctype="multipart/form-data" data-jpeg>${f}<input type="hidden" name="back" value="/gonderi/${p.id}"><label>Fotoğraf yükle<input type="file" name="files" accept="image/*" multiple required></label><button class="ghost">Yükle</button></form>` : ''}</section>
 <section class="card"><h2>Notlar</h2><form class="stack" method="post" action="/gonderi/${p.id}/not">${f}<textarea name="body" rows="2" maxlength="2000" required placeholder="Ekibe not ya da düzeltme isteği"></textarea><div><button class="ghost">Not ekle</button></div></form>
 ${notes.map(n => `<div style="border-top:1px solid #ECE6DA;padding-top:8px"><strong>${esc(n.author || '')}</strong> <span class="muted">${fmtDateTime(n.created_at)}${n.kind !== 'not' ? ' · ' + esc({ durum: 'durum', duzeltme: 'düzeltme isteği', musteri: 'müşteri', editor: 'Arvela editör' }[n.kind] || n.kind) : ''}</span><p style="margin:4px 0;white-space:pre-wrap">${esc(n.body)}</p></div>`).join('')}</section></div></div>`, '/takvim'));
   });
   route('POST', '/gonderi/:id', async (ctx, res, pr) => {
     need(ctx, 'owner', 'editor'); needUsable(ctx); const p = await postFor(ctx, pr.id); const b = ctx.body;
     if (p.status === 'paylasildi') throw new HttpError(400, 'Paylaşılmış gönderi değiştirilemez.');
-    const platforms = [].concat(b.platforms || []).filter(k => PLATFORMS[k]);
+    const accs = await all('SELECT id, platform, kind, status FROM accounts WHERE brand_id=$1', [p.brand_id]);
+    const ids = [...new Set([].concat(b.account_ids || []).map(Number))].filter(id => accs.some(a => a.id === id));
+    const platforms = [...new Set(ids.map(id => accs.find(a => a.id === id).platform))].filter(k => PLATFORMS[k]);
+    const mode = b.mode === 'otomatik' && ids.some(id => accs.find(a => a.id === id).kind) ? 'otomatik' : 'elle';
+    const tags = [...new Set(String(b.tags || '').split(',').map(t => t.trim().slice(0, 30)).filter(Boolean))].slice(0, 8);
+    for (const t of tags) await q('INSERT INTO tags (workspace_id, name) VALUES ($1,$2) ON CONFLICT DO NOTHING', [ctx.ws.id, t]);
+    const repeat = REPEATS[b.repeat_rule] ? b.repeat_rule : null; const until = repeat && /^\d{4}-\d{2}-\d{2}$/.test(b.repeat_until || '') ? b.repeat_until : null;
     const when = b.scheduled_at ? fromLocalInput(b.scheduled_at) : null; if (b.scheduled_at && !when) throw new HttpError(400, 'Paylaşım zamanı geçersiz.');
     // onaylanmış gönderi değişirse yeniden onaya düşer
     const changed = (p.caption || '') !== (b.caption || '') || String(p.scheduled_at || '') !== String(when || '');
     const st = p.status === 'onaylandi' && changed && ctx.lim.approvals ? 'taslak' : p.status;
-    await q(`UPDATE posts SET title=$1, platforms=$2, scheduled_at=$3, format=$4, pillar=$5, caption=$6, hashtags=$7, first_comment=$8, visual_brief=$9, status=$10, updated_at=now() WHERE id=$11`,
-      [clip(nn(b.title), 120), platforms, when, FORMATS[b.format] ? b.format : 'kare', clip(nn(b.pillar), 60), clip(b.caption ?? '', 63206), clip(nn(b.hashtags), 600), clip(nn(b.first_comment), 2200), clip(nn(b.visual_brief), 1000), st, p.id]);
+    await q(`UPDATE posts SET title=$1, platforms=$2, scheduled_at=$3, format=$4, pillar=$5, caption=$6, hashtags=$7, first_comment=$8, visual_brief=$9, status=$10, account_ids=$11, publish_mode=$12, tags=$13, repeat_rule=$14, repeat_until=$15, publish_error=NULL, updated_at=now() WHERE id=$16`,
+      [clip(nn(b.title), 120), platforms, when, FORMATS[b.format] ? b.format : 'kare', clip(nn(b.pillar), 60), clip(b.caption ?? '', 63206), clip(nn(b.hashtags), 600), clip(nn(b.first_comment), 2200), clip(nn(b.visual_brief), 1000), st, ids, mode, tags, repeat, until, p.id]);
+    await q(`DELETE FROM post_targets WHERE post_id=$1 AND status<>'paylasildi' AND NOT (account_id = ANY($2::int[]))`, [p.id, ids]);
     if (st !== p.status) await q(`INSERT INTO post_notes (post_id, user_id, author, kind, body) VALUES ($1,$2,$3,'durum','Onaylı metin ya da zaman değişti; yeniden onay gerekiyor.')`, [p.id, ctx.user.id, ctx.user.name]);
     await audit(ctx, 'post.update', { id: p.id }); redirect(res, `/gonderi/${p.id}`);
   });
@@ -158,6 +209,7 @@ ${notes.map(n => `<div style="border-top:1px solid #ECE6DA;padding-top:8px"><str
     const comment = clip(nn(ctx.body.comment), 1000); if (t.to === 'duzeltme' && !comment) throw new HttpError(400, 'Neyin düzeltilmesini istediğinizi yazın.');
     await q(`UPDATE posts SET status=$1, updated_at=now()${t.to === 'paylasildi' ? ', published_at=now(), published_by=$3' : ''} WHERE id=$2`, t.to === 'paylasildi' ? [t.to, p.id, ctx.user.id] : [t.to, p.id]);
     await q(`INSERT INTO post_notes (post_id, user_id, author, kind, body) VALUES ($1,$2,$3,$4,$5)`, [p.id, ctx.user.id, ctx.user.name, t.to === 'duzeltme' ? 'duzeltme' : 'durum', t.to === 'duzeltme' ? comment : `${POST_ST[p.status]} → ${POST_ST[t.to]}${comment ? ': ' + comment : ''}`]);
+    if (t.to === 'paylasildi') await createNextRepeat(p);
     if (t.to === 'onay' && ctx.ws.editor_service) await q(`UPDATE posts SET editor_status='bekliyor' WHERE id=$1 AND editor_status IS DISTINCT FROM 'bekliyor'`, [p.id]);
     await onStatus({ ...ctx.ws, lim: ctx.lim }, p, t.to, { actorId: ctx.user.id, actorName: ctx.user.name, comment });
     await audit(ctx, 'post.status', { id: p.id, from: p.status, to: t.to }); redirect(res, ctx.body.back === 'paylas' ? `/gonderi/${p.id}/paylas` : `/gonderi/${p.id}`);
@@ -169,6 +221,29 @@ ${notes.map(n => `<div style="border-top:1px solid #ECE6DA;padding-top:8px"><str
     await q(`UPDATE posts SET editor_status='bekliyor' WHERE id=$1`, [p.id]);
     await q(`INSERT INTO post_notes (post_id, user_id, author, kind, body) VALUES ($1,$2,$3,'durum','Editör kontrolüne gönderildi.')`, [p.id, ctx.user.id, ctx.user.name]);
     await audit(ctx, 'post.editor', { id: p.id }); redirect(res, `/gonderi/${p.id}`);
+  });
+  route('POST', '/gonderi/:id/yeniden', async (ctx, res, pr) => {
+    need(ctx, 'owner', 'editor'); needUsable(ctx); const p = await postFor(ctx, pr.id);
+    if (p.status === 'paylasildi') throw new HttpError(400, 'Gönderi zaten paylaşıldı.');
+    await q(`UPDATE post_targets SET attempts=0, next_try=NULL, error=NULL, status='bekliyor' WHERE post_id=$1 AND status='hata'`, [p.id]);
+    await q('UPDATE posts SET publish_error=NULL WHERE id=$1', [p.id]); await audit(ctx, 'post.retry', { id: p.id }); redirect(res, `/gonderi/${p.id}`);
+  });
+  route('POST', '/gonderi/:id/cogalt', async (ctx, res, pr) => {
+    need(ctx, 'owner', 'editor'); needUsable(ctx); const p = await postFor(ctx, pr.id);
+    if (await monthCount(ctx.ws.id) >= ctx.lim.postsPerMonth) throw new HttpError(402, `Bu ayki gönderi sınırına ulaştınız (${ctx.lim.postsPerMonth}).`);
+    const c = await one(`INSERT INTO posts (workspace_id, brand_id, platforms, account_ids, publish_mode, status, title, caption, hashtags, first_comment, visual_brief, pillar, format, template, template_data, media_ids, tags, created_by)
+      SELECT workspace_id, brand_id, platforms, account_ids, publish_mode, 'taslak', COALESCE(title, '') || ' (kopya)', caption, hashtags, first_comment, visual_brief, pillar, format, template, template_data, media_ids, tags, $2 FROM posts WHERE id=$1 RETURNING id`, [p.id, ctx.user.id]);
+    await audit(ctx, 'post.duplicate', { from: p.id, id: c.id }); redirect(res, `/gonderi/${c.id}`);
+  });
+  route('POST', '/gonderi/:id/zaman', async (ctx, res, pr) => { // takvimde sürükle-bırak
+    need(ctx, 'owner', 'editor'); needUsable(ctx); const p = await postFor(ctx, pr.id);
+    if (p.status === 'paylasildi') throw new HttpError(400, 'Paylaşılmış gönderi taşınamaz.');
+    const day = /^\d{4}-\d{2}-\d{2}$/.test(ctx.body.gun || '') ? ctx.body.gun : null; if (!day) throw new HttpError(400, 'Gün geçersiz.');
+    const hm = /^([01]\d|2[0-3]):[0-5]\d$/.test(ctx.body.saat || '') ? ctx.body.saat : (p.scheduled_at ? toLocalInput(p.scheduled_at).slice(11, 16) : '19:00');
+    const when = fromLocalInput(`${day}T${hm}`); const st = p.status === 'onaylandi' && ctx.lim.approvals ? 'taslak' : p.status;
+    await q('UPDATE posts SET scheduled_at=$1, status=$2, updated_at=now() WHERE id=$3', [when, st, p.id]);
+    if (st !== p.status) await q(`INSERT INTO post_notes (post_id, user_id, author, kind, body) VALUES ($1,$2,$3,'durum','Zaman değişti; yeniden onay gerekiyor.')`, [p.id, ctx.user.id, ctx.user.name]);
+    await audit(ctx, 'post.move', { id: p.id }); send(res, 200, JSON.stringify({ ok: true, reapprove: st !== p.status }), 'application/json; charset=utf-8');
   });
   route('POST', '/gonderi/:id/not', async (ctx, res, pr) => {
     const p = await postFor(ctx, pr.id); if (!nn(ctx.body.body)) throw new HttpError(400, 'Not boş olamaz.');

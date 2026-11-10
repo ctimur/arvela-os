@@ -17,6 +17,9 @@ const ICON = {
   bugun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
   menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
   rapor: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  kanal: '<circle cx="6" cy="12" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8.6 10.7l6.8-3.4M8.6 13.3l6.8 3.4"/>',
+  entegre: '<path d="M9 7H6a4 4 0 000 8h3M15 7h3a4 4 0 010 8h-3M8 11h8"/>',
+  analitik: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
   yz: '<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
 };
 export const icon = (n) => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n] || ''}</svg>`;
@@ -81,6 +84,23 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px 12p
 .count{font-size:12px;color:var(--stone)}.count.over{color:var(--bad);font-weight:600}
 .swatch{display:inline-block;width:18px;height:18px;border-radius:5px;border:1px solid #0002;vertical-align:middle}
 @media print{.side,.top,.no-print,.menu-btn{display:none!important}.app{display:block}.wrap{padding:0}.card{break-inside:avoid;box-shadow:none}body{background:#fff}}
+.av{border-radius:50%;object-fit:cover;flex:none;display:inline-grid;place-items:center;background:var(--graphite);color:#fff;font-size:11px;font-weight:600;vertical-align:middle}
+.av-instagram{background:#C13584}.av-facebook{background:#1877F2}.av-linkedin{background:#0A66C2}.av-tiktok{background:#111}.av-x{background:#111}.av-youtube{background:#E00}.av-gbp{background:#34A853}
+.chan-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}.chan{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}.chan-b{display:flex;flex-direction:column;gap:4px;flex:1;min-width:160px}
+.chan-pick{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}
+.chan-sel{border:0;padding:0;margin:0}.chan-sel legend{font-size:13px;font-weight:600;color:var(--stone);margin-bottom:6px}.chan-chips{display:flex;flex-wrap:wrap;gap:8px}
+.chan-chip{display:flex;flex-direction:row;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:4px 12px 4px 4px;background:#fff;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px;opacity:.55}
+.chan-chip:has(input:checked){opacity:1;border-color:var(--gold);box-shadow:0 0 0 2px #B0843333}.chan-chip input{position:absolute;opacity:0;width:1px;height:1px}.chan-chip small{display:block;color:var(--stone);font-weight:400;font-size:11px}.chan-chip.manual{border-style:dashed}
+.chip-av{display:inline-flex;gap:2px;margin-right:4px;vertical-align:middle}.chipp[draggable=true]{cursor:grab}.chipp.dragging{opacity:.4}.drop{outline:2px dashed var(--gold);outline-offset:-2px;background:#FBF6EA}
+.tagp{display:inline-block;border:1px solid var(--gold);border-radius:999px;padding:1px 9px;font-size:12px;color:var(--ink);text-decoration:none;background:#fff}.tagp.on{background:var(--champ)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}.seg a{padding:8px 14px;text-decoration:none;color:var(--ink);font-weight:500;background:#fff}.seg a.on{background:var(--night);color:#fff}
+.cal-filter{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}.cal-filter>a:not(.tagp){display:inline-flex;align-items:center;border-radius:999px;padding:3px;border:2px solid transparent;text-decoration:none;color:var(--ink);font-size:13px}.cal-filter>a.on:not(.tagp){border-color:var(--gold)}.cal-filter>a:first-child{padding:4px 10px;background:#fff;border:1px solid var(--line)}.cal-filter>a:first-child.on{background:var(--night);color:#fff}.cal-filter .sep{width:1px;height:22px;background:var(--line);margin:0 4px}
+.wk{display:grid;grid-template-columns:56px repeat(7,minmax(110px,1fr));border:1px solid var(--line);border-radius:14px;overflow:auto;background:#fff}.wk-h{position:sticky;top:0;background:#FBF9F4;padding:8px;font-weight:600;font-size:13px;border-bottom:1px solid var(--line);z-index:1}.wk-h.today{color:var(--gold)}
+.wk-t{font-size:11px;color:var(--stone);padding:4px 6px;border-top:1px solid #F0EBE1}.wk-c{min-height:44px;border-top:1px solid #F0EBE1;border-left:1px solid #F0EBE1;padding:3px;display:flex;flex-direction:column;gap:3px}.wk-c .add{opacity:0;font-size:12px;color:var(--stone);text-decoration:none}.wk-c:hover .add{opacity:1}
+.pv-tabs{display:flex;gap:6px;margin-bottom:10px}.pv-tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 12px;font-size:13px;cursor:pointer;color:var(--ink)}.pv-tab.on{background:var(--night);color:#fff;border-color:var(--night)}
+.pv{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden;max-width:420px}.pv-h{display:flex;gap:10px;align-items:center;padding:10px 12px}.pv-h small{display:block;color:var(--stone);font-size:12px}
+.pv-img{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;background:#EFE9DD}.pv-empty{display:grid;place-items:center;color:var(--stone);font-size:13px}.pv-t{margin:0;padding:10px 12px;white-space:pre-wrap;font-size:14px;line-height:1.5}
+.pv-linkedin .pv-img,.pv-facebook .pv-img{aspect-ratio:auto;max-height:420px}
 .pub-top{background:var(--night);color:#fff;padding:16px 24px;font-family:Poppins,sans-serif;font-size:20px}.pub-top small{font-size:11px;letter-spacing:2px;color:var(--champ)}.pub{max-width:760px;margin:0 auto;padding:28px 18px}
 .auth{min-height:100vh;display:grid;grid-template-columns:1fr 1fr}.auth .art{background:var(--night);color:#fff;padding:56px;display:flex;flex-direction:column;justify-content:space-between}
 .auth .art h1{font-size:44px;line-height:1.1;max-width:520px}.auth .art p{color:var(--muted-d);font-size:17px;max-width:480px}.auth .art .gold{color:var(--champ)}
@@ -95,7 +115,7 @@ ${LANDING_CSS}`;
 
 export function layout(ctx, title, body, active = '') {
   const u = ctx.user; const ws = ctx.ws;
-  const nav = [['/', 'bugun', 'Bugün'], ['/takvim', 'takvim', 'Takvim'], ['/gonderiler', 'gonderi', 'Gönderiler'], ['/markalar', 'marka', 'Markalar'], ['/medya', 'medya', 'Medya'], ['/yapay-zeka', 'yz', 'Yapay zekâ'], ['/rapor', 'rapor', 'Rapor'],
+  const nav = [['/', 'bugun', 'Bugün'], ['/takvim', 'takvim', 'Takvim'], ['/gonderiler', 'gonderi', 'Gönderiler'], ['/markalar', 'marka', 'Markalar'], ['/kanallar', 'kanal', 'Kanallar'], ['/medya', 'medya', 'Medya'], ['/analitik', 'analitik', 'Analitik'], ['/yapay-zeka', 'yz', 'Yapay zekâ'], ['/rapor', 'rapor', 'Rapor'], ['/entegrasyonlar', 'entegre', 'Entegrasyonlar'],
     ...(u.role === 'owner' ? [['/ekip', 'ekip', 'Ekip'], ['/paket', 'paket', 'Paket']] : []), ...(ctx.admin ? [['/yonetim', 'yonetim', 'Yönetim']] : [])];
   const brands = ctx.brands || [];
   const sw = brands.length > 1 ? `<form method="post" action="/marka-sec" class="row" style="align-items:center">${csrf(ctx)}<select name="brand_id" aria-label="Marka" data-autosubmit>${brands.map(b => `<option value="${b.id}"${b.id === ctx.brand?.id ? ' selected' : ''}>${esc(b.name)}</option>`).join('')}</select><noscript><button class="ghost">Seç</button></noscript></form>`
