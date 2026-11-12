@@ -67,7 +67,7 @@ social_dump() { # Arvela Social (0.31) veritabanı aynı sürüme ikinci dosya o
 
 prune() { # 30 günden eski yedekleri (sürüm + etiket) siler
   cutoff=$(( $(date -u +%s) - KEEP_DAYS * 86400 )); n=0
-  gh "$API/repos/$REPO/releases?per_page=100" | jq -r --argjson c "$cutoff" '.[] | select(.tag_name|startswith("yedek-")) | select((.created_at|fromdateiso8601) < $c) | "\(.id) \(.tag_name)"' |
+  gh "$API/repos/$REPO/releases?per_page=100" | jq -r --argjson c "$cutoff" '.[] | select(.tag_name|startswith("yedek-")) | select(((.published_at // .created_at)|fromdateiso8601) < $c) | "\(.id) \(.tag_name)"' |
   while read -r rid rtag; do
     gh -X DELETE "$API/repos/$REPO/releases/$rid" -o /dev/null && gh -X DELETE "$API/repos/$REPO/git/refs/tags/$rtag" -o /dev/null; n=$((n + 1))
   done
@@ -94,9 +94,10 @@ restore_test() {
 }
 
 n8n_check() { # n8n yedeği ayrı serviste alınır (deploy/n8n_backup.sh); burada yalnız son "n8n-" sürümünün yaşı denetlenir
+  # Yaş published_at'ten: created_at etiketin işaret ettiği commit'in tarihidir, yedeğin alındığı an değil
   rel=$(gh "$API/repos/$REPO/releases?per_page=50" | jq -c '[.[] | select(.tag_name|startswith("n8n-"))][0] // empty') || return 0
   [ -n "$rel" ] || return 0 # henüz kurulmadı: sessiz
-  tag=$(echo "$rel" | jq -r .tag_name); at=$(echo "$rel" | jq -r '.created_at|fromdateiso8601'); kb=$(( $(echo "$rel" | jq -r '.assets[0].size // 0') / 1024 ))
+  tag=$(echo "$rel" | jq -r .tag_name); at=$(echo "$rel" | jq -r '(.published_at // .created_at)|fromdateiso8601'); kb=$(( $(echo "$rel" | jq -r '.assets[0].size // 0') / 1024 ))
   age=$(( ( $(date -u +%s) - at ) / 3600 ))
   if [ "$age" -le 30 ] && [ "$kb" -gt 0 ]; then event n8n_yedek true "$tag · $kb KB · $age saat önce"; else event n8n_yedek false "Son n8n yedeği $age saat önce ($tag); n8n projesindeki n8nyedek servisini kontrol edin."; fi
 }
