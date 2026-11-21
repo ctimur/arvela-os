@@ -1,7 +1,7 @@
 // Arvela OS — görünüm katmanı (0.23 Atlas): gruplu akordiyon menü, üst çubuk, mobil çekmece, açık/koyu mod.
 // Renkler server.js'teki CSS değişkenleriyle tanımlı; koyu mod yalnız değişkenleri ve birkaç ters renkli bileşeni değiştirir.
 
-export const NAV_ICON = { '/panel': 'home', '/gorevler': 'check', '/onaylar': 'decide', '/satis': 'flow', '/musteriler': 'users', '/teklifler': 'doc', '/faturalar': 'receipt', '/projeler': 'folder', '/paketler': 'box', '/siteler': 'globe', '/katalog': 'book', '/otomasyonlar': 'bolt', '/odemeler': 'wallet', '/ayarlar': 'gear', '/portal': 'home', '/portal/siteler': 'globe', '/portal/teklifler': 'doc', '/portal/faturalar': 'receipt' };
+export const NAV_ICON = { '/panel': 'home', '/gorevler': 'check', '/onaylar': 'decide', '/satis': 'flow', '/randevular': 'decide', '/musteriler': 'users', '/teklifler': 'doc', '/faturalar': 'receipt', '/projeler': 'folder', '/paketler': 'box', '/siteler': 'globe', '/katalog': 'book', '/otomasyonlar': 'bolt', '/odemeler': 'wallet', '/ayarlar': 'gear', '/portal': 'home', '/portal/siteler': 'globe', '/portal/teklifler': 'doc', '/portal/faturalar': 'receipt' };
 export function navGroups(u) {
   if (!u) return [];
   if (u.role === 'client') return [{ key: '', items: [['/portal', 'Portalım'], ['/portal/siteler', 'Sitelerim'], ['/portal/teklifler', 'Tekliflerim'], ['/portal/faturalar', 'Faturalarım']] }];
@@ -9,7 +9,7 @@ export function navGroups(u) {
   const admin = u.role === 'admin';
   return [
     { key: 'gunluk', label: 'Günlük', items: [['/panel', 'Bugün'], ['/gorevler', 'Görevlerim'], ['/onaylar', 'Kararlar']] },
-    { key: 'satis', label: 'Satış ve müşteri', items: [['/satis', 'Satış hattı'], ['/musteriler', 'Müşteriler'], ...(admin ? [['/teklifler', 'Teklifler'], ['/faturalar', 'Faturalar']] : [])] },
+    { key: 'satis', label: 'Satış ve müşteri', items: [['/satis', 'Satış hattı'], ...(admin ? [['/randevular', 'Görüşmeler']] : []), ['/musteriler', 'Müşteriler'], ...(admin ? [['/teklifler', 'Teklifler'], ['/faturalar', 'Faturalar']] : [])] },
     { key: 'teslimat', label: 'Teslimat', items: [['/projeler', 'Projeler'], ['/paketler', 'İş paketleri'], ['/siteler', 'Siteler'], ['/katalog', 'Katalog']] },
     { key: 'yonetim', label: 'Yönetim', items: [['/otomasyonlar', 'Otomasyonlar'], ...(admin ? [['/odemeler', 'Freelancer ödemeleri'], ['/ayarlar', 'Ayarlar']] : [])] },
   ];
