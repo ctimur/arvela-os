@@ -1,0 +1,2 @@
+Poppins (Indian Type Foundry) ve Inter (Rasmus Andersson) SIL Open Font License 1.1 ile dağıtılır:
+https://openfontlicense.org — dosyalar Latin ve Türkçe karakterlere indirgenmiş (subset) WOFF kopyalarıdır.

@@ -80,8 +80,8 @@ def build_compose(sha):
     if not re.fullmatch(r'[0-9a-f]{40}', sha or ''):
         raise SystemExit(f'geçersiz commit: {sha!r}')
     compose = (ROOT / 'deploy' / 'docker-compose.yml').read_text()
-    if compose.count('__SHA__') != 2:  # app indirir, social (0.31) aynı commit'i bekler
-        raise SystemExit('docker-compose.yml içinde iki __SHA__ (app, social) bekleniyor')
+    if compose.count('__SHA__') != 3:  # app indirir; social (0.31) ve web (0.34) aynı commit'i bekler
+        raise SystemExit('docker-compose.yml içinde üç __SHA__ (app, social, web) bekleniyor')
     compose = compose.replace('__SHA__', sha)
     if len(compose) > LIMIT:
         raise SystemExit(f'arvela-os compose {len(compose)} karakter > {LIMIT}')
@@ -105,6 +105,8 @@ def main():
     env += 'SOCIAL_BRIDGE_KEY=' + hmac.new(os.environ['SETUP_TOKEN'].encode(), b'arvela-social-bridge', hashlib.sha256).hexdigest() + '\n'
     # Kanal erişim anahtarlarını şifreleyen anahtar (vault.mjs); SETUP_TOKEN değişmedikçe sabit kalır
     env += 'SOCIAL_TOKEN_KEY=' + hmac.new(os.environ['SETUP_TOKEN'].encode(), b'arvela-social-tokens', hashlib.sha256).hexdigest() + '\n'
+    # arveladigital.com (0.34): sitenin Arvela OS randevu köprüsü anahtarı (ext-booking.js webKey ile aynı)
+    env += 'WEB_BRIDGE_KEY=' + hmac.new(os.environ['SETUP_TOKEN'].encode(), b'arvela-web-bridge', hashlib.sha256).hexdigest() + '\n'
     for k in ('BACKUP_PASSPHRASE', 'BACKUP_GITHUB_TOKEN', 'BACKUP_REPO', 'SOCIAL_ADMIN_EMAILS', 'ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'META_APP_ID', 'META_APP_SECRET', 'LINKEDIN_CLIENT_ID', 'LINKEDIN_CLIENT_SECRET', 'LINKEDIN_ORG'):
         v = os.environ.get(k, '').strip()
         if '\n' in v: raise SystemExit(f'{k} tek satır olmalı')

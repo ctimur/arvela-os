@@ -102,6 +102,30 @@ services:
       - traefik.http.routers.arvela-social.entrypoints=websecure
       - traefik.http.routers.arvela-social.tls.certresolver=letsencrypt
       - traefik.http.services.arvela-social.loadbalancer.server.port=3100
+  web:
+    image: node:22-alpine
+    restart: unless-stopped
+    working_dir: /app
+    command: ["sh", "-c", "until [ \"$$(cat .sha 2>/dev/null)\" = __SHA__ ] && [ -f web/server.mjs ]; do sleep 5; done; exec node web/server.mjs"]
+    environment:
+      NODE_ENV: production
+      PORT: "3200"
+      WEB_URL: https://arveladigital.com
+      WEB_BRIDGE_URL: http://app:3000
+      WEB_BRIDGE_KEY: ${WEB_BRIDGE_KEY}
+    volumes:
+      - appsrc:/app:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3200/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 300s
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.arvela-web.rule=Host(`arveladigital.com`) || Host(`www.arveladigital.com`)
+      - traefik.http.routers.arvela-web.entrypoints=websecure
+      - traefik.http.routers.arvela-web.tls.certresolver=letsencrypt
+      - traefik.http.services.arvela-web.loadbalancer.server.port=3200
   backup:
     image: postgres:16-alpine
     restart: unless-stopped
