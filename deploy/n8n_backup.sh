@@ -16,7 +16,7 @@ ready() {
   [ "$(gh "$API/repos/$REPO" | jq -r .private)" = "true" ] || { log "yedek deposu yok, erişilemiyor ya da herkese açık: gönderilmedi"; return 1; }
 }
 last_age() { # son n8n yedeğinin yaşı (sn); yoksa çok büyük
-  t=$(gh "$API/repos/$REPO/releases?per_page=50" | jq -r '[.[] | select(.tag_name|startswith("n8n-"))][0].created_at // empty')
+  t=$(gh "$API/repos/$REPO/releases?per_page=50" | jq -r '[.[] | select(.tag_name|startswith("n8n-"))][0] | (.published_at // .created_at) // empty')
   [ -n "$t" ] && echo $(( $(date -u +%s) - $(date -u -d "$(echo "$t" | sed 's/T/ /; s/Z//')" +%s 2>/dev/null || echo 0) )) || echo 999999999
 }
 backup_once() {
@@ -33,7 +33,7 @@ backup_once() {
   gh -X POST -H "Content-Type: application/octet-stream" --data-binary @"$f.enc" "https://uploads.github.com/repos/$REPO/releases/$id/assets?name=n8n.dump.enc" -o /dev/null || { log "dosya yüklenemedi"; rm -f "$f.enc"; return 1; }
   rm -f "$f.enc"; log "n8n yedeği tamam: $tag · $((size / 1024)) KB"
   cutoff=$(( $(date -u +%s) - KEEP_DAYS * 86400 ))
-  gh "$API/repos/$REPO/releases?per_page=100" | jq -r --argjson c "$cutoff" '.[] | select(.tag_name|startswith("n8n-")) | select((.created_at|fromdateiso8601) < $c) | "\(.id) \(.tag_name)"' |
+  gh "$API/repos/$REPO/releases?per_page=100" | jq -r --argjson c "$cutoff" '.[] | select(.tag_name|startswith("n8n-")) | select(((.published_at // .created_at)|fromdateiso8601) < $c) | "\(.id) \(.tag_name)"' |
   while read -r rid rtag; do gh -X DELETE "$API/repos/$REPO/releases/$rid" -o /dev/null && gh -X DELETE "$API/repos/$REPO/git/refs/tags/$rtag" -o /dev/null; done
 }
 
